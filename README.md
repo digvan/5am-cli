@@ -32,6 +32,7 @@ server can't touch your media library.
 
 | Path | What it is |
 |---|---|
+| [`SKILL.md`](SKILL.md) | Full CLI reference written for **AI agents** — every command, its JSON shape, exit codes, and the gotchas. Drop it into your agent's skills directory. |
 | [`docs/server-agent.md`](docs/server-agent.md) | The full guide: architecture, datasets, query operations, custom skills, a step-by-step Ubuntu/Debian deployment, and the security model. |
 | [`examples/install-agent.sh`](examples/install-agent.sh) | Puts the agent under systemd — writes and starts the units so it survives reboots and closed SSH sessions. |
 | [`examples/sysmetrics.sh`](examples/sysmetrics.sh) | Emits one CPU/memory/disk/load sample as a JSON line. Linux and macOS. |
@@ -99,6 +100,26 @@ said rather than looping generic stock footage.
 Needs `ffmpeg` on PATH. The waveform mode is free and instant; the b-roll mode
 uses Gemini quota and takes minutes. Run the tests with
 `python3 examples/test_podcast_to_video.py` — 42 of them, no network required.
+
+## Using the CLI from an AI agent
+
+[`SKILL.md`](SKILL.md) is the whole CLI written up for a coding agent rather
+than a person: every command with its flags, the JSON each one returns, what the
+exit codes mean, and the traps worth knowing before you script against it.
+
+It's in [Claude Skill](https://code.claude.com/docs/en/skills) format — YAML
+frontmatter plus markdown — so you can drop it straight in:
+
+```sh
+mkdir -p ~/.claude/skills/5am
+cp SKILL.md ~/.claude/skills/5am/SKILL.md
+```
+
+It works as plain context for any other agent too; the frontmatter is just a
+few lines at the top. The design it documents is what makes the CLI scriptable
+in the first place: **stdout is always JSON**, stderr carries progress, and exit
+codes are specific (`2` auth, `3` validation, `4` network, `5` server) so an
+agent can branch on a failure instead of scraping error text.
 
 ## Adding your own
 
