@@ -107,18 +107,47 @@ uses Gemini quota and takes minutes. Run the tests with
 than a person: every command with its flags, the JSON each one returns, what the
 exit codes mean, and the traps worth knowing before you script against it.
 
-It's in [Claude Skill](https://code.claude.com/docs/en/skills) format — YAML
-frontmatter plus markdown — so you can drop it straight in:
+It's plain markdown with a few lines of YAML frontmatter, so every assistant
+can use it — the only difference is where the file goes.
+
+Download it first:
 
 ```sh
-mkdir -p ~/.claude/skills/5am
-cp SKILL.md ~/.claude/skills/5am/SKILL.md
+curl -fsSLO https://raw.githubusercontent.com/digvan/5am-cli/main/SKILL.md
 ```
 
-It works as plain context for any other agent too; the frontmatter is just a
-few lines at the top. The design it documents is what makes the CLI scriptable
-in the first place: **stdout is always JSON**, stderr carries progress, and exit
-codes are specific (`2` auth, `3` validation, `4` network, `5` server) so an
+**Claude Code** — [Agent Skills](https://code.claude.com/docs/en/skills) are
+loaded from a per-skill directory, and the frontmatter is what makes Claude
+pick it up automatically when you mention the CLI:
+
+```sh
+mkdir -p ~/.claude/skills/5am && mv SKILL.md ~/.claude/skills/5am/SKILL.md
+```
+
+Use `.claude/skills/5am/` inside a project instead if you only want it there.
+
+**Gemini CLI** — put it where the assistant reads project context, so it's in
+scope for every session in that directory:
+
+```sh
+mkdir -p .gemini && mv SKILL.md .gemini/5am-cli.md
+```
+
+Then reference it from your `GEMINI.md` (for example: *"For any `5am` command,
+follow .gemini/5am-cli.md"*), or paste it in directly.
+
+**Codex** — same idea: keep it in the repo and point `AGENTS.md` at it.
+
+```sh
+mkdir -p docs && mv SKILL.md docs/5am-cli.md
+```
+
+**Anything else** — it is just a markdown file. Attach it, paste it, or add it
+to whatever context mechanism your tool has; the frontmatter is inert if unused.
+
+Whichever you use, the thing that makes this work is the CLI's design rather
+than the document: **stdout is always JSON**, stderr carries progress, and exit
+codes are specific (`2` auth, `3` validation, `4` network, `5` server), so an
 agent can branch on a failure instead of scraping error text.
 
 ## Adding your own
