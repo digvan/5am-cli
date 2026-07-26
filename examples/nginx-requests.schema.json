@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "ip": "string",
+    "method": "string",
+    "path": "string",
+    "status": "number",
+    "bytes": "number",
+    "ts": "timestamp"
+  },
+  "time_field": "ts"
+}

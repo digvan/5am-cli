@@ -1,0 +1,10 @@
+{
+  "fields": {
+    "cpu_pct": "number",
+    "mem_pct": "number",
+    "disk_pct": "number",
+    "load1": "number",
+    "ts": "timestamp"
+  },
+  "time_field": "ts"
+}

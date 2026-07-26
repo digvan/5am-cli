@@ -1,0 +1,59 @@
+# This is a repo people CLONE AND RUN IN, so most of what follows is about the
+# artefacts the examples produce in your working tree — not just editor cruft.
+
+# --- what the examples generate ---------------------------------------------
+
+# The 5am binary, if you keep it here instead of on PATH. podcast_to_video.py
+# looks for ./bin/5am before falling back to $PATH.
+bin/
+
+# podcast_to_video.py: rendered videos, and the media you feed it. The default
+# output is <input>-video.mp4 right next to the input, so these land in the
+# repo if you work here. Ignored by extension mostly to stop a multi-hundred-MB
+# episode.wav ending up in a pull request.
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+
+# Cover art and other stills you pass with --cover.
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Transcripts you pass with --subtitles.
+*.srt
+*.vtt
+
+# Intermediate clip directories (--workdir, or --keep on a temp run).
+podcast-video.*/
+workdir/
+clips/
+
+# sysmetrics.sh output when you sample into the repo rather than /var/log/5am.
+*.jsonl
+
+# --- tooling ----------------------------------------------------------------
+
+# Python (test_podcast_to_video.py imports the script, so a cache appears).
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors and OS.
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- deliberately NOT ignored -----------------------------------------------
+# The schemas are tracked source, not output — *.json stays out of this file on
+# purpose. If you add a generated .json, ignore it by name rather than widening
+# the pattern and hiding examples/*.schema.json.
