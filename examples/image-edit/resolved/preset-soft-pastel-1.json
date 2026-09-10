@@ -1,7 +1,7 @@
 {
   "kind": "iedl-resolved",
   "version": 1,
-  "runtime": "iedl-1.0.0",
+  "runtime": "iedl-1.1.0",
   "source": {
     "width": 640,
     "height": 960,
@@ -239,12 +239,12 @@
     "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
     "backend": "webgl2+cpu/simd",
     "text": "system sans-serif",
-    "runtime": "iedl-1.0.0",
-    "sha256:worker.js": "8e6d3236f2efc4b744d93d98c549c2aa676408a33ce11620cc3b66f05a761e9b",
+    "runtime": "iedl-1.1.0",
+    "sha256:worker.js": "6d5e4520f8b36cec5977924682cd57eadfbbdce9747d7092ad208c0f0358ea8d",
     "sha256:kernels-scalar.wasm": "3c632c6a5f57440cc8d6fd309d7b875d415f1b70f6e074bc7c029c8fa9201a31",
     "sha256:kernels-simd.wasm": "faf1123d5ec723574c4954b45fe39133bcc454b7c08c074526f2a10a97a565c0",
-    "sha256:runtime.js": "15604be80172dc204232e2a2984cc5039bbc46dafc07db18b0311e15a8625808",
-    "sha256:core.mjs": "dea6717250f2dd3670ee64467c1befbfb36f7e087233ffcbb8ee79f8d95a532a",
+    "sha256:runtime.js": "0510aeea25f1831e62e9dd5c8c0f88907d80246292f6e55d5cfbdca2594c4fb5",
+    "sha256:core.mjs": "4d25ca1c4f185783a45ae8a580cd901e9c6dc236c25f6088b9d71c8e873ce461",
     "sha256:runner.mjs": "223d4487e43b3eeb41c1c17188783216e9c55d05ae25a22493d0fd44b2947cf6",
     "sha256:browser.mjs": "51b2db0a783e415988ea2f29ffe1ba6a02530d8ce6c4773c4cb4e1b45f0311a6",
     "sha256:package.json": "cce6f8c1916d2248267b4182989f5e7184c405e8d784c8e9420082a02cc39353"

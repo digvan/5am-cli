@@ -977,7 +977,7 @@
     "id": "auto-white-balance",
     "title": "Auto white-balance",
     "group": "Analysis & automation",
-    "note": "Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.",
+    "note": "Runtime 1.1 preserves this concert lighting: mixed-color evidence, 6.1% candidate neutrals, consistency 0.084, and zero applied correction. The former global green cast is avoided. This is intentional abstention, not a claim that the lighting is neutral.",
     "assets": {},
     "mask": null,
     "remote": false,

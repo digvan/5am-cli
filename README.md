@@ -4,6 +4,8 @@ Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create vide
 
 **New: [IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
+The checked-in gallery previews runtime **1.1** ahead of deployment, including conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-11-preview) before replaying its resolved bundles.
+
 ![A concert photograph edited through IEDL](examples/image-edit/images/stage-balance.jpg)
 
 ## Install and update

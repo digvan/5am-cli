@@ -6,50 +6,51 @@
       "image": "images/adjust-exposure.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57
+      "seconds": 1.49
     },
     "adjust-contrast": {
       "status": "Rendered",
       "image": "images/adjust-contrast.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.56
+      "seconds": 1.5
     },
     "stage-balance": {
       "status": "Rendered",
       "image": "images/stage-balance.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.67,
-      "mask": "masks/stage-balance.png"
+      "seconds": 1.61,
+      "mask": "masks/stage-balance.png",
+      "bundle": "bundles/stage-balance.iedl.zip"
     },
     "adjust-highlights": {
       "status": "Rendered",
       "image": "images/adjust-highlights.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5
+      "seconds": 1.45
     },
     "adjust-shadows": {
       "status": "Rendered",
       "image": "images/adjust-shadows.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.49
+      "seconds": 1.43
     },
     "adjust-whites": {
       "status": "Rendered",
       "image": "images/adjust-whites.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51
+      "seconds": 1.47
     },
     "adjust-blacks": {
       "status": "Rendered",
       "image": "images/adjust-blacks.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5
+      "seconds": 1.47
     },
     "adjust-tint": {
       "status": "Rendered",
@@ -70,72 +71,74 @@
       "image": "images/adjust-saturation.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.47
+      "seconds": 1.5
     },
     "adjust-vibrance": {
       "status": "Rendered",
       "image": "images/adjust-vibrance.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51
+      "seconds": 1.5
     },
     "adjust-texture": {
       "status": "Rendered",
       "image": "images/adjust-texture.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.54
+      "seconds": 1.5
     },
     "adjust-clarity": {
       "status": "Rendered",
       "image": "images/adjust-clarity.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55
+      "seconds": 1.59
     },
     "adjust-dehaze": {
       "status": "Rendered",
       "image": "images/adjust-dehaze.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.53
+      "seconds": 1.51
     },
     "adjust-sharpening": {
       "status": "Rendered",
       "image": "images/adjust-sharpening.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.54
+      "seconds": 1.47
     },
     "adjust-denoise": {
       "status": "Rendered",
       "image": "images/adjust-denoise.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.7
+      "seconds": 1.53
     },
     "adjust-colorNoise": {
       "status": "Rendered",
       "image": "images/adjust-colorNoise.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.66
+      "seconds": 1.51
     },
     "preset-subject-pop-1": {
       "status": "Rendered",
       "image": "images/preset-subject-pop-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.61,
-      "mask": "masks/preset-subject-pop-1.png"
+      "seconds": 1.59,
+      "mask": "masks/preset-subject-pop-1.png",
+      "bundle": "bundles/preset-subject-pop-1.iedl.zip"
     },
     "preset-skin-smooth-1": {
       "status": "Rendered",
       "image": "images/preset-skin-smooth-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.63,
-      "mask": "masks/preset-skin-smooth-1.png"
+      "seconds": 1.64,
+      "mask": "masks/preset-skin-smooth-1.png",
+      "bundle": "bundles/preset-skin-smooth-1.iedl.zip"
     },
     "preset-bw-classic-1": {
       "status": "Rendered",
@@ -149,283 +152,293 @@
       "image": "images/preset-bw-high-contrast-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.53
+      "seconds": 1.51
     },
     "preset-bw-matte-1": {
       "status": "Rendered",
       "image": "images/preset-bw-matte-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55
+      "seconds": 1.5
     },
     "preset-teal-orange-1": {
       "status": "Rendered",
       "image": "images/preset-teal-orange-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5
+      "seconds": 1.45
     },
     "preset-cinematic-1": {
       "status": "Rendered",
       "image": "images/preset-cinematic-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.52
+      "seconds": 1.48
     },
     "preset-wedding-clean-1": {
       "status": "Rendered",
       "image": "images/preset-wedding-clean-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.54
+      "seconds": 1.48
     },
     "preset-wedding-airy-1": {
       "status": "Rendered",
       "image": "images/preset-wedding-airy-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.44
+      "seconds": 1.51
     },
     "preset-golden-romance-1": {
       "status": "Rendered",
       "image": "images/preset-golden-romance-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.68
+      "seconds": 1.72
     },
     "preset-editorial-portrait-1": {
       "status": "Rendered",
       "image": "images/preset-editorial-portrait-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.61
+      "seconds": 1.5
     },
     "preset-soft-pastel-1": {
       "status": "Rendered",
       "image": "images/preset-soft-pastel-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.49
+      "seconds": 1.35
     },
     "preset-indoor-celebration-1": {
       "status": "Rendered",
       "image": "images/preset-indoor-celebration-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.53
+      "seconds": 1.48
     },
     "preset-family-natural-1": {
       "status": "Rendered",
       "image": "images/preset-family-natural-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.42
+      "seconds": 1.43
     },
     "preset-autumn-warmth-1": {
       "status": "Rendered",
       "image": "images/preset-autumn-warmth-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.72
+      "seconds": 1.65
     },
     "preset-landscape-crisp-1": {
       "status": "Rendered",
       "image": "images/preset-landscape-crisp-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.76
+      "seconds": 1.74
     },
     "preset-night-sky-natural-1": {
       "status": "Rendered",
       "image": "images/preset-night-sky-natural-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.37
+      "seconds": 1.34
     },
     "preset-woodland-soft-1": {
       "status": "Rendered",
       "image": "images/preset-woodland-soft-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.65
+      "seconds": 1.67
     },
     "preset-dark-moody-1": {
       "status": "Rendered",
       "image": "images/preset-dark-moody-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.67
+      "seconds": 1.54
     },
     "preset-milky-way-definition-1": {
       "status": "Rendered",
       "image": "images/preset-milky-way-definition-1.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.65,
-      "mask": "masks/preset-milky-way-definition-1.png"
+      "seconds": 1.5,
+      "mask": "masks/preset-milky-way-definition-1.png",
+      "bundle": "bundles/preset-milky-way-definition-1.iedl.zip"
     },
     "curve-rgb": {
       "status": "Rendered",
       "image": "images/curve-rgb.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.35
+      "seconds": 1.27
     },
     "curve-r": {
       "status": "Rendered",
       "image": "images/curve-r.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.45
+      "seconds": 1.44
     },
     "curve-g": {
       "status": "Rendered",
       "image": "images/curve-g.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.46
+      "seconds": 1.37
     },
     "curve-b": {
       "status": "Rendered",
       "image": "images/curve-b.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.48
+      "seconds": 1.36
     },
     "hsl-red": {
       "status": "Rendered",
       "image": "images/hsl-red.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57
+      "seconds": 1.49
     },
     "hsl-orange": {
       "status": "Rendered",
       "image": "images/hsl-orange.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.59
+      "seconds": 1.62
     },
     "hsl-yellow": {
       "status": "Rendered",
       "image": "images/hsl-yellow.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51
+      "seconds": 1.5
     },
     "hsl-green": {
       "status": "Rendered",
       "image": "images/hsl-green.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.66
+      "seconds": 1.63
     },
     "hsl-aqua": {
       "status": "Rendered",
       "image": "images/hsl-aqua.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55
+      "seconds": 1.53
     },
     "hsl-blue": {
       "status": "Rendered",
       "image": "images/hsl-blue.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.69
+      "seconds": 1.68
     },
     "hsl-purple": {
       "status": "Rendered",
       "image": "images/hsl-purple.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.59
+      "seconds": 1.58
     },
     "hsl-magenta": {
       "status": "Rendered",
       "image": "images/hsl-magenta.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.68
+      "seconds": 1.63
     },
     "mask-brush": {
       "status": "Rendered",
       "image": "images/mask-brush.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5,
-      "mask": "masks/mask-brush.png"
+      "seconds": 1.42,
+      "mask": "masks/mask-brush.png",
+      "bundle": "bundles/mask-brush.iedl.zip"
     },
     "mask-linear": {
       "status": "Rendered",
       "image": "images/mask-linear.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.34,
-      "mask": "masks/mask-linear.png"
+      "seconds": 1.4,
+      "mask": "masks/mask-linear.png",
+      "bundle": "bundles/mask-linear.iedl.zip"
     },
     "mask-radial": {
       "status": "Rendered",
       "image": "images/mask-radial.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.53,
-      "mask": "masks/mask-radial.png"
+      "seconds": 1.43,
+      "mask": "masks/mask-radial.png",
+      "bundle": "bundles/mask-radial.iedl.zip"
     },
     "mask-rectangle": {
       "status": "Rendered",
       "image": "images/mask-rectangle.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.37,
-      "mask": "masks/mask-rectangle.png"
+      "seconds": 1.29,
+      "mask": "masks/mask-rectangle.png",
+      "bundle": "bundles/mask-rectangle.iedl.zip"
     },
     "mask-ellipse": {
       "status": "Rendered",
       "image": "images/mask-ellipse.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51,
-      "mask": "masks/mask-ellipse.png"
+      "seconds": 1.5,
+      "mask": "masks/mask-ellipse.png",
+      "bundle": "bundles/mask-ellipse.iedl.zip"
     },
     "mask-lasso": {
       "status": "Rendered",
       "image": "images/mask-lasso.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.47,
-      "mask": "masks/mask-lasso.png"
+      "seconds": 1.48,
+      "mask": "masks/mask-lasso.png",
+      "bundle": "bundles/mask-lasso.iedl.zip"
     },
     "mask-polygon": {
       "status": "Rendered",
       "image": "images/mask-polygon.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5,
-      "mask": "masks/mask-polygon.png"
+      "seconds": 1.49,
+      "mask": "masks/mask-polygon.png",
+      "bundle": "bundles/mask-polygon.iedl.zip"
     },
     "mask-color": {
       "status": "Rendered",
       "image": "images/mask-color.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.72,
-      "mask": "masks/mask-color.png"
+      "seconds": 1.5,
+      "mask": "masks/mask-color.png",
+      "bundle": "bundles/mask-color.iedl.zip"
     },
     "mask-luminance": {
       "status": "Rendered",
       "image": "images/mask-luminance.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5,
-      "mask": "masks/mask-luminance.png"
+      "seconds": 1.55,
+      "mask": "masks/mask-luminance.png",
+      "bundle": "bundles/mask-luminance.iedl.zip"
     },
     "mask-raster": {
       "status": "Rendered",
       "image": "images/mask-raster.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57,
+      "seconds": 1.53,
       "mask": "masks/mask-raster.png",
       "bundle": "bundles/mask-raster.iedl.zip"
     },
@@ -434,24 +447,27 @@
       "image": "images/mask-add.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.44,
-      "mask": "masks/mask-add.png"
+      "seconds": 1.51,
+      "mask": "masks/mask-add.png",
+      "bundle": "bundles/mask-add.iedl.zip"
     },
     "mask-subtract": {
       "status": "Rendered",
       "image": "images/mask-subtract.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.47,
-      "mask": "masks/mask-subtract.png"
+      "seconds": 1.48,
+      "mask": "masks/mask-subtract.png",
+      "bundle": "bundles/mask-subtract.iedl.zip"
     },
     "mask-intersect": {
       "status": "Rendered",
       "image": "images/mask-intersect.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.38,
-      "mask": "masks/mask-intersect.png"
+      "seconds": 1.44,
+      "mask": "masks/mask-intersect.png",
+      "bundle": "bundles/mask-intersect.iedl.zip"
     },
     "refine-feather": {
       "status": "Rendered",
@@ -459,208 +475,221 @@
       "width": 640,
       "height": 960,
       "seconds": 1.51,
-      "mask": "masks/refine-feather.png"
+      "mask": "masks/refine-feather.png",
+      "bundle": "bundles/refine-feather.iedl.zip"
     },
     "refine-expand": {
       "status": "Rendered",
       "image": "images/refine-expand.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51,
-      "mask": "masks/refine-expand.png"
+      "seconds": 1.7,
+      "mask": "masks/refine-expand.png",
+      "bundle": "bundles/refine-expand.iedl.zip"
     },
     "refine-contract": {
       "status": "Rendered",
       "image": "images/refine-contract.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.5,
-      "mask": "masks/refine-contract.png"
+      "seconds": 2.25,
+      "mask": "masks/refine-contract.png",
+      "bundle": "bundles/refine-contract.iedl.zip"
     },
     "refine-smooth": {
       "status": "Rendered",
       "image": "images/refine-smooth.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.6,
-      "mask": "masks/refine-smooth.png"
+      "seconds": 1.58,
+      "mask": "masks/refine-smooth.png",
+      "bundle": "bundles/refine-smooth.iedl.zip"
     },
     "refine-density": {
       "status": "Rendered",
       "image": "images/refine-density.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55,
-      "mask": "masks/refine-density.png"
+      "seconds": 1.27,
+      "mask": "masks/refine-density.png",
+      "bundle": "bundles/refine-density.iedl.zip"
     },
     "refine-invert": {
       "status": "Rendered",
       "image": "images/refine-invert.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.42,
-      "mask": "masks/refine-invert.png"
+      "seconds": 1.55,
+      "mask": "masks/refine-invert.png",
+      "bundle": "bundles/refine-invert.iedl.zip"
     },
     "refine-bypass": {
       "status": "Rendered",
       "image": "images/refine-bypass.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.45,
-      "mask": "masks/refine-bypass.png"
+      "seconds": 1.51,
+      "mask": "masks/refine-bypass.png",
+      "bundle": "bundles/refine-bypass.iedl.zip"
     },
     "blend-normal": {
       "status": "Rendered",
       "image": "images/blend-normal.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.43
+      "seconds": 1.41
     },
     "blend-screen": {
       "status": "Rendered",
       "image": "images/blend-screen.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.65
+      "seconds": 1.42
     },
     "blend-multiply": {
       "status": "Rendered",
       "image": "images/blend-multiply.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.74
+      "seconds": 1.48
     },
     "blend-overlay": {
       "status": "Rendered",
       "image": "images/blend-overlay.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.54
+      "seconds": 1.47
     },
     "blend-soft-light": {
       "status": "Rendered",
       "image": "images/blend-soft-light.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51
+      "seconds": 1.47
     },
     "blend-luminosity": {
       "status": "Rendered",
       "image": "images/blend-luminosity.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.66
+      "seconds": 1.47
     },
     "layer-text": {
       "status": "Rendered",
       "image": "images/layer-text.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.72
+      "seconds": 1.6
     },
     "layer-raster": {
       "status": "Rendered",
       "image": "images/layer-raster.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.69
+      "seconds": 1.64
     },
     "layer-frequency": {
       "status": "Rendered",
       "image": "images/layer-frequency.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57,
-      "mask": "masks/layer-frequency.png"
+      "seconds": 1.46,
+      "mask": "masks/layer-frequency.png",
+      "bundle": "bundles/layer-frequency.iedl.zip"
     },
     "layer-lifecycle": {
       "status": "Rendered",
       "image": "images/layer-lifecycle.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.4
+      "seconds": 1.34
     },
     "geometry-square": {
       "status": "Rendered",
       "image": "images/geometry-square.jpg",
       "width": 640,
       "height": 640,
-      "seconds": 1.52
+      "seconds": 1.44
     },
     "geometry-portrait": {
       "status": "Rendered",
       "image": "images/geometry-portrait.jpg",
       "width": 640,
       "height": 800,
-      "seconds": 1.46
+      "seconds": 1.39
     },
     "geometry-rotate": {
       "status": "Rendered",
       "image": "images/geometry-rotate.jpg",
       "width": 960,
       "height": 640,
-      "seconds": 1.51
+      "seconds": 1.43
     },
     "geometry-flip-x": {
       "status": "Rendered",
       "image": "images/geometry-flip-x.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.51
+      "seconds": 1.42
     },
     "geometry-rectangle": {
       "status": "Rendered",
       "image": "images/geometry-rectangle.jpg",
       "width": 352,
       "height": 768,
-      "seconds": 1.44
+      "seconds": 1.43
     },
     "geometry-flip-y": {
       "status": "Rendered",
       "image": "images/geometry-flip-y.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.44
+      "seconds": 1.49
     },
     "retouch-heal": {
       "status": "Rendered",
       "image": "images/retouch-heal.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.52,
-      "mask": "masks/retouch-heal.png"
+      "seconds": 1.48,
+      "mask": "masks/retouch-heal.png",
+      "bundle": "bundles/retouch-heal.iedl.zip"
     },
     "retouch-clone": {
       "status": "Rendered",
       "image": "images/retouch-clone.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.52,
-      "mask": "masks/retouch-clone.png"
+      "seconds": 1.54,
+      "mask": "masks/retouch-clone.png",
+      "bundle": "bundles/retouch-clone.iedl.zip"
     },
     "retouch-spot": {
       "status": "Rendered",
       "image": "images/retouch-spot.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.46,
-      "mask": "masks/retouch-spot.png"
+      "seconds": 1.52,
+      "mask": "masks/retouch-spot.png",
+      "bundle": "bundles/retouch-spot.iedl.zip"
     },
     "retouch-patch": {
       "status": "Rendered",
       "image": "images/retouch-patch.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.45,
-      "mask": "masks/retouch-patch.png"
+      "seconds": 1.53,
+      "mask": "masks/retouch-patch.png",
+      "bundle": "bundles/retouch-patch.iedl.zip"
     },
     "retouch-burn": {
       "status": "Rendered",
       "image": "images/retouch-burn.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55,
-      "mask": "masks/retouch-burn.png"
+      "seconds": 1.48,
+      "mask": "masks/retouch-burn.png",
+      "bundle": "bundles/retouch-burn.iedl.zip"
     },
     "retouch-dodge": {
       "status": "Rendered",
@@ -668,75 +697,81 @@
       "width": 640,
       "height": 960,
       "seconds": 1.56,
-      "mask": "masks/retouch-dodge.png"
+      "mask": "masks/retouch-dodge.png",
+      "bundle": "bundles/retouch-dodge.iedl.zip"
     },
     "retouch-red-eye": {
       "status": "Rendered",
       "image": "images/retouch-red-eye.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57,
-      "mask": "masks/retouch-red-eye.png"
+      "seconds": 1.48,
+      "mask": "masks/retouch-red-eye.png",
+      "bundle": "bundles/retouch-red-eye.iedl.zip"
     },
     "retouch-liquify": {
       "status": "Rendered",
       "image": "images/retouch-liquify.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57,
-      "mask": "masks/retouch-liquify.png"
+      "seconds": 1.49,
+      "mask": "masks/retouch-liquify.png",
+      "bundle": "bundles/retouch-liquify.iedl.zip"
     },
     "retouch-liquify-smooth": {
       "status": "Rendered",
       "image": "images/retouch-liquify-smooth.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.7,
-      "mask": "masks/retouch-liquify-smooth.png"
+      "seconds": 1.61,
+      "mask": "masks/retouch-liquify-smooth.png",
+      "bundle": "bundles/retouch-liquify-smooth.iedl.zip"
     },
     "retouch-reconstruct": {
       "status": "Rendered",
       "image": "images/retouch-reconstruct.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.7,
-      "mask": "masks/retouch-reconstruct.png"
+      "seconds": 1.53,
+      "mask": "masks/retouch-reconstruct.png",
+      "bundle": "bundles/retouch-reconstruct.iedl.zip"
     },
     "auto-exposure": {
       "status": "Rendered",
       "image": "images/auto-exposure.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.4
+      "seconds": 1.51
     },
     "liquify-freeze": {
       "status": "Rendered",
       "image": "images/liquify-freeze.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.55,
-      "mask": "masks/liquify-freeze.png"
+      "seconds": 1.56,
+      "mask": "masks/liquify-freeze.png",
+      "bundle": "bundles/liquify-freeze.iedl.zip"
     },
     "auto-white-balance": {
       "status": "Rendered",
       "image": "images/auto-white-balance.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.61
+      "seconds": 1.51
     },
     "auto-baseline": {
       "status": "Rendered",
       "image": "images/auto-baseline.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.45
+      "seconds": 1.59
     },
     "auto-vibrance": {
       "status": "Rendered",
       "image": "images/auto-vibrance.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.57
+      "seconds": 1.64
     },
     "analysis-mask": {
       "status": "Rendered",
@@ -744,29 +779,31 @@
       "width": 640,
       "height": 960,
       "seconds": 1.51,
-      "mask": "masks/analysis-mask.png"
+      "mask": "masks/analysis-mask.png",
+      "bundle": "bundles/analysis-mask.iedl.zip"
     },
     "auto-local": {
       "status": "Rendered",
       "image": "images/auto-local.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.6,
-      "mask": "masks/auto-local.png"
+      "seconds": 1.56,
+      "mask": "masks/auto-local.png",
+      "bundle": "bundles/auto-local.iedl.zip"
     },
     "parameters": {
       "status": "Rendered",
       "image": "images/parameters.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.48
+      "seconds": 1.47
     },
     "wand": {
       "status": "Rendered",
       "image": "images/wand.jpg",
       "width": 640,
       "height": 960,
-      "seconds": 1.64,
+      "seconds": 1.54,
       "mask": "masks/wand.png",
       "bundle": "bundles/wand.iedl.zip"
     },
@@ -775,7 +812,7 @@
       "image": "images/output-png.png",
       "width": 640,
       "height": 960,
-      "seconds": 1.44
+      "seconds": 1.49
     },
     "remote-select-subject": {
       "status": "Recipe only",
@@ -810,7 +847,7 @@
       "image": "images/output-webp.webp",
       "width": 640,
       "height": 960,
-      "seconds": 1.31
+      "seconds": 1.26
     }
   }
 }

@@ -177,7 +177,7 @@ adjustments can use the same snapshot without another scan. White balance suppor
 a new analysis. Applying the same exposure recommendation twice adds two layers;
 the runner does not infer the author's intent or silently recompute it.
 
-The `local-image-v1` profile provides:
+The `local-image-v2` profile provides:
 
 | Findings | Definition |
 | --- | --- |
@@ -541,3 +541,28 @@ PNG directly, including after restoring a saved experiment, without another AI c
 The review can export regional coverage metrics, polygons and provenance. Annotations
 are transient until downloaded; changing the source/mask/recipe clears the review.
 The panel supports up to 40 MP. The compact mask preview remains a 1024 px preview.
+
+### White-balance rendering and confidence (runtime 1.1)
+
+`iedl-1.1.0` replaces additive temperature/tint offsets with positive linear-light
+RGB gains before exposure and tone adjustments. Gains are normalized to preserve
+the luminance of a neutral input; black stays black. This is a display-RGB model,
+not camera-specific RAW calibration or a Kelvin control. CPU and GPU use the same
+log-gain calibration. Existing manual temperature/tint settings and presets can
+look different. Resolved artifacts from runtime 1.0 must be replayed with that
+runtime; 1.1 rejects them rather than silently changing approved pixels.
+
+`local-image-v2` shares one WB estimator between editor auto controls and IEDL.
+It excludes clipped/dark pixels and candidates above 25% saturation, requires at
+least 5% candidate coverage and eight weighted samples, and measures dispersion
+of candidate log-channel corrections. Poor consistency or a large proposed
+correction returns zero temperature/tint. Too little neutral evidence leaves WB
+unavailable (explicit auto WB fails). Otherwise it applies at most half strength,
+capped at ±12 temperature and ±8 tint. These are conservative heuristics, not
+semantic lighting detection. Strong casts may require a reviewed manual edit.
+
+Image findings include `whiteBalance` with profile `neutral-log-v2`, candidate
+count, confidence (evidence consistency, not calibrated probability), applied
+strength and reason. Mixed stage light should be preserved for manual/local review
+instead of globally neutralized. The lab displays these findings. Runtime and
+analysis profiles are recorded in execution reports.

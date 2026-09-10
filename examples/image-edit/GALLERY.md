@@ -34,7 +34,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Stage lights, gently balanced](images/stage-balance.jpg) |
 
-[Recipe](recipes/stage-balance.iedl) · [Full image](images/stage-balance.jpg) · [Resolved report](resolved/stage-balance.json) · [Mask](masks/stage-balance.png)
+[Recipe](recipes/stage-balance.iedl) · [Full image](images/stage-balance.jpg) · [Resolved report](resolved/stage-balance.json) · [Mask](masks/stage-balance.png) · [Replay bundle](bundles/stage-balance.iedl.zip)
 
 
 <a name="category-2"></a>
@@ -214,7 +214,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Skin smooth @1](images/preset-skin-smooth-1.jpg) |
 
-[Recipe](recipes/preset-skin-smooth-1.iedl) · [Full image](images/preset-skin-smooth-1.jpg) · [Resolved report](resolved/preset-skin-smooth-1.json) · [Mask](masks/preset-skin-smooth-1.png)
+[Recipe](recipes/preset-skin-smooth-1.iedl) · [Full image](images/preset-skin-smooth-1.jpg) · [Resolved report](resolved/preset-skin-smooth-1.json) · [Mask](masks/preset-skin-smooth-1.png) · [Replay bundle](bundles/preset-skin-smooth-1.iedl.zip)
 
 ### Subject Pop
 
@@ -224,7 +224,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Subject Pop](images/preset-subject-pop-1.jpg) |
 
-[Recipe](recipes/preset-subject-pop-1.iedl) · [Full image](images/preset-subject-pop-1.jpg) · [Resolved report](resolved/preset-subject-pop-1.json) · [Mask](masks/preset-subject-pop-1.png)
+[Recipe](recipes/preset-subject-pop-1.iedl) · [Full image](images/preset-subject-pop-1.jpg) · [Resolved report](resolved/preset-subject-pop-1.json) · [Mask](masks/preset-subject-pop-1.png) · [Replay bundle](bundles/preset-subject-pop-1.iedl.zip)
 
 ### B&amp;W Classic
 
@@ -394,7 +394,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Milky Way Definition](images/preset-milky-way-definition-1.jpg) |
 
-[Recipe](recipes/preset-milky-way-definition-1.iedl) · [Full image](images/preset-milky-way-definition-1.jpg) · [Resolved report](resolved/preset-milky-way-definition-1.json) · [Mask](masks/preset-milky-way-definition-1.png)
+[Recipe](recipes/preset-milky-way-definition-1.iedl) · [Full image](images/preset-milky-way-definition-1.jpg) · [Resolved report](resolved/preset-milky-way-definition-1.json) · [Mask](masks/preset-milky-way-definition-1.png) · [Replay bundle](bundles/preset-milky-way-definition-1.iedl.zip)
 
 ### Dark &amp; Moody
 
@@ -544,7 +544,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Brush mask](images/mask-brush.jpg) |
 
-[Recipe](recipes/mask-brush.iedl) · [Full image](images/mask-brush.jpg) · [Resolved report](resolved/mask-brush.json) · [Mask](masks/mask-brush.png)
+[Recipe](recipes/mask-brush.iedl) · [Full image](images/mask-brush.jpg) · [Resolved report](resolved/mask-brush.json) · [Mask](masks/mask-brush.png) · [Replay bundle](bundles/mask-brush.iedl.zip)
 
 ### Linear mask
 
@@ -554,7 +554,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Linear mask](images/mask-linear.jpg) |
 
-[Recipe](recipes/mask-linear.iedl) · [Full image](images/mask-linear.jpg) · [Resolved report](resolved/mask-linear.json) · [Mask](masks/mask-linear.png)
+[Recipe](recipes/mask-linear.iedl) · [Full image](images/mask-linear.jpg) · [Resolved report](resolved/mask-linear.json) · [Mask](masks/mask-linear.png) · [Replay bundle](bundles/mask-linear.iedl.zip)
 
 ### Radial mask
 
@@ -564,7 +564,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Radial mask](images/mask-radial.jpg) |
 
-[Recipe](recipes/mask-radial.iedl) · [Full image](images/mask-radial.jpg) · [Resolved report](resolved/mask-radial.json) · [Mask](masks/mask-radial.png)
+[Recipe](recipes/mask-radial.iedl) · [Full image](images/mask-radial.jpg) · [Resolved report](resolved/mask-radial.json) · [Mask](masks/mask-radial.png) · [Replay bundle](bundles/mask-radial.iedl.zip)
 
 ### Rectangle mask
 
@@ -574,7 +574,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Rectangle mask](images/mask-rectangle.jpg) |
 
-[Recipe](recipes/mask-rectangle.iedl) · [Full image](images/mask-rectangle.jpg) · [Resolved report](resolved/mask-rectangle.json) · [Mask](masks/mask-rectangle.png)
+[Recipe](recipes/mask-rectangle.iedl) · [Full image](images/mask-rectangle.jpg) · [Resolved report](resolved/mask-rectangle.json) · [Mask](masks/mask-rectangle.png) · [Replay bundle](bundles/mask-rectangle.iedl.zip)
 
 ### Ellipse mask
 
@@ -584,7 +584,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Ellipse mask](images/mask-ellipse.jpg) |
 
-[Recipe](recipes/mask-ellipse.iedl) · [Full image](images/mask-ellipse.jpg) · [Resolved report](resolved/mask-ellipse.json) · [Mask](masks/mask-ellipse.png)
+[Recipe](recipes/mask-ellipse.iedl) · [Full image](images/mask-ellipse.jpg) · [Resolved report](resolved/mask-ellipse.json) · [Mask](masks/mask-ellipse.png) · [Replay bundle](bundles/mask-ellipse.iedl.zip)
 
 ### Lasso mask
 
@@ -594,7 +594,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Lasso mask](images/mask-lasso.jpg) |
 
-[Recipe](recipes/mask-lasso.iedl) · [Full image](images/mask-lasso.jpg) · [Resolved report](resolved/mask-lasso.json) · [Mask](masks/mask-lasso.png)
+[Recipe](recipes/mask-lasso.iedl) · [Full image](images/mask-lasso.jpg) · [Resolved report](resolved/mask-lasso.json) · [Mask](masks/mask-lasso.png) · [Replay bundle](bundles/mask-lasso.iedl.zip)
 
 ### Polygon mask
 
@@ -604,7 +604,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Polygon mask](images/mask-polygon.jpg) |
 
-[Recipe](recipes/mask-polygon.iedl) · [Full image](images/mask-polygon.jpg) · [Resolved report](resolved/mask-polygon.json) · [Mask](masks/mask-polygon.png)
+[Recipe](recipes/mask-polygon.iedl) · [Full image](images/mask-polygon.jpg) · [Resolved report](resolved/mask-polygon.json) · [Mask](masks/mask-polygon.png) · [Replay bundle](bundles/mask-polygon.iedl.zip)
 
 ### Color mask
 
@@ -614,7 +614,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Color mask](images/mask-color.jpg) |
 
-[Recipe](recipes/mask-color.iedl) · [Full image](images/mask-color.jpg) · [Resolved report](resolved/mask-color.json) · [Mask](masks/mask-color.png)
+[Recipe](recipes/mask-color.iedl) · [Full image](images/mask-color.jpg) · [Resolved report](resolved/mask-color.json) · [Mask](masks/mask-color.png) · [Replay bundle](bundles/mask-color.iedl.zip)
 
 ### Luminance mask
 
@@ -624,7 +624,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Luminance mask](images/mask-luminance.jpg) |
 
-[Recipe](recipes/mask-luminance.iedl) · [Full image](images/mask-luminance.jpg) · [Resolved report](resolved/mask-luminance.json) · [Mask](masks/mask-luminance.png)
+[Recipe](recipes/mask-luminance.iedl) · [Full image](images/mask-luminance.jpg) · [Resolved report](resolved/mask-luminance.json) · [Mask](masks/mask-luminance.png) · [Replay bundle](bundles/mask-luminance.iedl.zip)
 
 ### Raster mask
 
@@ -644,7 +644,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Mask add](images/mask-add.jpg) |
 
-[Recipe](recipes/mask-add.iedl) · [Full image](images/mask-add.jpg) · [Resolved report](resolved/mask-add.json) · [Mask](masks/mask-add.png)
+[Recipe](recipes/mask-add.iedl) · [Full image](images/mask-add.jpg) · [Resolved report](resolved/mask-add.json) · [Mask](masks/mask-add.png) · [Replay bundle](bundles/mask-add.iedl.zip)
 
 ### Mask subtract
 
@@ -654,7 +654,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Mask subtract](images/mask-subtract.jpg) |
 
-[Recipe](recipes/mask-subtract.iedl) · [Full image](images/mask-subtract.jpg) · [Resolved report](resolved/mask-subtract.json) · [Mask](masks/mask-subtract.png)
+[Recipe](recipes/mask-subtract.iedl) · [Full image](images/mask-subtract.jpg) · [Resolved report](resolved/mask-subtract.json) · [Mask](masks/mask-subtract.png) · [Replay bundle](bundles/mask-subtract.iedl.zip)
 
 ### Mask intersect
 
@@ -664,7 +664,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Mask intersect](images/mask-intersect.jpg) |
 
-[Recipe](recipes/mask-intersect.iedl) · [Full image](images/mask-intersect.jpg) · [Resolved report](resolved/mask-intersect.json) · [Mask](masks/mask-intersect.png)
+[Recipe](recipes/mask-intersect.iedl) · [Full image](images/mask-intersect.jpg) · [Resolved report](resolved/mask-intersect.json) · [Mask](masks/mask-intersect.png) · [Replay bundle](bundles/mask-intersect.iedl.zip)
 
 ### Refine: feather
 
@@ -674,7 +674,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: feather](images/refine-feather.jpg) |
 
-[Recipe](recipes/refine-feather.iedl) · [Full image](images/refine-feather.jpg) · [Resolved report](resolved/refine-feather.json) · [Mask](masks/refine-feather.png)
+[Recipe](recipes/refine-feather.iedl) · [Full image](images/refine-feather.jpg) · [Resolved report](resolved/refine-feather.json) · [Mask](masks/refine-feather.png) · [Replay bundle](bundles/refine-feather.iedl.zip)
 
 ### Refine: expand
 
@@ -684,7 +684,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: expand](images/refine-expand.jpg) |
 
-[Recipe](recipes/refine-expand.iedl) · [Full image](images/refine-expand.jpg) · [Resolved report](resolved/refine-expand.json) · [Mask](masks/refine-expand.png)
+[Recipe](recipes/refine-expand.iedl) · [Full image](images/refine-expand.jpg) · [Resolved report](resolved/refine-expand.json) · [Mask](masks/refine-expand.png) · [Replay bundle](bundles/refine-expand.iedl.zip)
 
 ### Refine: contract
 
@@ -694,7 +694,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: contract](images/refine-contract.jpg) |
 
-[Recipe](recipes/refine-contract.iedl) · [Full image](images/refine-contract.jpg) · [Resolved report](resolved/refine-contract.json) · [Mask](masks/refine-contract.png)
+[Recipe](recipes/refine-contract.iedl) · [Full image](images/refine-contract.jpg) · [Resolved report](resolved/refine-contract.json) · [Mask](masks/refine-contract.png) · [Replay bundle](bundles/refine-contract.iedl.zip)
 
 ### Refine: smooth
 
@@ -704,7 +704,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: smooth](images/refine-smooth.jpg) |
 
-[Recipe](recipes/refine-smooth.iedl) · [Full image](images/refine-smooth.jpg) · [Resolved report](resolved/refine-smooth.json) · [Mask](masks/refine-smooth.png)
+[Recipe](recipes/refine-smooth.iedl) · [Full image](images/refine-smooth.jpg) · [Resolved report](resolved/refine-smooth.json) · [Mask](masks/refine-smooth.png) · [Replay bundle](bundles/refine-smooth.iedl.zip)
 
 ### Refine: density
 
@@ -714,7 +714,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: density](images/refine-density.jpg) |
 
-[Recipe](recipes/refine-density.iedl) · [Full image](images/refine-density.jpg) · [Resolved report](resolved/refine-density.json) · [Mask](masks/refine-density.png)
+[Recipe](recipes/refine-density.iedl) · [Full image](images/refine-density.jpg) · [Resolved report](resolved/refine-density.json) · [Mask](masks/refine-density.png) · [Replay bundle](bundles/refine-density.iedl.zip)
 
 ### Refine: invert
 
@@ -724,7 +724,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: invert](images/refine-invert.jpg) |
 
-[Recipe](recipes/refine-invert.iedl) · [Full image](images/refine-invert.jpg) · [Resolved report](resolved/refine-invert.json) · [Mask](masks/refine-invert.png)
+[Recipe](recipes/refine-invert.iedl) · [Full image](images/refine-invert.jpg) · [Resolved report](resolved/refine-invert.json) · [Mask](masks/refine-invert.png) · [Replay bundle](bundles/refine-invert.iedl.zip)
 
 ### Refine: bypass
 
@@ -734,7 +734,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Refine: bypass](images/refine-bypass.jpg) |
 
-[Recipe](recipes/refine-bypass.iedl) · [Full image](images/refine-bypass.jpg) · [Resolved report](resolved/refine-bypass.json) · [Mask](masks/refine-bypass.png)
+[Recipe](recipes/refine-bypass.iedl) · [Full image](images/refine-bypass.jpg) · [Resolved report](resolved/refine-bypass.json) · [Mask](masks/refine-bypass.png) · [Replay bundle](bundles/refine-bypass.iedl.zip)
 
 
 <a name="category-6"></a>
@@ -829,7 +829,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Frequency controls](images/layer-frequency.jpg) |
 
-[Recipe](recipes/layer-frequency.iedl) · [Full image](images/layer-frequency.jpg) · [Resolved report](resolved/layer-frequency.json) · [Mask](masks/layer-frequency.png)
+[Recipe](recipes/layer-frequency.iedl) · [Full image](images/layer-frequency.jpg) · [Resolved report](resolved/layer-frequency.json) · [Mask](masks/layer-frequency.png) · [Replay bundle](bundles/layer-frequency.iedl.zip)
 
 ### Duplicate, set, order, delete
 
@@ -919,7 +919,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Clone stroke](images/retouch-clone.jpg) |
 
-[Recipe](recipes/retouch-clone.iedl) · [Full image](images/retouch-clone.jpg) · [Resolved report](resolved/retouch-clone.json) · [Mask](masks/retouch-clone.png)
+[Recipe](recipes/retouch-clone.iedl) · [Full image](images/retouch-clone.jpg) · [Resolved report](resolved/retouch-clone.json) · [Mask](masks/retouch-clone.png) · [Replay bundle](bundles/retouch-clone.iedl.zip)
 
 ### Heal stroke
 
@@ -929,7 +929,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Heal stroke](images/retouch-heal.jpg) |
 
-[Recipe](recipes/retouch-heal.iedl) · [Full image](images/retouch-heal.jpg) · [Resolved report](resolved/retouch-heal.json) · [Mask](masks/retouch-heal.png)
+[Recipe](recipes/retouch-heal.iedl) · [Full image](images/retouch-heal.jpg) · [Resolved report](resolved/retouch-heal.json) · [Mask](masks/retouch-heal.png) · [Replay bundle](bundles/retouch-heal.iedl.zip)
 
 ### Spot stroke
 
@@ -939,7 +939,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Spot stroke](images/retouch-spot.jpg) |
 
-[Recipe](recipes/retouch-spot.iedl) · [Full image](images/retouch-spot.jpg) · [Resolved report](resolved/retouch-spot.json) · [Mask](masks/retouch-spot.png)
+[Recipe](recipes/retouch-spot.iedl) · [Full image](images/retouch-spot.jpg) · [Resolved report](resolved/retouch-spot.json) · [Mask](masks/retouch-spot.png) · [Replay bundle](bundles/retouch-spot.iedl.zip)
 
 ### Patch stroke
 
@@ -949,7 +949,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Patch stroke](images/retouch-patch.jpg) |
 
-[Recipe](recipes/retouch-patch.iedl) · [Full image](images/retouch-patch.jpg) · [Resolved report](resolved/retouch-patch.json) · [Mask](masks/retouch-patch.png)
+[Recipe](recipes/retouch-patch.iedl) · [Full image](images/retouch-patch.jpg) · [Resolved report](resolved/retouch-patch.json) · [Mask](masks/retouch-patch.png) · [Replay bundle](bundles/retouch-patch.iedl.zip)
 
 ### Dodge stroke
 
@@ -959,7 +959,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Dodge stroke](images/retouch-dodge.jpg) |
 
-[Recipe](recipes/retouch-dodge.iedl) · [Full image](images/retouch-dodge.jpg) · [Resolved report](resolved/retouch-dodge.json) · [Mask](masks/retouch-dodge.png)
+[Recipe](recipes/retouch-dodge.iedl) · [Full image](images/retouch-dodge.jpg) · [Resolved report](resolved/retouch-dodge.json) · [Mask](masks/retouch-dodge.png) · [Replay bundle](bundles/retouch-dodge.iedl.zip)
 
 ### Burn stroke
 
@@ -969,7 +969,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Burn stroke](images/retouch-burn.jpg) |
 
-[Recipe](recipes/retouch-burn.iedl) · [Full image](images/retouch-burn.jpg) · [Resolved report](resolved/retouch-burn.json) · [Mask](masks/retouch-burn.png)
+[Recipe](recipes/retouch-burn.iedl) · [Full image](images/retouch-burn.jpg) · [Resolved report](resolved/retouch-burn.json) · [Mask](masks/retouch-burn.png) · [Replay bundle](bundles/retouch-burn.iedl.zip)
 
 ### Red-Eye stroke
 
@@ -979,7 +979,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Red-Eye stroke](images/retouch-red-eye.jpg) |
 
-[Recipe](recipes/retouch-red-eye.iedl) · [Full image](images/retouch-red-eye.jpg) · [Resolved report](resolved/retouch-red-eye.json) · [Mask](masks/retouch-red-eye.png)
+[Recipe](recipes/retouch-red-eye.iedl) · [Full image](images/retouch-red-eye.jpg) · [Resolved report](resolved/retouch-red-eye.json) · [Mask](masks/retouch-red-eye.png) · [Replay bundle](bundles/retouch-red-eye.iedl.zip)
 
 ### Liquify stroke
 
@@ -989,7 +989,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Liquify stroke](images/retouch-liquify.jpg) |
 
-[Recipe](recipes/retouch-liquify.iedl) · [Full image](images/retouch-liquify.jpg) · [Resolved report](resolved/retouch-liquify.json) · [Mask](masks/retouch-liquify.png)
+[Recipe](recipes/retouch-liquify.iedl) · [Full image](images/retouch-liquify.jpg) · [Resolved report](resolved/retouch-liquify.json) · [Mask](masks/retouch-liquify.png) · [Replay bundle](bundles/retouch-liquify.iedl.zip)
 
 ### Liquify-Smooth stroke
 
@@ -999,7 +999,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Liquify-Smooth stroke](images/retouch-liquify-smooth.jpg) |
 
-[Recipe](recipes/retouch-liquify-smooth.iedl) · [Full image](images/retouch-liquify-smooth.jpg) · [Resolved report](resolved/retouch-liquify-smooth.json) · [Mask](masks/retouch-liquify-smooth.png)
+[Recipe](recipes/retouch-liquify-smooth.iedl) · [Full image](images/retouch-liquify-smooth.jpg) · [Resolved report](resolved/retouch-liquify-smooth.json) · [Mask](masks/retouch-liquify-smooth.png) · [Replay bundle](bundles/retouch-liquify-smooth.iedl.zip)
 
 ### Reconstruct stroke
 
@@ -1009,7 +1009,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Reconstruct stroke](images/retouch-reconstruct.jpg) |
 
-[Recipe](recipes/retouch-reconstruct.iedl) · [Full image](images/retouch-reconstruct.jpg) · [Resolved report](resolved/retouch-reconstruct.json) · [Mask](masks/retouch-reconstruct.png)
+[Recipe](recipes/retouch-reconstruct.iedl) · [Full image](images/retouch-reconstruct.jpg) · [Resolved report](resolved/retouch-reconstruct.json) · [Mask](masks/retouch-reconstruct.png) · [Replay bundle](bundles/retouch-reconstruct.iedl.zip)
 
 ### Liquify freeze region
 
@@ -1019,7 +1019,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Liquify freeze region](images/liquify-freeze.jpg) |
 
-[Recipe](recipes/liquify-freeze.iedl) · [Full image](images/liquify-freeze.jpg) · [Resolved report](resolved/liquify-freeze.json) · [Mask](masks/liquify-freeze.png)
+[Recipe](recipes/liquify-freeze.iedl) · [Full image](images/liquify-freeze.jpg) · [Resolved report](resolved/liquify-freeze.json) · [Mask](masks/liquify-freeze.png) · [Replay bundle](bundles/liquify-freeze.iedl.zip)
 
 
 <a name="category-9"></a>
@@ -1038,7 +1038,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 
 ### Auto white-balance
 
-**Rendered** — Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.
+**Rendered** — Runtime 1.1 preserves this concert lighting: mixed-color evidence, 6.1% candidate neutrals, consistency 0.084, and zero applied correction. The former global green cast is avoided. This is intentional abstention, not a claim that the lighting is neutral.
 
 | Original | Edited |
 | --- | --- |
@@ -1074,7 +1074,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Subject-local baseline](images/auto-local.jpg) |
 
-[Recipe](recipes/auto-local.iedl) · [Full image](images/auto-local.jpg) · [Resolved report](resolved/auto-local.json) · [Mask](masks/auto-local.png)
+[Recipe](recipes/auto-local.iedl) · [Full image](images/auto-local.jpg) · [Resolved report](resolved/auto-local.json) · [Mask](masks/auto-local.png) · [Replay bundle](bundles/auto-local.iedl.zip)
 
 ### Mask geometry analysis
 
@@ -1084,7 +1084,7 @@ Images below are actual saved renders. Open an image for a larger view; each exa
 | --- | --- |
 | ![Original](source.jpg) | ![Edited: Mask geometry analysis](images/analysis-mask.jpg) |
 
-[Recipe](recipes/analysis-mask.iedl) · [Full image](images/analysis-mask.jpg) · [Resolved report](resolved/analysis-mask.json) · [Mask](masks/analysis-mask.png)
+[Recipe](recipes/analysis-mask.iedl) · [Full image](images/analysis-mask.jpg) · [Resolved report](resolved/analysis-mask.json) · [Mask](masks/analysis-mask.png) · [Replay bundle](bundles/analysis-mask.iedl.zip)
 
 ### Magic wand
 

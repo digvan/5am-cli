@@ -57,6 +57,9 @@ apply family-natural@1 strength=$strength id=look
 output format=jpeg quality=0.92
 ```
 
+Automatic white balance in runtime 1.1 uses conservative confidence checks; mixed
+or strong casts can intentionally produce zero correction, with a reason in
+analysis findings. Confirm runtime availability before promising that behavior.
 White balance can consume `analysis=scene` too, but fails when neutral samples are
 insufficient. Do not hide that failure or replace a user's correction silently.
 Manual masks can be measured with `analyze shape mask mask=region`; those findings

@@ -9,7 +9,15 @@ python3 -m http.server 8000
 # Visit http://localhost:8000/examples/image-edit/
 ```
 
-The interactive HTML page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Imported-mask and magic-wand examples also include replay bundles containing their raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
+The interactive HTML page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Mask examples also include replay bundles containing any required raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
+
+## Runtime 1.1 preview
+
+These checked-in renders and resolved bundles use **`iedl-1.1.0`**, published here for review ahead of runtime deployment. Until that release is available, the installed runtime may still be 1.0: `5am update --runtime-only` cannot install an unpublished version. The gallery itself needs no runtime to view. Reproduction requires the matching 1.1 runtime; developers with that build can supply `--runtime /path/to/runner.mjs`.
+
+White balance now uses linear-light RGB gains that preserve black, with shared CPU/GPU behavior. Automatic WB uses stricter candidate selection, consistency checks, and at most half strength. For this concert photograph it intentionally applies **temperature 0 / tint 0**, reporting mixed-color evidence instead of introducing the previous green cast. Inspect the linked resolved report for measurements.
+
+All local examples were regenerated together, including temperature/tint sliders and affected presets. Their look can differ from runtime 1.0. Resolved bundles require their original runtime: 1.1 rejects 1.0 artifacts rather than silently changing approved pixels. Hand-authored recipes remain IEDL 1.
 
 ## Build a gallery with your own image
 
