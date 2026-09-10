@@ -1,167 +1,150 @@
-# 5am CLI — examples & guides
+# 5am CLI — recipes, examples & guides
 
-Runnable examples and deployment guides for the [5am](https://5am.app/cli) command-line
-tool — **Server Agents** (running the CLI on your own machines so your AI
-characters can answer questions about them) and **media pipelines** (turning a
-podcast episode into a shareable video).
+Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create video/audio pipelines, and automate work through AI agents and managed workflows. This repository contains public documentation, agent skills, and runnable examples; it is not the CLI source distribution.
 
-> **You:** how many unique visitors did the portfolio get in the last 24 hours?
->
-> **Your character:** 1,284 unique visitors since this time yesterday.
+**New: [IEDL visual field guide](examples/image-edit/README.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
-The data stays on your machine. The agent answers structured queries against a
-local SQLite store and returns only the result — a number, a top-ten list, an
-average — never your raw logs. The [announcement post][sa-post] covers the
-design and the use cases; this repo is the runnable half.
+![A concert photograph edited through IEDL](examples/image-edit/images/stage-balance.jpg)
 
-[sa-post]: https://5am.app/blog/server-agents-ask-your-infrastructure
+## Install and update
 
-## Install the CLI
+macOS and Linux:
 
 ```sh
 curl -fsSL https://cli.5am.app/cli/latest/install.sh | sh
 5am --version
+5am update --check
+5am update
 ```
 
-Then `5am login`, and mint a **read-only** token at
-[5am.app/settings#keys](https://5am.app/settings#keys). Every server-agent
-endpoint is designed to need nothing more than `read`, so a token left on a
-server can't touch your media library.
+Windows PowerShell:
+
+```powershell
+Invoke-WebRequest https://cli.5am.app/cli/latest/5am-windows-amd64.exe -OutFile 5am.exe
+.\5am.exe --version
+```
+
+Release checksums and metadata are available in the [release manifest](https://cli.5am.app/cli/latest/manifest.json). Core CLI installation needs no Node.js, Chromium, or image-edit runtime. Individual media tools have their own dependencies, such as FFmpeg for video.
+
+For library access, create a personal access token in [Settings → CLI Access Tokens](https://5am.app/settings#keys), then run:
+
+```sh
+5am login
+5am whoami
+```
+
+Choose scopes for the work: server-agent queries can use `read`; library writes and AI-credit proxy access require `write`. Local image validation and local-only rendering do not require login. Gemini features use the normal access resolver: AI credits through the metered proxy, or the user's own Gemini key where configured. Proxy refusals are not a reason to bypass account limits.
+
+## Image editing: generate → validate → render
+
+Image editing is optional. Install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release:
+
+```sh
+5am update --runtime-only
+5am media image-edit generate \
+  --brief "Warm portrait, gentle contrast, 4:5 crop. Local adjustments only; no AI selections or generative edits." \
+  -o portrait.iedl
+5am media image-edit validate portrait.iedl
+5am media image-edit render portrait.iedl --input photo.jpg \
+  -o edited.jpg --resolved edited.iedl-resolved.json --bundle edited.iedl.zip
+```
+
+`generate` uses model quota. Go handles the Gemini request and credentials; the shared JS runtime prepares the prompt/schema and validates/prints the recipe. `generate` and `validate` need Node and the runtime, but no browser. Rendering and input-bound `inspect` need Chromium. Runtime installation downloads neither Node nor Chrome. Normal updates keep an opted-in managed runtime synchronized with the CLI.
+
+To edit entirely locally, start from one of the checked-in recipes:
+
+```sh
+cd examples/image-edit
+5am media image-edit render recipes/stage-balance.iedl --input source.jpg \
+  -o concert.jpg --bundle concert.iedl.zip
+5am media image-edit render concert.iedl.zip --input source.jpg -o replay.jpg
+```
+
+IEDL supports adjustments, curves/HSL, masks, editable layers, retouching, liquify, presets, local analysis, and smart baseline edits. See the [language reference](docs/iedl.md), [visual gallery guide](examples/image-edit/README.md), and [focused authoring skill](skills/iedl/SKILL.md).
+
+- Use `--runtime`/`IEDL_RUNTIME`, `--node`, or `--browser`/`CHROME_PATH` for explicit paths.
+- Reusable recipes resolve edits for each input. Resolved bundles preserve one result and require its matching source.
+- Hand-drawn masks transfer geometry, not subject recognition. Review them on every new photograph.
+- AI selections and masked generative edits use `--media-id` instead of `--input`, with authenticated backend access. They may incur credits. Do not automatically repeat an ambiguous paid edit.
+- Rendering writes local files. Uploading them is a separate operation. Existing output files require `--overwrite`.
+
+Directory batches are serial and nonrecursive, accept PNG/JPEG/WebP, save resolved sidecars, and report per-image failures:
+
+```sh
+5am media image-edit batch portrait.iedl --input-dir photos --output-dir edited --report batch.json
+```
+
+Use local-only recipes for directory batches. `--media-id` is not supported by `batch`. Inspect the report before publishing results; the command exits nonzero if any image fails.
 
 ## What's here
 
-| Path | What it is |
-|---|---|
-| [`SKILL.md`](SKILL.md) | Full CLI reference written for **AI agents** — every command, its JSON shape, exit codes, and the gotchas. Drop it into your agent's skills directory. |
-| [`docs/server-agent.md`](docs/server-agent.md) | The full guide: architecture, datasets, query operations, custom skills, a step-by-step Ubuntu/Debian deployment, and the security model. |
-| [`examples/install-agent.sh`](examples/install-agent.sh) | Puts the agent under systemd — writes and starts the units so it survives reboots and closed SSH sessions. |
-| [`examples/sysmetrics.sh`](examples/sysmetrics.sh) | Emits one CPU/memory/disk/load sample as a JSON line. Linux and macOS. |
-| [`examples/sysmetrics.schema.json`](examples/sysmetrics.schema.json) | Matching schema for the sampler above. |
-| [`examples/nginx-requests.schema.json`](examples/nginx-requests.schema.json) | Schema for nginx/Apache access logs (`--format combined`). |
-| [`examples/podcast_to_video.py`](examples/podcast_to_video.py) | Turns a podcast audio file into a shareable MP4 — AI b-roll or an animated waveform, with optional burned-in captions. |
-| [`examples/test_podcast_to_video.py`](examples/test_podcast_to_video.py) | Its test suite. Stdlib `unittest`, no API calls — run it after adapting the script. |
+| Path | Purpose |
+| --- | --- |
+| [`SKILL.md`](SKILL.md) | Current CLI command guidance for agents and workflow generation. |
+| [`skills/iedl/SKILL.md`](skills/iedl/SKILL.md) | Focused IEDL authoring instructions, with portable specification and eval references. |
+| [`docs/iedl.md`](docs/iedl.md) | IEDL grammar, capabilities, presets, coordinate semantics, and runtime contract. |
+| [`examples/image-edit/`](examples/image-edit/README.md) | Interactive HTML field guide, sample image, 113 recipes, real renders, masks, reports, and rebuild script. |
+| [`docs/IEDL_TEST_HARNESS.md`](docs/IEDL_TEST_HARNESS.md) | Upstream compiler/render verification guide; test paths refer to the application source repository. |
+| [`docs/IEDL_GENERATION_EVAL.md`](docs/IEDL_GENERATION_EVAL.md) | Upstream recipe-generation eval guide and interpretation. |
+| [`docs/server-agent.md`](docs/server-agent.md) | Server-agent architecture, datasets, query operations, systemd deployment, and security. |
+| [`examples/install-agent.sh`](examples/install-agent.sh) | Install a persistent server agent under systemd. |
+| [`examples/sysmetrics.sh`](examples/sysmetrics.sh) | Linux/macOS CPU, memory, and disk samples as JSON lines. |
+| [`examples/sysmetrics.schema.json`](examples/sysmetrics.schema.json) | Schema for the system metrics sampler. |
+| [`examples/nginx-requests.schema.json`](examples/nginx-requests.schema.json) | Schema for nginx/Apache access logs. |
+| [`examples/podcast_to_video.py`](examples/podcast_to_video.py) | Podcast audio → MP4 using a waveform or AI b-roll, with optional captions. |
+| [`examples/test_podcast_to_video.py`](examples/test_podcast_to_video.py) | Offline tests for the podcast example. |
 
-## Quick start: make your access log askable
+## AI agents and managed workflows
 
-On the server, with the CLI installed and logged in:
+Use [`SKILL.md`](SKILL.md) to teach an agent how to invoke `5am`. Download the current release copy with:
 
 ```sh
-# 1. Load the access log into a dataset (re-runnable: it resumes where it left off)
+curl -fsSL https://cli.5am.app/cli/latest/SKILL.md -o SKILL.md
+```
+
+For direct IEDL authoring, provide the entire [`skills/iedl/`](skills/iedl/SKILL.md) directory, including `references/`; the entrypoint alone is not the full specification. Add it through your agent's supported skill mechanism, or reference it from project instructions.
+
+**Workflow Python should delegate recipe creation to `5am media image-edit generate --brief …`.** It then validates and renders through subprocess argument lists, checking each exit status. It does not need the full IEDL spec. When a user supplies an approved recipe, preserve it unchanged rather than generating a replacement.
+
+Managed runs need an explicitly provisioned image-edit runner. Machine size alone does not install Node, Chromium, or the runtime. Missing capabilities should produce diagnostics, not dependency installation or a substitute rendering engine during the run.
+
+Most CLI commands return JSON on stdout; progress and errors use stderr. Some commands, such as `--version`, help, and default character chat, return text. Check the individual command contract in the skill rather than treating every stdout stream as JSON.
+
+## Server agents: make logs askable
+
+Server agents answer structured queries over data stored locally; they return results instead of uploading raw logs. Use a read-scoped token for this role.
+
+From this repository's root, on your server:
+
+```sh
 5am data ingest --dataset requests \
-    --schema nginx-requests.schema.json \
-    --file /var/log/nginx/access.log --format combined
-
-# 2. Check it locally — the same query engine your character will use
+  --schema examples/nginx-requests.schema.json \
+  --file /var/log/nginx/access.log --format combined
 5am data query --dataset requests --op count_distinct --field ip --since -24h
-
-# 3. Run the agent under systemd so it stays up
 sudo AGENT_NAME=web-1 ./examples/install-agent.sh
 ```
 
-Then enable the **Query Server Agent** skill on a character in the web UI and
-ask away. Full detail, including the parts that are easy to get wrong, is in
-[`docs/server-agent.md`](docs/server-agent.md).
+Enable **Query Server Agent** on your character in the web UI, then ask about the data. [`docs/server-agent.md`](docs/server-agent.md) covers deployment and custom datasets.
 
-## Two things worth knowing before you run an agent
-
-**`5am serve agent` is a foreground daemon.** Start it in an SSH session and it
-dies with the session — `5am agent list` will then show your agent registered
-but `"online": false`. That's what `install-agent.sh` is for.
-
-**A dataset remembers its schema.** Re-ingesting with a *different* set of
-fields is refused rather than silently merged, so take all the fields you might
-want up front. Adding them later means rebuilding with `--replace`.
+`5am serve agent` is a foreground daemon; use systemd for persistence. Datasets retain their schemas. Changing fields requires an explicit rebuild with `--replace`, not a silent schema merge.
 
 ## Podcast audio → shareable video
 
-Platforms like YouTube, TikTok and Instagram want video, not a WAV.
-[`podcast_to_video.py`](examples/podcast_to_video.py) wraps the whole pipeline in
-one command. Stdlib-only Python — nothing to `pip install`, and it runs the same
-on macOS, Linux and Windows.
-
-It pairs with [Podcast Studio](https://5am.app/podcast), which generates the WAV
-and a sample-accurate `.srt`/`.vtt` transcript — see
-[the announcement post](https://5am.app/blog/introducing-podcast-studio) for the
-full workflow.
+The Python example is standard-library-only and requires FFmpeg. Its b-roll mode also needs Gemini access:
 
 ```sh
-# Animated waveform over your cover art, captions burned in — instant, no API calls
+# Animated waveform and captions; no AI generation.
 python3 examples/podcast_to_video.py -i episode.wav --visualize \
-    --cover cover.jpg -s episode.srt
+  --cover cover.jpg -s episode.srt
 
-# AI b-roll instead: generates Veo clips to cover the audio, stitches, muxes
+# AI b-roll; uses model quota.
 python3 examples/podcast_to_video.py -i episode.wav -s episode.srt -a 9:16
+
+python3 examples/test_podcast_to_video.py
 ```
 
-Give the b-roll mode a transcript and it asks Gemini to write one cinematic
-scene per clip, in narrative order, so the visuals track what's actually being
-said rather than looping generic stock footage.
-
-Needs `ffmpeg` on PATH. The waveform mode is free and instant; the b-roll mode
-uses Gemini quota and takes minutes. Run the tests with
-`python3 examples/test_podcast_to_video.py` — 42 of them, no network required.
-
-## Using the CLI from an AI agent
-
-[`SKILL.md`](SKILL.md) is the whole CLI written up for a coding agent rather
-than a person: every command with its flags, the JSON each one returns, what the
-exit codes mean, and the traps worth knowing before you script against it.
-
-It's plain markdown with a few lines of YAML frontmatter, so every assistant
-can use it — the only difference is where the file goes.
-
-Download it first:
-
-```sh
-curl -fsSLO https://raw.githubusercontent.com/digvan/5am-cli/main/SKILL.md
-```
-
-**Claude Code** — [Agent Skills](https://code.claude.com/docs/en/skills) are
-loaded from a per-skill directory, and the frontmatter is what makes Claude
-pick it up automatically when you mention the CLI:
-
-```sh
-mkdir -p ~/.claude/skills/5am && mv SKILL.md ~/.claude/skills/5am/SKILL.md
-```
-
-Use `.claude/skills/5am/` inside a project instead if you only want it there.
-
-**Gemini CLI** — put it where the assistant reads project context, so it's in
-scope for every session in that directory:
-
-```sh
-mkdir -p .gemini && mv SKILL.md .gemini/5am-cli.md
-```
-
-Then reference it from your `GEMINI.md` (for example: *"For any `5am` command,
-follow .gemini/5am-cli.md"*), or paste it in directly.
-
-**Codex** — same idea: keep it in the repo and point `AGENTS.md` at it.
-
-```sh
-mkdir -p docs && mv SKILL.md docs/5am-cli.md
-```
-
-**Anything else** — it is just a markdown file. Attach it, paste it, or add it
-to whatever context mechanism your tool has; the frontmatter is inert if unused.
-
-Whichever you use, the thing that makes this work is the CLI's design rather
-than the document: **stdout is always JSON**, stderr carries progress, and exit
-codes are specific (`2` auth, `3` validation, `4` network, `5` server), so an
-agent can branch on a failure instead of scraping error text.
-
-## Adding your own
-
-The only contract is **one JSON object per line**, with types matching a schema
-you write once. Anything that can print that is a dataset: a nightly `find`
-inventory of an archive, a backup script's log, an offload station's per-file
-records, `journalctl -o json`. See the "any script → dataset" section of the
-guide.
-
-## Links
-
-- [5am.app](https://5am.app) · [CLI docs](https://5am.app/cli/docs) · [Blog](https://5am.app/blog)
+See [Podcast Studio](https://5am.app/podcast) and the [public CLI docs](https://5am.app/cli/docs) for related workflows, video clips/highlights, VEDL, and audio tools.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Code and documentation: Apache 2.0; see [LICENSE](LICENSE). The supplied photograph has separate rights; see [photo provenance](examples/image-edit/README.md#photo-and-license).

@@ -1,0 +1,7 @@
+iedl 1
+input image
+mask area
+component area shape brush points=[{"x":"30%w","y":"25%h"},{"x":"75%w","y":"75%h"}] brush={"size":"20%s","hardness":0.4,"flow":0.8}
+layer tone adjustment mask=area
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

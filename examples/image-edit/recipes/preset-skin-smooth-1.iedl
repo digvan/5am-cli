@@ -1,0 +1,8 @@
+iedl 1
+input image
+mask skin
+component skin region-skin polygon points=[{"x":"28%w","y":"43%h"},{"x":"31%w","y":"39%h"},{"x":"36%w","y":"43%h"},{"x":"41%w","y":"46%h"},{"x":"49%w","y":"46%h"},{"x":"50%w","y":"49%h"},{"x":"39%w","y":"51%h"},{"x":"30%w","y":"48%h"}]
+component skin arm ellipse operation=add points=[{"x":"60%w","y":"31%h"},{"x":"78%w","y":"38%h"}]
+refine skin feather=0.7%s
+apply skin-smooth@1 id=look strength=0.4 mask=skin
+output format=jpeg quality=0.9

@@ -1,0 +1,6 @@
+iedl 1
+input image
+wand region x=5%w y=5%h tolerance=0.16
+layer tone adjustment mask=region
+adjust tone exposure=0.5
+output format=jpeg quality=0.9

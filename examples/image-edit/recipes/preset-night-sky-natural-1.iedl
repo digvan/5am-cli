@@ -1,0 +1,4 @@
+iedl 1
+input image
+apply night-sky-natural@1 id=look strength=0.5
+output format=jpeg quality=0.9

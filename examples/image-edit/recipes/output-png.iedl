@@ -1,0 +1,5 @@
+iedl 1
+input image
+layer tone adjustment
+adjust tone highlights=-20
+output format=png quality=0.9

@@ -1,0 +1,7 @@
+iedl 1
+input image
+select region sky
+refine region feather=1%s
+layer tone adjustment mask=region
+adjust tone exposure=0.2
+output format=jpeg quality=0.9

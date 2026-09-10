@@ -1,0 +1,1085 @@
+{
+  "presets": {
+    "skin-smooth@1": {
+      "name": "Skin smooth @1",
+      "status": "experimental",
+      "description": "Gentle denoise and reduced texture inside an explicit skin mask. Inspect eyes, lips, hair and edges.",
+      "requiresMask": true,
+      "selection": "skin",
+      "strength": {
+        "default": 0.4,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "subject-pop@1": {
+      "name": "Subject Pop",
+      "status": "experimental",
+      "description": "Lift exposure, clarity and vibrance inside an explicit subject mask. Inspect selection edges.",
+      "requiresMask": true,
+      "selection": "subject",
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "bw-classic@1": {
+      "name": "B&W Classic",
+      "status": "experimental",
+      "description": "Neutral monochrome with moderate contrast and preserved highlights. Use strength 1 for full black and white.",
+      "requiresMask": false,
+      "strength": {
+        "default": 1,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "bw-high-contrast@1": {
+      "name": "B&W High Contrast",
+      "status": "experimental",
+      "description": "Deep blacks and a stronger contrast curve for graphic monochrome. Use strength 1 for full black and white.",
+      "requiresMask": false,
+      "strength": {
+        "default": 1,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "bw-matte@1": {
+      "name": "B&W Matte",
+      "status": "experimental",
+      "description": "Soft monochrome with lifted blacks and compressed highlights. Use strength 1 for full black and white.",
+      "requiresMask": false,
+      "strength": {
+        "default": 1,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "teal-orange@1": {
+      "name": "Teal & Orange",
+      "status": "experimental",
+      "description": "Channel curves cool shadows toward teal and warm highlights toward orange. This is tonal grading, not skin detection.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "cinematic@1": {
+      "name": "Cinematic",
+      "status": "experimental",
+      "description": "Restrained saturation, soft blacks, cool shadows and warm highlights. Keeps your original framing.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.7,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "wedding-clean@1": {
+      "name": "Wedding Clean",
+      "status": "experimental",
+      "description": "Neutral whites, gentle contrast and restrained color. Review white clothing and skin tones.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.7,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "wedding-airy@1": {
+      "name": "Wedding Airy",
+      "status": "experimental",
+      "description": "Brighter midtones, soft shadows and delicate highlights. Set exposure for each image first.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.6,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "golden-romance@1": {
+      "name": "Golden Romance",
+      "status": "experimental",
+      "description": "Warm highlights, softened greens and gentle contrast for outdoor portraits.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.6,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "editorial-portrait@1": {
+      "name": "Editorial Portrait",
+      "status": "experimental",
+      "description": "Clean color, deeper blacks and defined midtones without skin smoothing.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "soft-pastel@1": {
+      "name": "Soft Pastel",
+      "status": "experimental",
+      "description": "Soft contrast and subdued colors without an added pink cast or skin smoothing.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "indoor-celebration@1": {
+      "name": "Indoor Celebration",
+      "status": "experimental",
+      "description": "Lift shadows and control bright highlights. Correct mixed-light white balance separately.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "family-natural@1": {
+      "name": "Family Natural",
+      "status": "experimental",
+      "description": "Balanced contrast and gentle vibrance with minimal stylization. Keeps skin texture.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.7,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "autumn-warmth@1": {
+      "name": "Autumn Warmth",
+      "status": "experimental",
+      "description": "Warm earth tones and restrained greens. Review orange clothing and skin tones.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.6,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "landscape-crisp@1": {
+      "name": "Landscape Crisp",
+      "status": "experimental",
+      "description": "Moderate dehaze and texture with richer blues and greens. Inspect edges for halos.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "woodland-soft@1": {
+      "name": "Woodland Soft",
+      "status": "experimental",
+      "description": "Soft highlights, muted greens and subtle warmth for forest scenes.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "night-sky-natural@1": {
+      "name": "Night Sky Natural",
+      "status": "experimental",
+      "description": "Restrained tonal contrast and color. No denoise or sharpening; inspect stars at full resolution.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.5,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "milky-way-definition@1": {
+      "name": "Milky Way Definition",
+      "status": "experimental",
+      "description": "Gentle contrast and dehaze inside an explicit sky mask. No denoise or sharpening; inspect stars and sky boundaries.",
+      "requiresMask": true,
+      "selection": "sky",
+      "strength": {
+        "default": 0.5,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "dark-moody@1": {
+      "name": "Dark & Moody",
+      "status": "experimental",
+      "description": "Lower exposure, deeper blacks and subdued greens and blues. Check shadow detail before accepting.",
+      "requiresMask": false,
+      "strength": {
+        "default": 0.65,
+        "min": 0,
+        "max": 1
+      }
+    }
+  },
+  "registry": {
+    "apply": {
+      "args": 1,
+      "fields": {
+        "mask": {
+          "type": "string"
+        },
+        "strength": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "input": {
+      "args": 1,
+      "fields": {}
+    },
+    "param": {
+      "args": 2,
+      "fields": {
+        "default": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number",
+          "min": -10000000000,
+          "max": 10000000000
+        },
+        "max": {
+          "type": "number",
+          "min": -10000000000,
+          "max": 10000000000
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "asset": {
+      "args": 1,
+      "fields": {}
+    },
+    "layer": {
+      "args": 2,
+      "fields": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "opacity": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "blend": {
+          "type": "string",
+          "values": [
+            "normal",
+            "multiply",
+            "screen",
+            "overlay",
+            "soft-light",
+            "luminosity"
+          ]
+        },
+        "mask": {
+          "type": "string"
+        },
+        "freeze": {
+          "type": "string"
+        },
+        "asset": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 1,
+          "max": 10000
+        },
+        "x": {
+          "type": "dimension",
+          "axis": "x",
+          "min": -100000,
+          "max": 100000
+        },
+        "y": {
+          "type": "dimension",
+          "axis": "y",
+          "min": -100000,
+          "max": 100000
+        },
+        "width": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0.01,
+          "max": 100000
+        },
+        "height": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0.01,
+          "max": 100000
+        },
+        "rotation": {
+          "type": "number",
+          "min": -360,
+          "max": 360
+        },
+        "frequencyRadius": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 1,
+          "max": 100
+        },
+        "frequencyLow": {
+          "type": "number",
+          "min": 0,
+          "max": 2
+        },
+        "frequencyHigh": {
+          "type": "number",
+          "min": 0,
+          "max": 2
+        }
+      }
+    },
+    "set": {
+      "args": 1,
+      "fields": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "opacity": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "blend": {
+          "type": "string",
+          "values": [
+            "normal",
+            "multiply",
+            "screen",
+            "overlay",
+            "soft-light",
+            "luminosity"
+          ]
+        },
+        "mask": {
+          "type": "string"
+        },
+        "freeze": {
+          "type": "string"
+        },
+        "asset": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 1,
+          "max": 10000
+        },
+        "x": {
+          "type": "dimension",
+          "axis": "x",
+          "min": -100000,
+          "max": 100000
+        },
+        "y": {
+          "type": "dimension",
+          "axis": "y",
+          "min": -100000,
+          "max": 100000
+        },
+        "width": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0.01,
+          "max": 100000
+        },
+        "height": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0.01,
+          "max": 100000
+        },
+        "rotation": {
+          "type": "number",
+          "min": -360,
+          "max": 360
+        },
+        "frequencyRadius": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 1,
+          "max": 100
+        },
+        "frequencyLow": {
+          "type": "number",
+          "min": 0,
+          "max": 2
+        },
+        "frequencyHigh": {
+          "type": "number",
+          "min": 0,
+          "max": 2
+        }
+      }
+    },
+    "adjust": {
+      "args": 1,
+      "fields": {
+        "exposure": {
+          "type": "number",
+          "min": -4,
+          "max": 4
+        },
+        "contrast": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "highlights": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "shadows": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "whites": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "blacks": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "temperature": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "tint": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "saturation": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "vibrance": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "texture": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "clarity": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "dehaze": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "sharpening": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        },
+        "denoise": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        },
+        "colorNoise": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        }
+      }
+    },
+    "curve": {
+      "args": 2,
+      "fields": {
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "fields": {
+              "x": {
+                "type": "number",
+                "min": 0,
+                "max": 1
+              },
+              "y": {
+                "type": "number",
+                "min": 0,
+                "max": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "hsl": {
+      "args": 2,
+      "fields": {
+        "hue": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "saturation": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        },
+        "luminance": {
+          "type": "number",
+          "min": -100,
+          "max": 100
+        }
+      }
+    },
+    "mask": {
+      "args": 1,
+      "fields": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "inverted": {
+          "type": "boolean"
+        },
+        "density": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "feather": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 0,
+          "max": 200
+        },
+        "expand": {
+          "type": "dimension",
+          "axis": "s",
+          "min": -100,
+          "max": 100
+        },
+        "contrast": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "smooth": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        },
+        "refine": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        }
+      }
+    },
+    "refine": {
+      "args": 1,
+      "fields": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "inverted": {
+          "type": "boolean"
+        },
+        "density": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "feather": {
+          "type": "dimension",
+          "axis": "s",
+          "min": 0,
+          "max": 200
+        },
+        "expand": {
+          "type": "dimension",
+          "axis": "s",
+          "min": -100,
+          "max": 100
+        },
+        "contrast": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "smooth": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        },
+        "refine": {
+          "type": "number",
+          "min": 0,
+          "max": 100
+        }
+      }
+    },
+    "component": {
+      "args": 3,
+      "fields": {
+        "operation": {
+          "type": "string",
+          "values": [
+            "add",
+            "subtract",
+            "intersect"
+          ]
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "fields": {
+              "x": {
+                "type": "dimension",
+                "axis": "x",
+                "min": -100000,
+                "max": 100000
+              },
+              "y": {
+                "type": "dimension",
+                "axis": "y",
+                "min": -100000,
+                "max": 100000
+              },
+              "pressure": {
+                "type": "number",
+                "min": 0,
+                "max": 1
+              }
+            }
+          }
+        },
+        "brush": {
+          "type": "object",
+          "fields": {
+            "size": {
+              "type": "dimension",
+              "axis": "s",
+              "min": 0.5,
+              "max": 10000
+            },
+            "hardness": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "opacity": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "flow": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "spacing": {
+              "type": "number",
+              "min": 0.01,
+              "max": 1
+            },
+            "pressure": {
+              "type": "boolean"
+            },
+            "smoothing": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            }
+          }
+        },
+        "range": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "min": 0,
+            "max": 1
+          },
+          "length": 2
+        },
+        "color": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "min": 0,
+            "max": 255
+          },
+          "length": 3
+        },
+        "tolerance": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        },
+        "asset": {
+          "type": "string"
+        },
+        "edgeAware": {
+          "type": "boolean"
+        }
+      }
+    },
+    "stroke": {
+      "args": 3,
+      "fields": {
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "fields": {
+              "x": {
+                "type": "dimension",
+                "axis": "x",
+                "min": -100000,
+                "max": 100000
+              },
+              "y": {
+                "type": "dimension",
+                "axis": "y",
+                "min": -100000,
+                "max": 100000
+              },
+              "pressure": {
+                "type": "number",
+                "min": 0,
+                "max": 1
+              }
+            }
+          }
+        },
+        "source": {
+          "type": "object",
+          "fields": {
+            "x": {
+              "type": "dimension",
+              "axis": "x",
+              "min": -100000,
+              "max": 100000
+            },
+            "y": {
+              "type": "dimension",
+              "axis": "y",
+              "min": -100000,
+              "max": 100000
+            },
+            "pressure": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            }
+          }
+        },
+        "brush": {
+          "type": "object",
+          "fields": {
+            "size": {
+              "type": "dimension",
+              "axis": "s",
+              "min": 0.5,
+              "max": 10000
+            },
+            "hardness": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "opacity": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "flow": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            },
+            "spacing": {
+              "type": "number",
+              "min": 0.01,
+              "max": 1
+            },
+            "pressure": {
+              "type": "boolean"
+            },
+            "smoothing": {
+              "type": "number",
+              "min": 0,
+              "max": 1
+            }
+          }
+        },
+        "sourceRevision": {
+          "type": "number",
+          "min": 0,
+          "max": 9007199254740991
+        }
+      }
+    },
+    "duplicate": {
+      "args": 3,
+      "fields": {}
+    },
+    "delete": {
+      "args": 2,
+      "fields": {}
+    },
+    "order": {
+      "args": 1,
+      "fields": {
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        }
+      }
+    },
+    "crop": {
+      "args": 0,
+      "fields": {
+        "x": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0,
+          "max": 100000
+        },
+        "y": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0,
+          "max": 100000
+        },
+        "width": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0.01,
+          "max": 100000
+        },
+        "height": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0.01,
+          "max": 100000
+        },
+        "aspect": {
+          "type": "string"
+        },
+        "anchor": {
+          "type": "string",
+          "values": [
+            "center",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right"
+          ]
+        }
+      }
+    },
+    "rotate": {
+      "args": 0,
+      "fields": {
+        "degrees": {
+          "type": "number",
+          "min": 0,
+          "max": 270
+        }
+      }
+    },
+    "flip": {
+      "args": 0,
+      "fields": {
+        "x": {
+          "type": "boolean"
+        },
+        "y": {
+          "type": "boolean"
+        }
+      }
+    },
+    "analyze": {
+      "args": 2,
+      "fields": {
+        "input": {
+          "type": "string",
+          "values": [
+            "original",
+            "current"
+          ]
+        },
+        "mask": {
+          "type": "string"
+        }
+      },
+      "dynamic": true
+    },
+    "auto": {
+      "args": 1,
+      "fields": {
+        "id": {
+          "type": "string"
+        },
+        "analysis": {
+          "type": "string"
+        },
+        "mask": {
+          "type": "string"
+        }
+      },
+      "dynamic": true
+    },
+    "wand": {
+      "args": 1,
+      "fields": {
+        "x": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0,
+          "max": 100000
+        },
+        "y": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0,
+          "max": 100000
+        },
+        "tolerance": {
+          "type": "number",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "dynamic": true
+    },
+    "select": {
+      "args": 2,
+      "fields": {
+        "x": {
+          "type": "dimension",
+          "axis": "x",
+          "min": 0,
+          "max": 100000
+        },
+        "y": {
+          "type": "dimension",
+          "axis": "y",
+          "min": 0,
+          "max": 100000
+        }
+      },
+      "dynamic": true
+    },
+    "generative-edit": {
+      "args": 0,
+      "fields": {
+        "id": {
+          "type": "string"
+        },
+        "mask": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        }
+      },
+      "dynamic": true
+    },
+    "erase": {
+      "args": 1,
+      "fields": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "dynamic": true
+    },
+    "output": {
+      "args": 0,
+      "fields": {
+        "format": {
+          "type": "string",
+          "values": [
+            "jpeg",
+            "png",
+            "webp"
+          ]
+        },
+        "quality": {
+          "type": "number",
+          "min": 0.1,
+          "max": 1
+        }
+      }
+    }
+  }
+}

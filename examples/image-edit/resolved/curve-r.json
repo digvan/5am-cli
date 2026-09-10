@@ -1,0 +1,175 @@
+{
+  "kind": "iedl-resolved",
+  "version": 1,
+  "runtime": "iedl-1.0.0",
+  "source": {
+    "width": 640,
+    "height": 960,
+    "sha256": "acdc2ad9823809819cc34ccb2fea99ea8abd3678a14634355091841a73cb3577"
+  },
+  "document": {
+    "schemaVersion": 1,
+    "id": "iedl-document",
+    "revision": 0,
+    "name": "IEDL edit",
+    "source": {
+      "mediaId": "",
+      "width": 640,
+      "height": 960
+    },
+    "crop": {
+      "x": 0,
+      "y": 0,
+      "width": 640,
+      "height": 960
+    },
+    "rotation": 0,
+    "flipX": false,
+    "flipY": false,
+    "layers": [
+      {
+        "id": "curve",
+        "name": "curve",
+        "kind": "adjustment",
+        "enabled": true,
+        "opacity": 1,
+        "blend": "normal",
+        "adjustments": {
+          "exposure": 0,
+          "contrast": 0,
+          "highlights": 0,
+          "shadows": 0,
+          "whites": 0,
+          "blacks": 0,
+          "temperature": 0,
+          "tint": 0,
+          "saturation": 0,
+          "vibrance": 0,
+          "texture": 0,
+          "clarity": 0,
+          "dehaze": 0,
+          "sharpening": 0,
+          "denoise": 0,
+          "colorNoise": 0
+        },
+        "curves": {
+          "rgb": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 1,
+              "y": 1
+            }
+          ],
+          "r": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 0.5,
+              "y": 0.62
+            },
+            {
+              "x": 1,
+              "y": 1
+            }
+          ],
+          "g": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 1,
+              "y": 1
+            }
+          ],
+          "b": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "hsl": [
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          },
+          {
+            "hue": 0,
+            "saturation": 0,
+            "luminance": 0
+          }
+        ],
+        "strokes": [],
+        "x": 0,
+        "y": 0,
+        "rotation": 0,
+        "frequencyRadius": 12,
+        "frequencyLow": 1,
+        "frequencyHigh": 1
+      }
+    ],
+    "masks": [],
+    "assets": {}
+  },
+  "output": {
+    "format": "jpeg",
+    "quality": 0.9
+  },
+  "assets": {},
+  "report": [],
+  "environment": {
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "backend": "webgl2+cpu/simd",
+    "text": "system sans-serif",
+    "runtime": "iedl-1.0.0",
+    "sha256:worker.js": "8e6d3236f2efc4b744d93d98c549c2aa676408a33ce11620cc3b66f05a761e9b",
+    "sha256:kernels-scalar.wasm": "3c632c6a5f57440cc8d6fd309d7b875d415f1b70f6e074bc7c029c8fa9201a31",
+    "sha256:kernels-simd.wasm": "faf1123d5ec723574c4954b45fe39133bcc454b7c08c074526f2a10a97a565c0",
+    "sha256:runtime.js": "15604be80172dc204232e2a2984cc5039bbc46dafc07db18b0311e15a8625808",
+    "sha256:core.mjs": "dea6717250f2dd3670ee64467c1befbfb36f7e087233ffcbb8ee79f8d95a532a",
+    "sha256:runner.mjs": "223d4487e43b3eeb41c1c17188783216e9c55d05ae25a22493d0fd44b2947cf6",
+    "sha256:browser.mjs": "51b2db0a783e415988ea2f29ffe1ba6a02530d8ce6c4773c4cb4e1b45f0311a6",
+    "sha256:package.json": "cce6f8c1916d2248267b4182989f5e7184c405e8d784c8e9420082a02cc39353"
+  }
+}

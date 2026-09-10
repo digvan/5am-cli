@@ -1,0 +1,8 @@
+iedl 1
+input image
+mask repair
+component repair region-repair ellipse points=[{"x":"74%w","y":"65%h"},{"x":"81%w","y":"73%h"}]
+layer edit retouch mask=repair
+stroke edit push liquify points=[{"x":"77%w","y":"68%h"},{"x":"80%w","y":"68%h"}] brush={"size":"12%s","opacity":0.8}
+stroke edit stroke-liquify-smooth liquify-smooth points=[{"x":"77%w","y":"68%h"},{"x":"77%w","y":"70%h"}] brush={"size":"6%s","hardness":0.4,"opacity":0.8,"flow":0.8}
+output format=jpeg quality=0.9

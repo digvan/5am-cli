@@ -1,0 +1,5 @@
+iedl 1
+input image
+layer curve adjustment
+curve curve rgb points=[{"x":0,"y":0},{"x":0.5,"y":0.62},{"x":1,"y":1}]
+output format=jpeg quality=0.9

@@ -1,0 +1,10 @@
+iedl 1
+input image
+layer warm adjustment
+adjust warm temperature=18
+duplicate layer warm copy
+set copy opacity=0.3
+order copy before=warm
+layer scratch adjustment
+delete layer scratch
+output format=jpeg quality=0.9

@@ -1,0 +1,4 @@
+iedl 1
+input image
+crop x=25%w y=18%h width=55%w height=80%h
+output format=jpeg quality=0.9

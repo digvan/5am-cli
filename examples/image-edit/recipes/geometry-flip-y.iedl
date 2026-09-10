@@ -1,0 +1,4 @@
+iedl 1
+input image
+flip y=true
+output format=jpeg quality=0.9

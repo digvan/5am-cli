@@ -1,0 +1,4 @@
+iedl 1
+input image
+crop aspect=1:1 anchor=center
+output format=jpeg quality=0.9

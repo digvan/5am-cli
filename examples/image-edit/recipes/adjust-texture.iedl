@@ -1,0 +1,5 @@
+iedl 1
+input image
+layer tone adjustment
+adjust tone texture=30
+output format=jpeg quality=0.9

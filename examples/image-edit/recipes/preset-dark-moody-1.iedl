@@ -1,0 +1,4 @@
+iedl 1
+input image
+apply dark-moody@1 id=look strength=0.65
+output format=jpeg quality=0.9

@@ -57,3 +57,11 @@ venv/
 # The schemas are tracked source, not output — *.json stays out of this file on
 # purpose. If you add a generated .json, ignore it by name rather than widening
 # the pattern and hiding examples/*.schema.json.
+
+# Checked-in IEDL visual documentation fixtures and actual render results.
+!examples/image-edit/source.jpg
+!examples/image-edit/images/*.jpg
+!examples/image-edit/images/*.png
+!examples/image-edit/images/*.webp
+!examples/image-edit/masks/*.png
+!examples/image-edit/assets/*.png

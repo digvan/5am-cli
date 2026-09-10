@@ -1,0 +1,9 @@
+iedl 1
+input image
+mask subject
+component subject region-subject polygon points=[{"x":"40%w","y":"20%h"},{"x":"56%w","y":"21%h"},{"x":"59%w","y":"27%h"},{"x":"65%w","y":"28%h"},{"x":"78%w","y":"35%h"},{"x":"78%w","y":"38%h"},{"x":"64%w","y":"40%h"},{"x":"61%w","y":"55%h"},{"x":"64%w","y":"65%h"},{"x":"61%w","y":"81%h"},{"x":"54%w","y":"100%h"},{"x":"28%w","y":"100%h"},{"x":"30%w","y":"88%h"},{"x":"35%w","y":"74%h"},{"x":"35%w","y":"65%h"},{"x":"34%w","y":"58%h"},{"x":"30%w","y":"53%h"},{"x":"27%w","y":"49%h"},{"x":"28%w","y":"43%h"},{"x":"32%w","y":"36%h"},{"x":"35%w","y":"31%h"}]
+refine subject feather=1%s
+refine subject expand=-2%s
+layer tone adjustment mask=subject
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

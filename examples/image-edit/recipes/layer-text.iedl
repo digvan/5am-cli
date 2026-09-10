@@ -1,0 +1,4 @@
+iedl 1
+input image
+layer caption text text="LIVE / IEDL" color=#ffffff fontSize=5%s x=7%w y=12%h
+output format=jpeg quality=0.9

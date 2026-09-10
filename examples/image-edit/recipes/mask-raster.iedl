@@ -1,0 +1,8 @@
+iedl 1
+input image
+asset imported
+mask area
+component area shape raster asset=imported
+layer tone adjustment mask=area
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

@@ -1,0 +1,8 @@
+iedl 1
+input image
+mask area
+component area region-area rectangle points=[{"x":"20%w","y":"20%h"},{"x":"65%w","y":"70%h"}]
+component area overlap ellipse operation=add points=[{"x":"40%w","y":"30%h"},{"x":"85%w","y":"80%h"}]
+layer tone adjustment mask=area
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

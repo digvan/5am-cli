@@ -1,0 +1,7 @@
+iedl 1
+input image
+mask area
+component area shape polygon points=[{"x":"40%w","y":"21%h"},{"x":"62%w","y":"24%h"},{"x":"77%w","y":"37%h"},{"x":"58%w","y":"69%h"},{"x":"34%w","y":"68%h"},{"x":"28%w","y":"46%h"}]
+layer tone adjustment mask=area
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

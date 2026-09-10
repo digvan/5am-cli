@@ -1,0 +1,6 @@
+iedl 1
+input image
+mask repair
+component repair region-repair ellipse points=[{"x":"74%w","y":"65%h"},{"x":"81%w","y":"73%h"}]
+erase repair id=clean
+output format=jpeg quality=0.9

@@ -1,0 +1,7 @@
+iedl 1
+input image
+mask night
+component night region-night rectangle points=[{"x":"0%w","y":"0%h"},{"x":"100%w","y":"20%h"}]
+refine night feather=3%s
+apply milky-way-definition@1 id=look strength=0.5 mask=night
+output format=jpeg quality=0.9

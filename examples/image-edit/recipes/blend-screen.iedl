@@ -1,0 +1,5 @@
+iedl 1
+input image
+layer tone adjustment blend=screen opacity=0.65
+adjust tone exposure=0.7
+output format=jpeg quality=0.9

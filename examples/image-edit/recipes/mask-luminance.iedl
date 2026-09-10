@@ -1,0 +1,7 @@
+iedl 1
+input image
+mask area
+component area shape luminance range=[0.5,1]
+layer tone adjustment mask=area
+adjust tone exposure=-0.7
+output format=jpeg quality=0.9

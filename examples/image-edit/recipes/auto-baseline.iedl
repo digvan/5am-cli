@@ -1,0 +1,5 @@
+iedl 1
+input image
+analyze scene image input=original
+auto baseline id=tone analysis=scene
+output format=jpeg quality=0.9

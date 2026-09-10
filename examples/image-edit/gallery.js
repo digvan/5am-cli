@@ -1,0 +1,6 @@
+const cards=[...document.querySelectorAll('article')];
+const search=document.querySelector('#search'),group=document.querySelector('#group');
+function filter(){const q=search.value.trim().toLowerCase();let count=0;for(const card of cards){card.hidden=!(card.dataset.search.includes(q)&&(!group.value||card.dataset.group===group.value));if(!card.hidden)count++}document.querySelector('#count').textContent=`${count} examples`;document.querySelector('#empty').hidden=count>0}
+search.addEventListener('input',filter);group.addEventListener('change',filter);
+document.querySelector('#reset').addEventListener('click',()=>{search.value='';group.value='';filter()});
+for(const card of cards){card.querySelector('input[type=range]')?.addEventListener('input',e=>card.querySelector('.comparison').style.setProperty('--split',e.target.value+'%'));card.querySelector('.copy').addEventListener('click',async e=>{const text=card.querySelector('pre code').textContent;try{await navigator.clipboard.writeText(text);e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy recipe',1500)}catch{const range=document.createRange();range.selectNodeContents(card.querySelector('pre code'));const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);e.target.textContent='Selected — press Ctrl/Cmd+C'}})}

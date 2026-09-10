@@ -1,0 +1,5 @@
+iedl 1
+input image
+asset photo
+layer insert raster asset=photo x=65%w y=5%h width=25%w height=25%h opacity=0.85
+output format=jpeg quality=0.9

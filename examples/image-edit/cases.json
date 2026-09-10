@@ -1,0 +1,1136 @@
+[
+  {
+    "id": "stage-balance",
+    "title": "Stage lights, gently balanced",
+    "group": "Start here",
+    "note": "A restrained interpretation of mixed stage light, not a neutral-light reconstruction. Hand-drawn subject region.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-exposure",
+    "title": "exposure 0.5",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-contrast",
+    "title": "contrast 25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-highlights",
+    "title": "highlights -55",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-shadows",
+    "title": "shadows 35",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-whites",
+    "title": "whites -35",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-blacks",
+    "title": "blacks -25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-temperature",
+    "title": "temperature 25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-tint",
+    "title": "tint -25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-saturation",
+    "title": "saturation -35",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-vibrance",
+    "title": "vibrance 25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-texture",
+    "title": "texture 30",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-clarity",
+    "title": "clarity 25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-dehaze",
+    "title": "dehaze 25",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-sharpening",
+    "title": "sharpening 55",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-denoise",
+    "title": "denoise 50",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "adjust-colorNoise",
+    "title": "colorNoise 50",
+    "group": "Adjustments",
+    "note": "One slider at a time; intentionally visible settings. Noise/detail effects may be subtle on this downsampled JPEG.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-skin-smooth-1",
+    "title": "Skin smooth @1",
+    "group": "Presets",
+    "note": "Gentle denoise and reduced texture inside an explicit skin mask. Inspect eyes, lips, hair and edges. Uses a hand-drawn skin demonstration mask, not AI segmentation. Skin example only covers arms, not a complete skin selection.",
+    "assets": {},
+    "mask": "skin",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-subject-pop-1",
+    "title": "Subject Pop",
+    "group": "Presets",
+    "note": "Lift exposure, clarity and vibrance inside an explicit subject mask. Inspect selection edges. Uses a hand-drawn subject region; inspect edges.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-bw-classic-1",
+    "title": "B&W Classic",
+    "group": "Presets",
+    "note": "Neutral monochrome with moderate contrast and preserved highlights. Use strength 1 for full black and white.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-bw-high-contrast-1",
+    "title": "B&W High Contrast",
+    "group": "Presets",
+    "note": "Deep blacks and a stronger contrast curve for graphic monochrome. Use strength 1 for full black and white.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-bw-matte-1",
+    "title": "B&W Matte",
+    "group": "Presets",
+    "note": "Soft monochrome with lifted blacks and compressed highlights. Use strength 1 for full black and white.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-teal-orange-1",
+    "title": "Teal & Orange",
+    "group": "Presets",
+    "note": "Channel curves cool shadows toward teal and warm highlights toward orange. This is tonal grading, not skin detection.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-cinematic-1",
+    "title": "Cinematic",
+    "group": "Presets",
+    "note": "Restrained saturation, soft blacks, cool shadows and warm highlights. Keeps your original framing.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-wedding-clean-1",
+    "title": "Wedding Clean",
+    "group": "Presets",
+    "note": "Neutral whites, gentle contrast and restrained color. Review white clothing and skin tones.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-wedding-airy-1",
+    "title": "Wedding Airy",
+    "group": "Presets",
+    "note": "Brighter midtones, soft shadows and delicate highlights. Set exposure for each image first.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-golden-romance-1",
+    "title": "Golden Romance",
+    "group": "Presets",
+    "note": "Warm highlights, softened greens and gentle contrast for outdoor portraits.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-editorial-portrait-1",
+    "title": "Editorial Portrait",
+    "group": "Presets",
+    "note": "Clean color, deeper blacks and defined midtones without skin smoothing.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-soft-pastel-1",
+    "title": "Soft Pastel",
+    "group": "Presets",
+    "note": "Soft contrast and subdued colors without an added pink cast or skin smoothing.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-indoor-celebration-1",
+    "title": "Indoor Celebration",
+    "group": "Presets",
+    "note": "Lift shadows and control bright highlights. Correct mixed-light white balance separately.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-family-natural-1",
+    "title": "Family Natural",
+    "group": "Presets",
+    "note": "Balanced contrast and gentle vibrance with minimal stylization. Keeps skin texture.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-autumn-warmth-1",
+    "title": "Autumn Warmth",
+    "group": "Presets",
+    "note": "Warm earth tones and restrained greens. Review orange clothing and skin tones.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-landscape-crisp-1",
+    "title": "Landscape Crisp",
+    "group": "Presets",
+    "note": "Moderate dehaze and texture with richer blues and greens. Inspect edges for halos.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-woodland-soft-1",
+    "title": "Woodland Soft",
+    "group": "Presets",
+    "note": "Soft highlights, muted greens and subtle warmth for forest scenes.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-night-sky-natural-1",
+    "title": "Night Sky Natural",
+    "group": "Presets",
+    "note": "Restrained tonal contrast and color. No denoise or sharpening; inspect stars at full resolution.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-milky-way-definition-1",
+    "title": "Milky Way Definition",
+    "group": "Presets",
+    "note": "Gentle contrast and dehaze inside an explicit sky mask. No denoise or sharpening; inspect stars and sky boundaries. Uses a hand-drawn dark background region, not a sky/star selection. This concert is not an astrophotography quality test.",
+    "assets": {},
+    "mask": "night",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "preset-dark-moody-1",
+    "title": "Dark & Moody",
+    "group": "Presets",
+    "note": "Lower exposure, deeper blacks and subdued greens and blues. Check shadow detail before accepting.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "curve-rgb",
+    "title": "RGB tone curve",
+    "group": "Curves & HSL",
+    "note": "Lift the midpoint in one channel; endpoints stay fixed.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "curve-r",
+    "title": "R tone curve",
+    "group": "Curves & HSL",
+    "note": "Lift the midpoint in one channel; endpoints stay fixed.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "curve-g",
+    "title": "G tone curve",
+    "group": "Curves & HSL",
+    "note": "Lift the midpoint in one channel; endpoints stay fixed.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "curve-b",
+    "title": "B tone curve",
+    "group": "Curves & HSL",
+    "note": "Lift the midpoint in one channel; endpoints stay fixed.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-red",
+    "title": "Red HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-orange",
+    "title": "Orange HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-yellow",
+    "title": "Yellow HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-green",
+    "title": "Green HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-aqua",
+    "title": "Aqua HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-blue",
+    "title": "Blue HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-purple",
+    "title": "Purple HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "hsl-magenta",
+    "title": "Magenta HSL band",
+    "group": "Curves & HSL",
+    "note": "Only this hue band changes. Bands absent from the photograph can show almost no difference.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-brush",
+    "title": "Brush mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-linear",
+    "title": "Linear mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-radial",
+    "title": "Radial mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-rectangle",
+    "title": "Rectangle mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-ellipse",
+    "title": "Ellipse mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-lasso",
+    "title": "Lasso mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-polygon",
+    "title": "Polygon mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-color",
+    "title": "Color mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-luminance",
+    "title": "Luminance mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-raster",
+    "title": "Raster mask",
+    "group": "Masks",
+    "note": "A deliberately visible local exposure change shows coverage. White in the mask preview applies the effect.",
+    "assets": {
+      "imported": "assets/subject-mask.png"
+    },
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-add",
+    "title": "Mask add",
+    "group": "Masks",
+    "note": "Combine a rectangle and ellipse.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-subtract",
+    "title": "Mask subtract",
+    "group": "Masks",
+    "note": "Combine a rectangle and ellipse.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "mask-intersect",
+    "title": "Mask intersect",
+    "group": "Masks",
+    "note": "Combine a rectangle and ellipse.",
+    "assets": {},
+    "mask": "area",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-feather",
+    "title": "Refine: feather",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-expand",
+    "title": "Refine: expand",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-contract",
+    "title": "Refine: contract",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-smooth",
+    "title": "Refine: smooth",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-density",
+    "title": "Refine: density",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-invert",
+    "title": "Refine: invert",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "refine-bypass",
+    "title": "Refine: bypass",
+    "group": "Masks",
+    "note": "Hand-drawn region. Bypass applies the adjustment everywhere; density weakens coverage.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-normal",
+    "title": "Normal blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-multiply",
+    "title": "Multiply blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-screen",
+    "title": "Screen blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-overlay",
+    "title": "Overlay blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-soft-light",
+    "title": "Soft-Light blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "blend-luminosity",
+    "title": "Luminosity blend",
+    "group": "Layers",
+    "note": "Same adjustment, different layer blend mode.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "layer-text",
+    "title": "Text layer",
+    "group": "Layers",
+    "note": "Editable text. Font appearance depends on the host fonts.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "layer-raster",
+    "title": "Imported raster layer",
+    "group": "Layers",
+    "note": "Picture-in-picture from an explicitly bound asset.",
+    "assets": {
+      "photo": "source.jpg"
+    },
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "layer-frequency",
+    "title": "Frequency controls",
+    "group": "Layers",
+    "note": "Reduces high-frequency detail inside a hand-drawn subject mask; not selective skin smoothing.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "layer-lifecycle",
+    "title": "Duplicate, set, order, delete",
+    "group": "Layers",
+    "note": "The scratch layer is removed. Both remaining layers are editable.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-square",
+    "title": "Square crop",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-portrait",
+    "title": "Portrait 4:5",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-rotate",
+    "title": "Rotate 90\u00b0",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-flip-x",
+    "title": "Flip horizontal",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-flip-y",
+    "title": "Flip vertical",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "geometry-rectangle",
+    "title": "Explicit crop",
+    "group": "Geometry",
+    "note": "Geometry comparison changes framing/orientation; the before and after are shown fitted to the same viewing area.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-clone",
+    "title": "Clone stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-heal",
+    "title": "Heal stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-spot",
+    "title": "Spot stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-patch",
+    "title": "Patch stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-dodge",
+    "title": "Dodge stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-burn",
+    "title": "Burn stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-red-eye",
+    "title": "Red-Eye stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-liquify",
+    "title": "Liquify stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-liquify-smooth",
+    "title": "Liquify-Smooth stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "retouch-reconstruct",
+    "title": "Reconstruct stroke",
+    "group": "Retouch & liquify",
+    "note": "Localized tool demonstration near the background water bottle; not an automatic repair. Red-eye has no appropriate target here and can be a no-op.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "liquify-freeze",
+    "title": "Liquify freeze region",
+    "group": "Retouch & liquify",
+    "note": "The hand-drawn freeze mask protects the repair region.",
+    "assets": {},
+    "mask": "repair",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "auto-exposure",
+    "title": "Auto exposure",
+    "group": "Analysis & automation",
+    "note": "Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "auto-white-balance",
+    "title": "Auto white-balance",
+    "group": "Analysis & automation",
+    "note": "Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "auto-vibrance",
+    "title": "Auto vibrance",
+    "group": "Analysis & automation",
+    "note": "Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "auto-baseline",
+    "title": "Auto baseline",
+    "group": "Analysis & automation",
+    "note": "Measured from this source. Colored stage lights can mislead neutral-light assumptions; a valid automatic result still needs review.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "auto-local",
+    "title": "Subject-local baseline",
+    "group": "Analysis & automation",
+    "note": "Local metering of a hand-drawn subject region, not semantic subject detection.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "analysis-mask",
+    "title": "Mask geometry analysis",
+    "group": "Analysis & automation",
+    "note": "Analysis changes no pixels. Open the resolved report to inspect mask coverage and centroid.",
+    "assets": {},
+    "mask": "subject",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "wand",
+    "title": "Magic wand",
+    "group": "Analysis & automation",
+    "note": "Contiguous selection measured from the dark upper-left background.",
+    "assets": {},
+    "mask": "region",
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "parameters",
+    "title": "Typed recipe parameters",
+    "group": "Analysis & automation",
+    "note": "Override with --param warmth=20 --param strength=0.7; no embedded code.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "jpeg"
+  },
+  {
+    "id": "output-png",
+    "title": "PNG output",
+    "group": "Output & assets",
+    "note": "Download the real rendered output to inspect the codec.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "png"
+  },
+  {
+    "id": "output-webp",
+    "title": "WEBP output",
+    "group": "Output & assets",
+    "note": "Download the real rendered output to inspect the codec.",
+    "assets": {},
+    "mask": null,
+    "remote": false,
+    "format": "webp"
+  },
+  {
+    "id": "remote-select-subject",
+    "title": "AI subject selection",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Requires a matching library media ID and backend access. This photo contains no visible sky; sky selection is not a suitable photographic test.",
+    "assets": {},
+    "mask": null,
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-select-background",
+    "title": "AI background selection",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Requires a matching library media ID and backend access. This photo contains no visible sky; sky selection is not a suitable photographic test.",
+    "assets": {},
+    "mask": null,
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-select-sky",
+    "title": "AI sky selection",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Requires a matching library media ID and backend access. This photo contains no visible sky; sky selection is not a suitable photographic test.",
+    "assets": {},
+    "mask": null,
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-select-skin",
+    "title": "AI skin selection",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Requires a matching library media ID and backend access. This photo contains no visible sky; sky selection is not a suitable photographic test.",
+    "assets": {},
+    "mask": null,
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-select-object",
+    "title": "AI object selection",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Requires a matching library media ID and backend access. This photo contains no visible sky; sky selection is not a suitable photographic test.",
+    "assets": {},
+    "mask": null,
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-erase",
+    "title": "Magic Eraser",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Hand-drawn bottle region. Uses the authenticated backend; may incur credits.",
+    "assets": {},
+    "mask": "repair",
+    "remote": true,
+    "format": "jpeg"
+  },
+  {
+    "id": "remote-generative-edit",
+    "title": "Masked generative edit",
+    "group": "Authenticated APIs",
+    "note": "Recipe only; not executed. Hand-drawn bottle region. Uses the authenticated backend; may incur credits.",
+    "assets": {},
+    "mask": "repair",
+    "remote": true,
+    "format": "jpeg"
+  }
+]
