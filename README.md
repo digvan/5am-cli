@@ -76,6 +76,17 @@ Directory batches are serial and nonrecursive, accept PNG/JPEG/WebP, save resolv
 
 Use local-only recipes for directory batches. `--media-id` is not supported by `batch`. Inspect the report before publishing results; the command exits nonzero if any image fails.
 
+## Make your own visual gallery
+
+The Apache 2.0 gallery builder accepts your own photo and creates a standalone HTML gallery with local renders and editable recipes:
+
+```sh
+python3 examples/image-edit/build_gallery.py \
+  --input "/path/to/photo.jpg" --output-dir /tmp/my-iedl-gallery
+```
+
+Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-edit/README.md#build-a-gallery-with-your-own-image) for setup, preview size, selective rendering, and adapting the sample masks.
+
 ## What's here
 
 | Path | Purpose |

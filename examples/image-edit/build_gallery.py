@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parent
@@ -59,10 +61,24 @@ def build_html(cases, results):
 <section class="workflow"><p class="eyebrow">FROM EXPERIMENT TO AUTOMATION</p><h2>Find a look. Keep the recipe.</h2><ol><li>Inspect the pixels and mask edges.</li><li>Download and validate the recipe.</li><li>Render another image; re-check local geometry.</li><li>Save a resolved bundle for replay, or use the reusable recipe in a workflow.</li></ol><pre><code>5am update --runtime-only
 5am media image-edit validate recipes/stage-balance.iedl
 5am media image-edit render recipes/stage-balance.iedl --input source.jpg -o stage.jpg --bundle stage.iedl.zip</code></pre><p>Workflow Python calls the CLI. Shared JavaScript owns IEDL rules; Go owns Gemini transport and credentials. Image rendering and local analysis stay local.</p></section></main><footer>5AM / IEDL 1 · Photographic examples, not a benchmark of every scene. <a href="README.md#photo-and-license">Photo & license</a></footer><script src="gallery.js"></script></body></html>'''
+    hero = next((r['image'] for r in results.values() if r.get('status') == 'Rendered'), 'source.jpg')
+    if results.get('stage-balance',{}).get('status') != 'Rendered':
+        content = content.replace('src="images/stage-balance.jpg"', f'src="{hero}"')
+    if (ROOT/'custom-source.json').exists():
+        content = content.replace('Original concert photograph', 'Original photograph')
+        content = content.replace('Mixed stage light. Bright satin. Deep shadows.', 'Your photograph. Your experiments.')
+        content = content.replace('640 × 960 derivative of the supplied photograph', 'resized copy of your photograph')
+        content = content.replace('Concert photograph with gentle highlight and color adjustments', 'Gallery preview')
+        content = content.replace('STAGE BALANCE / A restrained starting point, not a universal correction.', 'CAPABILITY PREVIEW / Review each edit on your own photograph.')
+        content = content.replace('This image has no visible stars or red-eye; the relevant tools may show little change.', 'Some tools require suitable targets, such as stars or red-eye.')
+        content = content.replace('Manual masks are explicitly labeled.', 'Manual masks and retouch coordinates were drawn for the original concert example. They do not identify subjects in your image: edit the recipes before judging local effects.')
+        for relative in ['../../README.md','../../skills/iedl/SKILL.md','../../docs/iedl.md']:
+            content = content.replace(relative, 'https://github.com/digvan/5am-cli/blob/main/'+relative.removeprefix('../../'))
     (ROOT/'index.html').write_text(content)
 
 
 def main():
+    global ROOT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--render', action='store_true', help='Execute local recipes using the installed CLI')
     parser.add_argument('--cli', default='5am')
@@ -71,10 +87,55 @@ def main():
     parser.add_argument('--jobs', type=int, choices=(1,2), default=1, help='Bound parallel browsers; default serial')
     parser.add_argument('--only', help='Comma-separated case IDs to rerender')
     parser.add_argument('--overwrite', action='store_true')
+    parser.add_argument('--input', type=Path, help='Create a gallery with your own JPEG, PNG, or WebP')
+    parser.add_argument('--output-dir', type=Path, help='New/empty destination for --input; existing gallery for rebuilds')
+    parser.add_argument('--width', type=int, default=640, help='Preview width for your image (64–2048; default 640)')
     args = parser.parse_args()
+    if args.input and not args.output_dir:
+        parser.error('--input requires --output-dir to protect the published examples')
+    if not 64 <= args.width <= 2048:
+        parser.error('--width must be between 64 and 2048')
+    template = ROOT
+    known = {c["id"] for c in json.loads((template/"cases.json").read_text())}
+    if args.only and set(args.only.split(","))-known: parser.error("Unknown case in --only")
+    if args.output_dir:
+        destination = args.output_dir.expanduser().resolve()
+        if args.input:
+            source = args.input.expanduser().resolve()
+            if not source.is_file(): parser.error('--input must be an existing image')
+            if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
+                parser.error('--input requires a new or empty output directory; choose another directory')
+            # Prepare the source before copying anything; originals are never overwritten.
+            with tempfile.TemporaryDirectory(prefix='iedl-gallery-') as temporary:
+                converted = Path(temporary)/'converted.jpg'
+                resized = Path(temporary)/'source.jpg'
+                with source.open('rb') as stream:
+                    jpeg = stream.read(3) == b'\xff\xd8\xff'
+                commands = []
+                if jpeg: shutil.copy2(source,converted)
+                else: commands.append([args.cli,'media','convert',str(source),'--output',str(converted)])
+                commands.append([args.cli,'media','resize',str(converted),'--width',str(args.width),'--output',str(resized)])
+                for command in commands:
+                    result = subprocess.run(command,capture_output=True,text=True,timeout=150)
+                    if result.returncode: raise RuntimeError(result.stderr or result.stdout)
+                destination.mkdir(parents=True,exist_ok=True)
+                for name in ['cases.json','capabilities.json','gallery.css','gallery.js','README.md','build_gallery.py','check_gallery.py','test_gallery_builder.py','LICENSE']:
+                    shutil.copy2(template/name,destination/name)
+                shutil.copytree(template/'recipes',destination/'recipes')
+                shutil.copy2(resized,destination/'source.jpg')
+                (destination/'custom-source.json').write_text(json.dumps({'preview_width':args.width}))
+            args.render = True
+        ROOT = destination
+    if not (ROOT/'cases.json').is_file(): parser.error('Output directory is not an initialized gallery')
     cases = json.loads((ROOT/'cases.json').read_text())
     results_path = ROOT/'results.json'
-    results = json.loads(results_path.read_text()).get('cases',{}) if results_path.exists() else {}
+    previous = json.loads(results_path.read_text()) if results_path.exists() else {}
+    source_hash = hashlib.sha256((ROOT/'source.jpg').read_bytes()).hexdigest()
+    if previous and previous.get('source_sha256') != source_hash:
+        parser.error('Source changed: create a new gallery with --input and a new --output-dir')
+    results = previous.get('cases',{})
+    selected = set(args.only.split(',')) if args.only else {c['id'] for c in cases}
+    if selected-{c['id'] for c in cases}: parser.error('Unknown case in --only')
     env = dict(os.environ, **{'5AM_NO_UPDATE_CHECK':'1'})
     def call(action, *argv):
         command = [args.cli,'media','image-edit',action,*map(str,argv)]
@@ -88,8 +149,6 @@ def main():
         seed = ROOT/'assets/subject-mask.png'
         if not seed.exists() or args.overwrite:
             call('render','recipes/stage-balance.iedl','--input','source.jpg','--mask','subject','-o',seed,*(['--overwrite'] if args.overwrite else []))
-        selected = set(args.only.split(',')) if args.only else {c['id'] for c in cases}
-        if selected-{c['id'] for c in cases}: raise ValueError('Unknown case in --only')
         def execute(case):
             id=case['id'];start=time.monotonic()
             try:

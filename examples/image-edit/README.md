@@ -9,6 +9,33 @@ python3 -m http.server 8000
 
 The page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Imported-mask and magic-wand examples also include replay bundles containing their raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
 
+## Build a gallery with your own image
+
+The gallery builder is open source under Apache 2.0. It uses Python 3.9+ standard library and the installed `5am` CLI, Node.js, image-edit runtime, and Chrome/Chromium. No Python packages are needed.
+
+From the repository root:
+
+```sh
+5am update --runtime-only
+python3 examples/image-edit/build_gallery.py \
+  --input "/path/to/your photo.jpg" \
+  --output-dir /tmp/my-iedl-gallery
+# Open /tmp/my-iedl-gallery/index.html in a browser.
+```
+
+JPEG, PNG, and WebP inputs are converted to a resized JPEG preview (640 pixels wide by default); transparency is flattened. Use `--width 960` to increase preview resolution, up to 2048. Use an oriented export for predictable composition. The original file is never changed. The destination must be new or empty, even with `--overwrite`. Gallery generation uses local operations only; remote recipes remain recipe-only.
+
+For a quick first experiment, append `--only auto-exposure,auto-white-balance,preset-cinematic-1` (see `cases.json` for IDs). Unselected cards remain “Not rendered.” To continue rendering, omit `--input`:
+
+```sh
+python3 examples/image-edit/build_gallery.py \
+  --output-dir /tmp/my-iedl-gallery --render --overwrite
+```
+
+Edit the copied `recipes/*.iedl` files and rerun selected cases using `--only`. Imported masks are generated from the copied `stage-balance` subject region. **All sample geometric masks and retouch coordinates were drawn for the concert photograph. Adapt them to your image; they are not automatic subject/skin/sky detection.** Case notes describe the original demonstration. If you change `source.jpg`, the builder refuses to reuse stale results; create a new gallery instead.
+
+Share the generated directory to share your experiments, including its image and reports. Your photographs retain their own rights; the sample photo provenance below applies only to the checked-in concert example.
+
 ## Coverage
 
 113 examples cover all 26 IEDL commands: every adjustment slider, all 20 versioned presets, four curve channels, eight HSL bands, ten mask component kinds, mask composition/refinement, all layer kinds and blend modes, geometry, all retouch/liquify stroke kinds, local analysis, four automatic adjustments, explicit assets/parameters, and output codecs.
@@ -53,6 +80,10 @@ python3 build_gallery.py --render --overwrite --only stage-balance,auto-white-ba
 python3 build_gallery.py
 # Check source hashes, artifacts, coverage, and links offline.
 python3 check_gallery.py
+# For an intentionally partial custom gallery:
+python3 check_gallery.py --allow-partial
+# Builder regression tests (from the repository example directory):
+python3 test_gallery_builder.py
 ```
 
 `--cli`, `--runtime`, and `--browser` accept explicit executable/runtime paths. The builder never executes remote recipes or calls a model. It validates recipes, records failures in `results.json`, writes real local renders, and exits nonzero if any local example fails. Existing output files require `--overwrite`. `capabilities.json` snapshots the source registry and preset catalog; the HTML builder checks that every registered command appears in the recipe collection.

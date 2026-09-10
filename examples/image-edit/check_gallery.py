@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Offline integrity check for the published gallery and its rendered artifacts."""
+import argparse
 import hashlib
 from html.parser import HTMLParser
 import json
@@ -8,15 +9,20 @@ from urllib.parse import unquote, urlsplit
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--allow-partial', action='store_true', help='Permit cases not yet rendered/validated')
+args = parser.parse_args()
 cases = json.loads((ROOT / 'cases.json').read_text())
 report = json.loads((ROOT / 'results.json').read_text())
 assert report['source_sha256'] == hashlib.sha256((ROOT / 'source.jpg').read_bytes()).hexdigest()
 assert len({c['id'] for c in cases}) == len(cases)
-assert set(report['cases']) == {c['id'] for c in cases}
+assert set(report['cases']) <= {c['id'] for c in cases}
+if not args.allow_partial: assert set(report['cases']) == {c['id'] for c in cases}
 commands = set()
 for case in cases:
     recipe = (ROOT / 'recipes' / (case['id'] + '.iedl')).read_text()
     commands.update(line.split()[0] for line in recipe.splitlines() if line.strip() and not line.startswith('#'))
+    if args.allow_partial and case['id'] not in report['cases']: continue
     result = report['cases'][case['id']]
     if case['remote']:
         assert result['status'] == 'Recipe only' and result['validated']
