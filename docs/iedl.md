@@ -484,14 +484,6 @@ browser, or executes a candidate to probe it. `generate` and ordinary recipe
 and the packaged runtime are still required. Provision a browser compatible with
 the bundle's pinned Puppeteer Core version. The bundle now includes `browser.mjs`.
 
-### Comprehensive verification
-
-See [IEDL_TEST_HARNESS.md](IEDL_TEST_HARNESS.md) for the command/preset coverage
-matrix, `npm run test:iedl`, full browser/CLI checks and optional local image-gallery
-review. Synthetic checks are deterministic and paid operations are mocked; photographic
-quality is reviewed separately against real images.
-
-
 ## Smart baseline and local metering (experimental)
 
 Prefer explicit local masks when a subject and background need different corrections:

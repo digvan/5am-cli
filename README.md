@@ -92,11 +92,9 @@ Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-e
 | Path | Purpose |
 | --- | --- |
 | [`SKILL.md`](SKILL.md) | Current CLI command guidance for agents and workflow generation. |
-| [`skills/iedl/SKILL.md`](skills/iedl/SKILL.md) | Focused IEDL authoring instructions, with portable specification and eval references. |
+| [`skills/iedl/SKILL.md`](skills/iedl/SKILL.md) | Focused IEDL authoring instructions, with the portable language specification. |
 | [`docs/iedl.md`](docs/iedl.md) | IEDL grammar, capabilities, presets, coordinate semantics, and runtime contract. |
 | [`examples/image-edit/`](examples/image-edit/README.md) | Interactive HTML field guide, sample image, 113 recipes, real renders, masks, reports, and rebuild script. |
-| [`docs/IEDL_TEST_HARNESS.md`](docs/IEDL_TEST_HARNESS.md) | Upstream compiler/render verification guide; test paths refer to the application source repository. |
-| [`docs/IEDL_GENERATION_EVAL.md`](docs/IEDL_GENERATION_EVAL.md) | Upstream recipe-generation eval guide and interpretation. |
 | [`docs/server-agent.md`](docs/server-agent.md) | Server-agent architecture, datasets, query operations, systemd deployment, and security. |
 | [`examples/install-agent.sh`](examples/install-agent.sh) | Install a persistent server agent under systemd. |
 | [`examples/sysmetrics.sh`](examples/sysmetrics.sh) | Linux/macOS CPU, memory, and disk samples as JSON lines. |
