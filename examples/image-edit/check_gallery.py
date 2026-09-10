@@ -2,6 +2,7 @@
 """Offline integrity check for the published gallery and its rendered artifacts."""
 import argparse
 import hashlib
+import re
 from html.parser import HTMLParser
 import json
 from pathlib import Path
@@ -51,4 +52,14 @@ class Links(HTMLParser):
             assert (ROOT / unquote(url.path)).is_file(), value
 
 Links().feed((ROOT / 'index.html').read_text())
+markdown = (ROOT/'GALLERY.md').read_text()
+assert markdown.count('[Recipe](') == len(cases)
+expected = sum(not c['remote'] and report['cases'].get(c['id'], {}).get('status') == 'Rendered' for c in cases)
+assert markdown.count('![Edited:') == expected
+for target in re.findall(r'\]\(([^)]+)\)', markdown):
+    url = urlsplit(target)
+    if not url.scheme and not url.netloc and url.path:
+        assert (ROOT/unquote(url.path)).is_file(), target
+    elif target.startswith('#'):
+        assert f'name="{target[1:]}"' in markdown, target
 print(f'PASS: {len(cases)} cases, source hashes, artifacts, command coverage, and HTML links')

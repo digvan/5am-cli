@@ -2,7 +2,7 @@
 
 Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create video/audio pipelines, and automate work through AI agents and managed workflows. This repository contains public documentation, agent skills, and runnable examples; it is not the CLI source distribution.
 
-**New: [IEDL visual field guide](examples/image-edit/README.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
+**New: [IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
 ![A concert photograph edited through IEDL](examples/image-edit/images/stage-balance.jpg)
 

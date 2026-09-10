@@ -1,5 +1,7 @@
 # IEDL visual field guide
 
+**[Browse the visual gallery directly on GitHub →](GALLERY.md)** — side-by-side original/edited images for every rendered example, grouped by category, with recipe and mask links.
+
 Open [`index.html`](index.html) after cloning this repository. GitHub displays HTML source; to see the interactive gallery, open the local file in a browser or serve the repository:
 
 ```sh
@@ -7,7 +9,7 @@ python3 -m http.server 8000
 # Visit http://localhost:8000/examples/image-edit/
 ```
 
-The page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Imported-mask and magic-wand examples also include replay bundles containing their raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
+The interactive HTML page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Imported-mask and magic-wand examples also include replay bundles containing their raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
 
 ## Build a gallery with your own image
 
@@ -68,7 +70,7 @@ Recipes use relative geometry, but the hand-drawn regions are specific to this c
 
 ## Regenerate the gallery
 
-The builder is Python standard library only. From this directory:
+Every build writes both `index.html` and `GALLERY.md`. Markdown uses the same saved images without additional rendering; upload the entire generated directory to a GitHub repository to view it there. The builder is Python standard library only. From this directory:
 
 ```sh
 python3 build_gallery.py --render --overwrite

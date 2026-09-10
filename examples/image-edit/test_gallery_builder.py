@@ -66,5 +66,10 @@ class BuilderTests(unittest.TestCase):
         self.assertIn('Your photograph. Your experiments.',page)
         self.assertIn('Not rendered',page)
         self.assertIn('They do not identify subjects',page)
+        markdown=(self.destination/'GALLERY.md').read_text()
+        self.assertIn('Not rendered',markdown)
+        self.assertNotIn('![Edited:',markdown)
+        self.assertEqual(markdown.count('[Recipe]('),113)
+
 
 if __name__=='__main__': unittest.main()
