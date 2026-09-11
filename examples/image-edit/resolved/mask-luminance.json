@@ -192,13 +192,13 @@
     "backend": "webgl2+cpu/simd",
     "text": "system sans-serif",
     "runtime": "iedl-1.1.0",
-    "sha256:worker.js": "6d5e4520f8b36cec5977924682cd57eadfbbdce9747d7092ad208c0f0358ea8d",
+    "sha256:worker.js": "cf942f7d3655fd0b3621b36bbe02922d6bb7fd559cb7eeb6938b5de912220f6b",
     "sha256:kernels-scalar.wasm": "3c632c6a5f57440cc8d6fd309d7b875d415f1b70f6e074bc7c029c8fa9201a31",
     "sha256:kernels-simd.wasm": "faf1123d5ec723574c4954b45fe39133bcc454b7c08c074526f2a10a97a565c0",
-    "sha256:runtime.js": "0510aeea25f1831e62e9dd5c8c0f88907d80246292f6e55d5cfbdca2594c4fb5",
-    "sha256:core.mjs": "4d25ca1c4f185783a45ae8a580cd901e9c6dc236c25f6088b9d71c8e873ce461",
-    "sha256:runner.mjs": "223d4487e43b3eeb41c1c17188783216e9c55d05ae25a22493d0fd44b2947cf6",
-    "sha256:browser.mjs": "51b2db0a783e415988ea2f29ffe1ba6a02530d8ce6c4773c4cb4e1b45f0311a6",
+    "sha256:runtime.js": "c87cd70fcc551a45e9f2fa0035af8f7b448654581111a55824d8340a56b64d50",
+    "sha256:core.mjs": "cfce50532eac450842bb6ee5813333bf945887d8cb36b7a288f3e12087de6e99",
+    "sha256:runner.mjs": "01b3ea455579e2a23f0a70f01cbc96a1082579dd73f5956329948840764e0078",
+    "sha256:browser.mjs": "5cb548cb8c53a2446d7cdf31c0d8a306acb39adf69eef58b02b6df4f2760c4aa",
     "sha256:package.json": "cce6f8c1916d2248267b4182989f5e7184c405e8d784c8e9420082a02cc39353"
   }
 }
