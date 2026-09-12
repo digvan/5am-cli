@@ -4,11 +4,13 @@ Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create vide
 
 **New: [IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
-The checked-in gallery previews runtime **1.1** ahead of deployment, including conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-11-preview) before replaying its resolved bundles.
+The gallery uses **`iedl-1.1.0`**, released with CLI **v1.3.0** as the optional image-edit runtime. It includes conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-compatibility) before replaying its resolved bundles.
 
 ![A concert photograph edited through IEDL](examples/image-edit/images/stage-balance.jpg)
 
 ## Install and update
+
+**Current release: [v1.3.0](https://cli.5am.app/cli/v1.3.0/manifest.json)** (September 12, 2026). This release adds IEDL image editing with an optional runtime, AI-credit access for Gemini commands, and concurrent image-edit batches.
 
 macOS and Linux:
 
@@ -39,9 +41,10 @@ Choose scopes for the work: server-agent queries can use `read`; library writes 
 
 ## Image editing: generate → validate → render
 
-Image editing is optional. Install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release:
+Image editing is optional. Update the CLI first, install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release. To upgrade an existing installation and enable image editing:
 
 ```sh
+5am update
 5am update --runtime-only
 5am media image-edit generate \
   --brief "Warm portrait, gentle contrast, 4:5 crop. Local adjustments only; no AI selections or generative edits." \
@@ -70,13 +73,13 @@ IEDL supports adjustments, curves/HSL, masks, editable layers, retouching, liqui
 - AI selections and masked generative edits use `--media-id` instead of `--input`, with authenticated backend access. They may incur credits. Do not automatically repeat an ambiguous paid edit.
 - Rendering writes local files. Uploading them is a separate operation. Existing output files require `--overwrite`.
 
-Directory batches are serial and nonrecursive, accept PNG/JPEG/WebP, save resolved sidecars, and report per-image failures:
+Directory batches are nonrecursive and accept PNG/JPEG/WebP. They share one Chrome browser and process up to four images in isolated contexts by default, saving resolved sidecars and per-image results:
 
 ```sh
 5am media image-edit batch portrait.iedl --input-dir photos --output-dir edited --report batch.json
 ```
 
-Use local-only recipes for directory batches. `--media-id` is not supported by `batch`. Inspect the report before publishing results; the command exits nonzero if any image fails.
+Set `--concurrency 1` through `4` to control memory and CPU use; `--concurrency 1` processes images serially. Use local-only recipes for directory batches. `--media-id` is not supported by `batch`. Results remain in input order, and processing continues after per-image failures. Inspect the report before publishing results; the command exits nonzero if any image fails.
 
 ## Make your own visual gallery
 

@@ -11,9 +11,11 @@ python3 -m http.server 8000
 
 The interactive HTML page has category/search filters, before/after sliders, copyable recipes, rendered image downloads, grayscale masks, and resolved reports. Mask examples also include replay bundles containing any required raster assets. No external scripts, fonts, analytics, or API calls are needed to view it.
 
-## Runtime 1.1 preview
+<a id="runtime-11-preview"></a>
 
-These checked-in renders and resolved bundles use **`iedl-1.1.0`**, published here for review ahead of runtime deployment. Until that release is available, the installed runtime may still be 1.0: `5am update --runtime-only` cannot install an unpublished version. The gallery itself needs no runtime to view. Reproduction requires the matching 1.1 runtime; developers with that build can supply `--runtime /path/to/runner.mjs`.
+## Runtime compatibility
+
+These checked-in renders and resolved bundles use **`iedl-1.1.0`**, available in the optional runtime shipped with CLI **[v1.3.0](https://cli.5am.app/cli/v1.3.0/manifest.json)**. Run `5am update` followed by `5am update --runtime-only` to upgrade the CLI and install its matching runtime. The gallery itself needs no runtime to view; reproducing the renders and replaying the resolved bundles require the matching 1.1 runtime. Use `--runtime /path/to/runner.mjs` when managing that runtime explicitly.
 
 White balance now uses linear-light RGB gains that preserve black, with shared CPU/GPU behavior. Automatic WB uses stricter candidate selection, consistency checks, and at most half strength. For this concert photograph it intentionally applies **temperature 0 / tint 0**, reporting mixed-color evidence instead of introducing the previous green cast. Inspect the linked resolved report for measurements.
 
