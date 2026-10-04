@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "title": "Motion from your terminal",
+  "format": "9:16",
+  "duration": 12,
+  "tempo": 120,
+  "seed": 11,
+  "palette": {
+    "bg": "#060D0C",
+    "ink": "#060D0C",
+    "paper": "#EFEAE0",
+    "accent": "#EA580C",
+    "accent2": "#5EEAD4",
+    "muted": "#0D9488"
+  },
+  "fonts": {
+    "display": "inter",
+    "body": "inter",
+    "mono": "jetbrains-mono"
+  },
+  "sound": {
+    "style": "house"
+  },
+  "hud": false,
+  "scenes": [
+    {
+      "id": "hook",
+      "beats": 4,
+      "bg": "bg",
+      "layers": [
+        {
+          "kind": "text",
+          "text": "MOTION",
+          "dy": -92,
+          "unitEnter": "rise",
+          "size": 122
+        },
+        {
+          "kind": "text",
+          "text": "FROM",
+          "start": 1,
+          "dx": -22,
+          "dy": 100,
+          "align": "right",
+          "maxWidth": 0.47,
+          "unitEnter": "tumble",
+          "size": 122,
+          "highlight": {
+            "word": 0,
+            "style": "brackets"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CODE",
+          "start": 2,
+          "dx": 40,
+          "dy": 100,
+          "align": "left",
+          "maxWidth": 0.47,
+          "unitEnter": "from-right",
+          "size": 122,
+          "dot": {
+            "color": "paper",
+            "at": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "frames",
+      "beats": 4,
+      "bg": "accent",
+      "enter": {
+        "type": "circle",
+        "beats": 0.6
+      },
+      "layers": [
+        {
+          "kind": "counter",
+          "from": 0,
+          "to": 720,
+          "format": "0",
+          "label": "FRAMES, ONE COMMAND",
+          "size": 240,
+          "y": -0.06
+        },
+        {
+          "kind": "lines",
+          "pattern": "corners",
+          "beats": 1
+        }
+      ]
+    },
+    {
+      "id": "rings",
+      "beats": 4,
+      "bg": "paper",
+      "layers": [
+        {
+          "kind": "rings",
+          "rows": [
+            {
+              "text": "GENERATE • REVISE • LINT"
+            },
+            {
+              "text": "STILLS • SHEETS • RENDERS",
+              "outline": true
+            },
+            {
+              "text": "JSON IN • MP4 OUT"
+            }
+          ],
+          "collapse": [
+            2.9,
+            3.96
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dial",
+      "beats": 4,
+      "bg": "muted",
+      "enter": {
+        "type": "wipe",
+        "beats": 0.5
+      },
+      "layers": [
+        {
+          "kind": "dial",
+          "to": 100,
+          "label": "RENDERED",
+          "fill": [
+            0.5,
+            3.2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ribbon",
+      "beats": 4,
+      "bg": "accent2",
+      "layers": [
+        {
+          "kind": "path",
+          "preset": "infinity",
+          "draw": [
+            0,
+            1.9
+          ],
+          "erase": [
+            2.4,
+            3.7
+          ]
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "beats": 4,
+      "bg": "paper",
+      "layers": [
+        {
+          "kind": "text",
+          "text": "5AM",
+          "size": 182,
+          "tracking": -0.05,
+          "dy": -60,
+          "dot": {
+            "hop": true
+          },
+          "case": "none"
+        },
+        {
+          "kind": "text",
+          "text": "MOTION FROM THE TERMINAL",
+          "font": "body",
+          "weight": 700,
+          "size": 19,
+          "tracking": 0.42,
+          "dy": 110,
+          "start": 2,
+          "split": "chars",
+          "unitEnter": "fade",
+          "stagger": 0.018
+        },
+        {
+          "kind": "text",
+          "text": "GENERATE  ·  LINT  ·  RENDER",
+          "font": "mono",
+          "weight": 500,
+          "size": 11,
+          "tracking": 0.18,
+          "dy": 158,
+          "start": 2.45,
+          "split": "chars",
+          "unitEnter": "type",
+          "stagger": 0.008,
+          "opacity": 0.5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "title": "Live tonight",
+  "format": "9:16",
+  "duration": 10,
+  "tempo": 120,
+  "seed": 31,
+  "palette": {
+    "bg": "#060D0C",
+    "ink": "#060D0C",
+    "paper": "#EFEAE0",
+    "accent": "#EA580C",
+    "accent2": "#5EEAD4",
+    "muted": "#0D9488"
+  },
+  "fonts": {
+    "display": "inter",
+    "body": "inter",
+    "mono": "jetbrains-mono"
+  },
+  "sound": {
+    "style": "pulse"
+  },
+  "hud": false,
+  "photos": [
+    {
+      "id": "p1",
+      "src": "file:../image-edit/source.jpg",
+      "width": 640,
+      "height": 960,
+      "description": "A singer in a white dress with gold embroidery sings into a microphone on an outdoor stage at night, a band and purple stage lights behind her."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "photo",
+      "beats": 8,
+      "bg": "bg",
+      "layers": [
+        {
+          "kind": "image",
+          "photo": "p1",
+          "width": 1000,
+          "height": 1240,
+          "y": -0.27,
+          "fit": "cover",
+          "focus": [
+            0.5,
+            0.4
+          ],
+          "zoom": [
+            [
+              0,
+              1
+            ],
+            [
+              8,
+              1.12
+            ]
+          ],
+          "grade": "mono",
+          "amount": [
+            [
+              0,
+              1
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              6,
+              0,
+              "inOut"
+            ]
+          ],
+          "radius": 0
+        },
+        {
+          "kind": "text",
+          "text": "LIVE",
+          "size": 240,
+          "y": 0.74,
+          "unitEnter": "drop",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "id": "when",
+      "beats": 4,
+      "bg": "accent",
+      "enter": {
+        "type": "circle",
+        "beats": 0.6
+      },
+      "layers": [
+        {
+          "kind": "text",
+          "text": "SATURDAY",
+          "dy": -92,
+          "unitEnter": "rise",
+          "size": 122
+        },
+        {
+          "kind": "text",
+          "text": "OPEN",
+          "start": 1,
+          "dx": -22,
+          "dy": 100,
+          "align": "right",
+          "maxWidth": 0.47,
+          "unitEnter": "tumble",
+          "size": 122,
+          "highlight": {
+            "word": 0,
+            "style": "brackets"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "AIR",
+          "start": 2,
+          "dx": 40,
+          "dy": 100,
+          "align": "left",
+          "maxWidth": 0.47,
+          "unitEnter": "from-right",
+          "size": 122,
+          "dot": {
+            "color": "paper",
+            "at": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "print",
+      "beats": 4,
+      "bg": "paper",
+      "enter": {
+        "type": "push",
+        "beats": 0.5
+      },
+      "layers": [
+        {
+          "kind": "image",
+          "photo": "p1",
+          "width": 560,
+          "fit": "cover",
+          "y": -0.12,
+          "grade": "golden",
+          "frame": {
+            "at": 1,
+            "mat": 30,
+            "molding": 14
+          },
+          "shadow": true
+        },
+        {
+          "kind": "text",
+          "text": "DOORS AT 8",
+          "size": 96,
+          "y": 0.62,
+          "unitEnter": "rise",
+          "start": 1.5
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "beats": 4,
+      "bg": "bg",
+      "layers": [
+        {
+          "kind": "text",
+          "text": "LIVE",
+          "size": 182,
+          "tracking": -0.05,
+          "dy": -60,
+          "dot": {
+            "hop": true
+          },
+          "case": "none"
+        },
+        {
+          "kind": "text",
+          "text": "TICKETS AT THE DOOR",
+          "font": "body",
+          "weight": 700,
+          "size": 19,
+          "tracking": 0.42,
+          "dy": 110,
+          "start": 2,
+          "split": "chars",
+          "unitEnter": "fade",
+          "stagger": 0.018
+        }
+      ]
+    }
+  ]
+}

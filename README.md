@@ -2,7 +2,9 @@
 
 Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create video/audio pipelines, and automate work through AI agents and managed workflows. This repository contains public documentation, agent skills, and runnable examples; it is not the CLI source distribution.
 
-**New: [IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
+**New in v1.5.0: [motion graphics with `5am motion`](docs/motion.md)**: films from a brief (kinetic type, counters, charts, your photos and clips, a narrator) by Motion Studio's engine, with a live preview, free contact sheets and [four sample films](examples/motion/README.md).
+
+**[IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
 The gallery uses **`iedl-1.1.0`**, released with CLI **v1.3.0** as the optional image-edit runtime. It includes conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-compatibility) before replaying its resolved bundles.
 
@@ -10,7 +12,7 @@ The gallery uses **`iedl-1.1.0`**, released with CLI **v1.3.0** as the optional 
 
 ## Install and update
 
-**Current release: [v1.3.0](https://cli.5am.app/cli/v1.3.0/manifest.json)** (September 12, 2026). This release adds IEDL image editing with an optional runtime, AI-credit access for Gemini commands, and concurrent image-edit batches.
+**Current release: [v1.5.0](https://cli.5am.app/cli/v1.5.0/manifest.json)** (October 2026). This release adds `5am motion`: motion-graphics films generated from a brief and rendered locally by the same engine as Motion Studio on 5am.app, in the optional runtime it shares with image editing.
 
 macOS and Linux:
 
@@ -37,11 +39,11 @@ For library access, create a personal access token in [Settings → CLI Access T
 5am whoami
 ```
 
-Choose scopes for the work: server-agent queries can use `read`; library writes and AI-credit proxy access require `write`. Local image validation and local-only rendering do not require login. Gemini features use the normal access resolver: AI credits through the metered proxy, or the user's own Gemini key where configured. Proxy refusals are not a reason to bypass account limits.
+Choose scopes for the work: server-agent queries can use `read`; library writes, AI-credit proxy access and Motion exports require `write`. Local image validation and local-only rendering do not require login. Gemini features use the normal access resolver: AI credits through the metered proxy, or the user's own Gemini key where configured. Proxy refusals are not a reason to bypass account limits.
 
 ## Image editing: generate → validate → render
 
-Image editing is optional. Update the CLI first, install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release. To upgrade an existing installation and enable image editing:
+Image editing is optional. Update the CLI first, install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release (the same runtime carries motion graphics). To upgrade an existing installation and enable image editing:
 
 ```sh
 5am update
@@ -92,6 +94,44 @@ python3 examples/image-edit/build_gallery.py \
 
 Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-edit/README.md#build-a-gallery-with-your-own-image) for setup, preview size, selective rendering, and adapting the sample masks.
 
+## Motion graphics: generate → check → render
+
+`5am motion` turns a brief into a motion-graphics film: kinetic type, shapes, counters, dials, charts, 3D point clouds and your own photos and video clips, cut on a beat grid with a composed score and an optional narrator. A film is a small JSON file (a MotionDoc) that you can revise in plain language or edit by hand. It uses the optional runtime above, plus FFmpeg for stills and renders.
+
+```sh
+5am update --runtime-only
+5am motion generate --brief "A 10 second launch film for a coffee app: bold type, a counter to 10,000 cups, an end card" \
+  --format 9:16 --duration 10 -o coffee.motion.json
+5am motion lint coffee.motion.json                     # free: layout issues, size, fonts
+5am motion sheet coffee.motion.json -o coffee.png      # free contact sheet
+5am motion revise coffee.motion.json "warmer colours, slower ending" --in-place
+5am motion narrate coffee.motion.json --script "Mornings, sorted."   # a voice track beside the film
+5am motion preview coffee.motion.json                  # free: plays in your browser, updates on save
+5am motion render coffee.motion.json -o coffee.mp4 --dry-run    # price and checks, no charge
+5am motion render coffee.motion.json -o coffee.mp4 --fps 30     # 20 AI credits
+```
+
+- **Costs.** `generate` and `revise` use model quota: one call, or two when the
+  layout needs a repair; `narrate` makes one speech call. `lint`, `stills`, `sheet`
+  and `preview` are free. Each MP4 export
+  costs 20 AI credits on every account, including accounts with their own Gemini key.
+- **No charge for a film that cannot render.** Every font, photo and clip loads
+  before anything is charged; the charge comes after the last frame.
+- **A refused charge keeps the render.** If the charge is refused, the MP4 is kept
+  for 24 hours, and `5am motion finalize <requestId>` pays for it once you have
+  bought credits (`5am credits buy` makes a payment link you can pay on your phone,
+  without signing in, and waits for it).
+  Never render again to recover: that is a second export.
+- **Your photos and clips.** `--photo` takes files (JPEG, PNG, WebP, GIF, HEIC) or
+  `media:<id>` from your library, up to 12; `--clip` takes videos the same way, up
+  to 4 (clips Chrome cannot play are converted with FFmpeg).
+- **Speed.** About 28 frames a second at 1080x1920 on a recent Mac: a 15-second
+  film at 60 fps renders in about 30 seconds.
+
+![Contact sheet of a sample film](examples/motion/sheets/terminal-launch.png)
+
+See the [motion guide](docs/motion.md) for every command, the film format and troubleshooting, and [`examples/motion/`](examples/motion/README.md) for four sample films: the 5AM showreel, a vertical launch film, a square data story and a photo film.
+
 ## What's here
 
 | Path | Purpose |
@@ -99,6 +139,8 @@ Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-e
 | [`SKILL.md`](SKILL.md) | Current CLI command guidance for agents and workflow generation. |
 | [`skills/iedl/SKILL.md`](skills/iedl/SKILL.md) | Focused IEDL authoring instructions, with the portable language specification. |
 | [`docs/iedl.md`](docs/iedl.md) | IEDL grammar, capabilities, presets, coordinate semantics, and runtime contract. |
+| [`docs/motion.md`](docs/motion.md) | `5am motion`: commands, costs, clips, narration, the preview, the export sequence, the film format, and troubleshooting. |
+| [`examples/motion/`](examples/motion/README.md) | Four sample MotionDoc films (16:9, 9:16, 1:1, one with a photo) with contact sheets. |
 | [`examples/image-edit/`](examples/image-edit/README.md) | Interactive HTML field guide, sample image, 113 recipes, real renders, masks, reports, and rebuild script. |
 | [`docs/server-agent.md`](docs/server-agent.md) | Server-agent architecture, datasets, query operations, systemd deployment, and security. |
 | [`examples/install-agent.sh`](examples/install-agent.sh) | Install a persistent server agent under systemd. |
@@ -121,6 +163,8 @@ For direct IEDL authoring, provide the entire [`skills/iedl/`](skills/iedl/SKILL
 **Workflow Python should delegate recipe creation to `5am media image-edit generate --brief …`.** It then validates and renders through subprocess argument lists, checking each exit status. It does not need the full IEDL spec. When a user supplies an approved recipe, preserve it unchanged rather than generating a replacement.
 
 Managed runs need an explicitly provisioned image-edit runner. Machine size alone does not install Node, Chromium, or the runtime. Missing capabilities should produce diagnostics, not dependency installation or a substitute rendering engine during the run.
+
+For motion films, an agent should iterate on the film with `lint`, `sheet` and `revise` (free or cheap) and `render` once at the end; a failed export is recovered with `5am motion finalize`, never a second render. `5am motion preview` is for people: it never exits on its own, so scripts look at a film with `sheet`. See [agents and scripts](docs/motion.md#agents-and-scripts).
 
 Most CLI commands return JSON on stdout; progress and errors use stderr. Some commands, such as `--version`, help, and default character chat, return text. Check the individual command contract in the skill rather than treating every stdout stream as JSON.
 

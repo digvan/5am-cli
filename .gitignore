@@ -65,3 +65,8 @@ venv/
 !examples/image-edit/images/*.webp
 !examples/image-edit/masks/*.png
 !examples/image-edit/assets/*.png
+
+# The motion samples' contact sheets and animated previews
+# (examples/motion/README.md rebuilds them). The MP4s live on the CDN.
+!examples/motion/sheets/*.png
+!examples/motion/previews/*.webp

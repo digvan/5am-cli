@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "title": "Quarter in motion",
+  "format": "1:1",
+  "duration": 10,
+  "tempo": 120,
+  "seed": 23,
+  "palette": {
+    "bg": "#060D0C",
+    "ink": "#060D0C",
+    "paper": "#EFEAE0",
+    "accent": "#EA580C",
+    "accent2": "#5EEAD4",
+    "muted": "#0D9488"
+  },
+  "fonts": {
+    "display": "inter",
+    "body": "inter",
+    "mono": "jetbrains-mono"
+  },
+  "sound": {
+    "style": "minimal"
+  },
+  "hud": false,
+  "scenes": [
+    {
+      "id": "bars",
+      "beats": 4,
+      "bg": "bg",
+      "layers": [
+        {
+          "kind": "graph",
+          "style": "bars",
+          "values": [
+            12,
+            19,
+            27,
+            41
+          ],
+          "labels": [
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4"
+          ],
+          "draw": [
+            0.3,
+            1.8
+          ]
+        }
+      ]
+    },
+    {
+      "id": "growth",
+      "beats": 4,
+      "bg": "accent",
+      "enter": {
+        "type": "push",
+        "beats": 0.5
+      },
+      "layers": [
+        {
+          "kind": "counter",
+          "from": 0,
+          "to": 242,
+          "format": "0%",
+          "label": "YEAR OVER YEAR",
+          "size": 240,
+          "y": -0.06
+        },
+        {
+          "kind": "lines",
+          "pattern": "corners",
+          "beats": 1
+        }
+      ]
+    },
+    {
+      "id": "curve",
+      "beats": 4,
+      "bg": "paper",
+      "layers": [
+        {
+          "kind": "graph",
+          "curves": [
+            "linear",
+            "inOut"
+          ],
+          "draw": [
+            0.3,
+            1.2
+          ],
+          "morphAt": [
+            2
+          ],
+          "playhead": [
+            2.48,
+            3.7
+          ]
+        }
+      ]
+    },
+    {
+      "id": "goal",
+      "beats": 4,
+      "bg": "muted",
+      "enter": {
+        "type": "circle",
+        "beats": 0.6
+      },
+      "layers": [
+        {
+          "kind": "dial",
+          "to": 87,
+          "label": "OF THE ANNUAL GOAL",
+          "fill": [
+            0.5,
+            3.2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "beats": 4,
+      "bg": "paper",
+      "layers": [
+        {
+          "kind": "text",
+          "text": "2026",
+          "size": 182,
+          "tracking": -0.05,
+          "dy": -60,
+          "dot": {
+            "hop": true
+          },
+          "case": "none"
+        },
+        {
+          "kind": "text",
+          "text": "OUR BEST QUARTER YET",
+          "font": "body",
+          "weight": 700,
+          "size": 19,
+          "tracking": 0.42,
+          "dy": 110,
+          "start": 2,
+          "split": "chars",
+          "unitEnter": "fade",
+          "stagger": 0.018
+        }
+      ]
+    }
+  ]
+}

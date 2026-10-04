@@ -1,6 +1,6 @@
 ---
 name: 5am
-description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate Veo video clips, concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), render a podcast WAV into a video (waveform overlay OR Veo b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music".
+description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate Veo video clips, concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), make motion graphics films from a brief (kinetic type, counters, charts, photos; Motion Studio's engine; free stills and contact sheets, 20-credit MP4 export), render a podcast WAV into a video (waveform overlay OR Veo b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music", "motion graphics", "kinetic typography", "animated title video", "launch film", "motion design", "5am motion", "motion studio".
 when_to_use: User mentions the `5am` CLI, the 5AM Media Hub, 5am.app, or wants to perform any media-hub action from the terminal. Also invoke when the user pastes a `5am ...` command and asks for help, or asks to script against the hub.
 ---
 
@@ -12,6 +12,7 @@ The `5am` binary is a Go CLI for the 5AM Media Hub (`https://5am.app`). It is **
 
 - **stdout = JSON, stderr = progress/footers.** Always pipe stdout to `jq` when consuming output. Never grep stderr for results.
 - **Exit codes are meaningful** — branch on them: `0` ok, `1` generic, `2` auth (401/403/missing token), `3` validation (4xx), `4` network/timeout, `5` server (5xx), `6` CLI version below the supported floor (run `5am update`).
+- **Errors are JSON on stderr**: `{"error", "category", "hint"}`. Category `credits` means AI credits stopped the command (exit `3` when they ran out, `5` when credits are paused platform-wide); its `credits` object says `reason` (`exhausted` | `paused`), `needed` / `available` (credits, when known) and `export: true` for an export, which a Gemini key does not pay for. Tell the user; never retry it in a loop.
 - **Auth is required for almost every command.** Local image-edit validation, inspection, and local-only rendering/batching need no login; recipe generation uses normal Gemini access, and library-backed AI edits require auth. If `5am whoami` fails with exit 2, run `5am login` (or set `5AM_TOKEN`) before anything else.
 - **Pass `--yes` for destructive ops in scripts.** Without it, `delete` commands prompt.
 - **Use `--pretty` only for human display.** Never parse `--pretty` output.
@@ -91,7 +92,7 @@ Mint tokens in the web UI: **Settings → CLI Access Tokens → Generate token**
 5am albums get <albumId>
 5am albums create --name "Trip 2026" --description "..."
 5am albums update <albumId> --name "..." --description "..."
-5am albums delete <albumId> --yes                  # cascades to media; --yes required in scripts
+5am albums delete <albumId> --yes                  # admin scope; refused (400, exit 3) while the album has media; --yes required in scripts
 ```
 
 **`list` vs `list-shared`** — they're distinct endpoints, not a flag on one
@@ -130,8 +131,9 @@ cat shares.json | 5am albums share <albumId> --shares-file -
 # Revoke
 5am albums unshare <albumId> --user <email> --yes              # revoke a share (direct or pending)
 
-# Public link — separate subcommands. Returns publicShareToken; usable as
-# https://5am.app/album/<id>?shareToken=<token>
+# Public link — separate subcommands. Returns publicUrl, the link to post
+# (https://5am.app/album/<id>?shareToken=<token>), plus publicShareToken.
+# Viewers without a 5AM account sign up (free) before the album opens.
 5am albums public-link enable <albumId>
 5am albums public-link disable <albumId>
 5am albums public-link get <albumId>
@@ -161,7 +163,7 @@ Sharing nuances:
 5am media list --added-after 2026-08-01
 5am media list --added-after 2026-07-02 --added-before 2026-08-01 --type image
 
-# Library-wide listing (no --album) is PAGED: 20 per call by default. A bare
+# Listing is PAGED, with or without --album: 20 per call by default. A bare
 # `media list` returns ONLY the newest 20 — a script that filters the whole
 # library client-side over it silently misses the rest. Prefer the date
 # window above to narrow server-side; to walk more, pass --limit (server
@@ -512,7 +514,7 @@ keys").
 5am media generate text --prompt "Summarize in one sentence: ..."          # → stdout
 SUMMARY=$(5am media generate text --prompt "...")                          # capture
 5am media generate text --prompt "..." --output notes.txt --yes            # → file
-5am media generate text --prompt "..." --model gemini-2.5-pro              # pick model
+5am media generate text --prompt "..." --model gemini-3.1-pro-preview      # pick model
 5am media generate text --prompt "Tell me about this instrument" --image organ.jpg  # multimodal (repeatable --image)
 5am media generate text --prompt "Summarize this lecture" --file lecture.mp3        # audio/video/PDF via --file (Files API, deleted after)
 
@@ -530,8 +532,10 @@ printf '%s' "$LONG_PROMPT" | 5am media generate text --prompt -
 > answer, which looks like a working pipeline and is not.
 
 Models (`--model`, default `gemini-3-flash-preview`): `gemini-3-flash-preview`
-(fast), `gemini-3.7-flash` (newest flash), `gemini-3.5-flash-lite` (lightest),
-`gemini-2.5-flash`, `gemini-2.5-pro` (strongest). This backs the
+(fast), `gemini-3.7-flash` (flash), `gemini-3.8-flash` (newest flash),
+`gemini-3.5-flash-lite` (lightest), `gemini-3.1-flash-lite`,
+`gemini-3.1-pro-preview` (strongest). Anything else is refused before the
+API call (`internal/textmodels.Supported`). This backs the
 transcript-driven scene prompts in `scripts/podcast_to_video.py` — it turns a
 podcast transcript into per-scene b-roll prompts so the video tracks the
 conversation.
@@ -752,12 +756,82 @@ stereo MP4 with `+faststart`. JSON result: `inputs`, `output`, dims,
 `ffmpeg`, and `uploadedToAlbum` (when uploaded). ffmpeg progress streams to
 stderr — rely on the JSON + exit code.
 
+## Motion Studio films — `5am motion`
+
+Motion graphics from a brief: kinetic type, shapes, counters, charts and the
+user's photos, cut on a beat grid with a composed score, by the web Motion
+Studio's own engine. A film is a MotionDoc JSON file (`*.motion.json`). Needs the
+image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
+`sheet` and `render` also need Chrome/Chromium and ffmpeg (so does `--clip`).
+
+```sh
+5am motion generate --brief "A 10 second launch film for a coffee app" --format 9:16 --duration 10 -o coffee.motion.json
+5am motion revise coffee.motion.json "warmer colours, slower ending" -o coffee-v2.motion.json   # or --in-place
+5am motion narrate coffee-v2.motion.json --script "Mornings, sorted. Order ahead." --voice Kore
+5am motion lint coffee-v2.motion.json
+5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
+5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills
+5am motion render coffee-v2.motion.json -o coffee.mp4 --dry-run
+5am motion render coffee-v2.motion.json -o coffee.mp4 --fps 30 --new-album "Films"
+5am motion finalize <requestId>
+```
+
+| Command | Costs | Prints |
+|---|---|---|
+| `generate`, `revise` | Gemini access: 1 call, 2 with a layout repair | `output` (the film file), `title`, `format`, `duration`, `scenes`, `photos`, `calls`, `repaired`, `fixes`, `issues`, `warnings` |
+| `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
+| `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `frames`, `width`, `height`, `fonts`, `hash` |
+| `stills` / `sheet` | free (watermarked) | `files` / `output`, `frames` |
+| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
+| `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of renders waiting |
+| `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
+| `fonts` | free | `dir`, `fonts`, `bytes` |
+
+Agent rules:
+- **Iterate on the film, not the MP4.** `lint` and `sheet` are free; use `revise`
+  for changes and `render` once at the end. Look at a sheet before rendering: the
+  lint cannot see contrast.
+- **`fixes > 0`** after `generate` is worth a `revise` that names the issues; the
+  film still renders.
+- **Never render twice to recover a failure.** `render` loads every font and photo
+  before charging (a refusal at that point renders nothing). If the final charge
+  is refused, the MP4 is kept for 24 hours and the error names
+  `5am motion finalize <requestId>`: run that after the user buys credits. A
+  second `render` is a second export.
+- **Photos:** `--photo <file>` (JPEG, PNG, WebP, GIF, HEIC) or `--photo media:<id>`,
+  up to 12. On `revise`, `--photo` REPLACES the film's photos. Local photos are
+  stored as `file:<path relative to the film>`: keep them beside the film.
+  Local photos are described with Gemini once (cached) unless `--no-describe`.
+- **Video clips:** `--clip <file>` or `--clip media:<id>`, up to 4, on `generate`
+  and `revise` (where it REPLACES the film's clips). Needs the server's video flag
+  (`video clips in Motion films are not enabled on this server` otherwise). Clips
+  Chrome cannot decode get a cached ffmpeg proxy automatically.
+- **Narration:** `narrate` writes `<film>.narration.wav` + `.narration.json` beside
+  the film; lint, stills, sheet, preview and render use them (`--no-narration` to
+  leave them out). Settle the film's length first: a take longer than the film is
+  refused, never cut (about 45 to 65 words per 30 s). A new take means a new export
+  hash. After `revise --in-place` the old take still plays: narrate again with
+  `--overwrite` if the words changed.
+- **Formats** 16:9, 9:16, 1:1; **duration** 6 to 60 s; `--fps` 60 or 30;
+  `--resolution` 1080p or 1440p. A 15-second film renders in about 30 s at 60 fps
+  (about 28 frames a second at 1080x1920 on a recent Mac; slower on small machines).
+- **Tokens:** `render` needs write scope; an AI character's token is refused for
+  exports even with write scope.
+- **Cloud workflow runs** have the runtime and every font preinstalled
+  (`FIVEAM_MOTION_FONTS`); render there like anywhere else.
+- **Not supported:** Ad Maker's unmarked export (every CLI render carries the
+  "Made with 5AM" mark), sending a film to the web studio.
+
+Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/motion.md
+
 ## API keys (third-party providers)
 
 Stored encrypted server-side; used by `media generate` and the local generation skills.
 
 ```sh
 5am keys list                          # redacted, plus gemini_access / ai_credits (below)
+5am credits                            # the AI credit balance and the packs on sale
+5am credits buy --pack <id> --no-wait # a payment link for the user (no sign-in needed to pay)
 5am keys set gemini <KEY>              # → {"provider":"gemini","status":"updated","stored_locally":true}
 5am keys set openai <KEY>
 5am keys delete gemini --yes           # → {"provider":"gemini","status":"deleted"}
@@ -788,16 +862,44 @@ reports the verdict:
 (`cli_read_scope`: this CLI token has read scope and cannot obtain a token
 that spends money, so create one with write scope or set your own key;
 `exhausted`: buy credits at https://5am.app/settings#ai-credits or set a
-key; `paused` / `credits_disabled`: set a key). Amounts are AI credits,
+key; `paused`: credits are paused platform-wide, set a key or wait;
+`credits_disabled`: set a key). Amounts are AI credits,
 never dollars: the `*_micros` fields are the raw micro-dollars for scripts,
 the `*_credits` fields the same amounts in credits (1 credit =
 `credit_micros` micro-dollars, whole credits rounded down, thousands
 grouped), and `summary` the line a person reads; `--pretty` prints that
-line. A command that runs out of credits mid-way fails with "not enough AI
-credits: this needs about 800 and you have 480" (the need rounds up, the
-balance down) or, without the amounts, "your AI credits are used up"; some
-models are BYOK-only and answer "this feature is not available on AI
-credits".
+line. A command that runs out of credits mid-way fails with category
+`credits` (see "Operating principles") and "not enough AI credits: this needs
+about 800 credits and you have 480 credits: buy credits with '5am credits
+buy' …" (the need rounds up, the balance down) or, without the amounts, "your
+AI credits are used up"; some models are BYOK-only and answer "this feature is
+not available on AI credits".
+
+**Buying credits.** `5am credits` prints the balance (`ai_credits`, the same
+shape as above), the access verdict and the `packs` on sale (`id`, `credits`,
+`price_usd`: the only dollars anywhere). `5am credits buy` makes a **payment
+link** (`https://5am.app/pay#…`) for one pack (`--pack ai_pack_20` or
+`--pack 20000`; default the smallest). The user opens it on any device and
+pays **without signing in** (a card, or a wallet where offered); it lasts 30 minutes
+and the credits always go to this account. Nobody is charged until someone
+pays on that page.
+
+**Agents (including ones on their own computer, like Muse):**
+1. Only when the user asks to buy credits, or agrees after a credits stop: say
+   which pack and price (from `5am credits`) and get a yes.
+2. `5am credits buy --pack <id> --no-wait` prints
+   `{"status":"awaiting_payment","url":…,"expires_at":…,"pack":{…},"purchased_total_micros":…}`.
+   **Send `url` to the user**; never open or pay it yourself.
+3. `5am credits wait --since <purchased_total_micros>` waits (35 min by
+   default) and prints `"status":"added"` with `added_credits` and the new
+   balance, or `not_received`. Never run `credits buy` again to wait: that
+   makes a second link. Then continue the work that stopped.
+
+At a terminal with a person present, plain `5am credits buy --pack <id>` does
+both: it opens the link in their browser and waits.
+
+Refused for an AI character's token and inside a workflow run. Purchased credits
+never expire.
 
 ## AI Characters
 
@@ -832,7 +934,7 @@ Characters are server-side AI personas with their own scoped CLI token, optional
   --goals "help me organize my photo library" \
   --skills get_album_images,fetch_media \
   --scopes read,write \
-  --ai-model gemini-2.5-flash
+  --ai-model gemini-3-flash-preview
 
 # Load a long system prompt from a .md or .txt file (max 256 KB).
 # Mutually exclusive with --system-instruction.
@@ -935,8 +1037,8 @@ any test failed.
 
 Three judge modes per test:
 
-- `llm_judge` (default) — rubric sent to Gemini judge (default
-  `gemini-2.5-pro`). Use for open-ended / creative responses.
+- `llm_judge` (default) — rubric sent to a Gemini judge (default
+  `gemini-3.1-pro-preview`; override with `--judge-model` or the suite's `judge_model`). Use for open-ended / creative responses.
 - `tool_calls` — deterministic. Empty list asserts **no** tool calls.
   `args_match` constraints: `equals`, `contains`, `regex`, `exists`.
 - `expected_response` — text overlay: `equals` / `contains` / `regex`.
@@ -1453,6 +1555,22 @@ pets, reactions, b-roll), add `--visual`. It also engages automatically when
 the source has no audio or too little speech, so a silent video still yields
 clips instead of an error.
 
+### "Make a motion graphics film from a brief and export it"
+
+```sh
+5am motion generate --brief "A 12 second launch film for Northside Coffee: bold type, a counter to 10,000 cups, an end card" \
+  --format 9:16 --duration 12 -o launch.motion.json > /tmp/gen.json
+jq '{fixes, issues}' /tmp/gen.json                      # layout issues left after the repair and tidy passes
+5am motion sheet launch.motion.json -o launch.png       # free: look before paying
+5am motion revise launch.motion.json "bigger counter, slower end card" --in-place
+5am motion render launch.motion.json -o launch.mp4 --fps 30 > /tmp/render.json   # 20 AI credits
+jq -r '.output' /tmp/render.json
+```
+
+If `render` exits non-zero after it began charging, read the error: a refused
+final charge keeps the MP4 for `5am motion finalize <requestId>`. Do not run
+`render` again.
+
 ### "Wrap a podcast WAV into a shareable MP4 with a cover and waveform"
 
 ```sh
@@ -1565,8 +1683,8 @@ echo "$RESULT" | jq '{succeeded: .results.succeeded, failed: .results.failed}'
 
 ```sh
 # Will fail (exit 3) if the album has any paid direct shares.
-TOKEN=$(5am albums public-link enable "$ALBUM" | jq -r .publicShareToken)
-echo "Public URL: https://5am.app/album/$ALBUM?shareToken=$TOKEN"
+URL=$(5am albums public-link enable "$ALBUM" | jq -r .publicUrl)
+echo "Public URL: $URL"
 
 # Later: turn it off.
 5am albums public-link disable "$ALBUM"
@@ -1585,11 +1703,13 @@ done
 
 ### "Bulk-delete an album safely"
 
-Albums must be emptied first (server-side safety check on the platform).
+Albums must be emptied first (server-side safety check), and both deletes need an
+admin-scope token. `media list` returns one page, so loop until the album is empty:
 
 ```sh
-5am media list --album "$ALBUM" | jq -r '.[].id' | \
-  xargs -I{} 5am media delete {} --yes
+while IDS=$(5am media list --album "$ALBUM" --limit 100 | jq -r '.[].id') && [ -n "$IDS" ]; do
+  echo "$IDS" | xargs -I{} 5am media delete {} --yes || break
+done
 5am albums delete "$ALBUM" --yes
 ```
 
@@ -1741,7 +1861,7 @@ EOF
 
 ## Gotchas (read these before scripting)
 
-- **`--yes` is required to skip confirmation on `delete` commands.** A non-TTY environment will hang without it.
+- **`--yes` is required to skip confirmation on `delete` commands.** Without it the command prompts on stdin: it blocks if stdin is open, and if stdin is at EOF it declines and exits `0` having deleted nothing, so the exit code cannot tell you the delete was skipped.
 - **Use `media clips` for N shorts; never loop `media highlight`.** `clips` produces all N from one transcription and one model call. Looping `highlight` re-analyses the entire video every iteration — minutes of wasted compute and N× the Gemini spend on a long source — and yields composed reels rather than standalone moments. They are different commands for different jobs, not two speeds of the same one.
 - **`media clips` and `media highlight` share the transcript cache** (`~/.5am/transcripts`). Running both on one video, or re-running either with a different `--brief`, pays for transcription once. Do not add your own caching layer, and do not pass `--force-transcribe` in a loop.
 - **`media clips` needs ffmpeg with libass** for burned-in subtitles and titles. `--style none` and `--visual` skip libass entirely — reach for those if a user's ffmpeg lacks it, rather than telling them to rebuild ffmpeg.
@@ -1752,14 +1872,14 @@ EOF
 - **Characters can only query an ONLINE agent** (daemon polled within 90s). Offline agents fast-fail with `agent_offline` — the character will say so; it is not an error in your setup.
 - **`stats` requires a `number` field; `latest`, `--since`/`--until`, and `prune` require the dataset's `time_field`.** Datasets without a time field still support count/count_distinct/group_by/stats.
 - **Destructive custom skills are refused by the headless agent** (`destructive_refused`) unless it runs with `--allow-destructive` — the interactive confirm prompt from `characters chat` does not exist in the daemon.
-- **Album delete cascades to media. Character delete cascades to token, webhooks, interactions, and memory.** Both are irreversible.
+- **Album delete refuses an album that still has media** (400, exit 3; empty it first) and, like `media delete`, needs an admin-scope token. **Character delete cascades to token, webhooks, interactions, and memory.** Both deletes are irreversible.
 - **Paid direct shares and public-link sharing are mutually exclusive on the same album.** `5am albums public-link enable` returns 400 (exit 3) if the album has any paid direct shares; adding a paid share to an album with public sharing on is also rejected. To switch modes, disable the conflicting side first.
 - **`5am albums unshare --user` is rejected for contributors.** If the recipient uploaded media to the album, the unshare returns 400 with `"You cannot unshare someone who contributed to the album."` Reassign or delete their media first.
 - **`5am albums share` max 20 recipients per call.** Exceeding returns 400. Split into batches in a loop for larger sets.
 - **`characters update --active false` is a soft kill at the token-lookup layer.** Already-issued 15-minute CLI JWTs stay valid until they expire — do not assume "active=false" instantly invalidates active sessions.
 - **`webhooks rotate-secret` invalidates the old secret immediately.** Update the receiver _before_ rotating in production, or you will drop deliveries.
 - **`webhooks test` does not increment `error_count`** and bypasses `is_active` / `allowed_actions` — it tests connectivity, not policy.
-- **`media list` returns paginated JSON.** Inspect for pagination keys; do not assume the first response is the full set when listing large albums.
+- **`media list` returns ONE page as a bare JSON array** (default 20, `--limit` up to 100), with or without `--album`. Step `--offset` until a call returns fewer than `--limit`; the first response is not the full set.
 - **`5am characters skills execute` denials are returned in the JSON body**, not as non-zero exit. Always `jq` for an `error` / `denied` field.
 - **Skills enabled via `--skills` flag use defaults.** If the user wants per-skill config (e.g., a skill that takes its own API key, model, or limits), use `--from-file`.
 - **The CLI does not bundle a tunnel.** `webhooks listen` requires the user to run `ngrok`, `cloudflared`, or equivalent in another terminal first.
@@ -1838,11 +1958,12 @@ replay.
 
 Use actual declared mask IDs for `--mask`. Bundles reuse resolved adjustments and
 stored generated assets; they require the matching source image, not another
-photo. Mask export produces original-space PNG. `batch` is already serial,
-nonrecursive, and accepts PNG/JPEG/WebP; it cannot use `--media-id`. Use local-only
-recipes for directory batches. It continues after per-image failures, writes the
-report, and exits nonzero if any image failed. Inspect the report before publishing
-results; bound memory if orchestrating several CLI processes yourself.
+photo. Mask export produces original-space PNG. `batch` is nonrecursive and accepts
+PNG/JPEG/WebP; it cannot use `--media-id`. It shares one Chrome browser and runs up
+to four images in isolated contexts by default. Set `--concurrency 1` through `4`
+to control memory and CPU use. Use local-only recipes for directory batches. It
+continues after per-image failures, writes results in input order, and exits
+nonzero if any image failed. Inspect the report before publishing results.
 
 Use repeated `--param name=value` and `--asset name=path` for explicit bindings.
 `--timeout 2m` is the default per-image deadline; `--overwrite` explicitly allows
@@ -1864,6 +1985,24 @@ Missing dependencies produce setup guidance. A larger workflow machine alone doe
 not provide them: use an explicitly provisioned image-edit runner.
 No browser/dependency installation during a managed run. Report missing capabilities
 clearly instead of silently substituting a different editing engine.
+
+**Cloud agent VMs and containers** (Linux, often running as root; for example Meta's
+Muse). Outside managed runs, install what the commands ask for:
+
+- **ffmpeg:** `apt install ffmpeg`. Debian and Ubuntu builds include libass and the
+  filters clips, collage, mix and highlight use.
+- **Node.js 20+:** `apt install nodejs` gives 18 on Ubuntu 24.04 and Debian 12; install
+  20 or newer from nodejs.org or NodeSource instead.
+- **Chrome:** on Debian, `apt install chromium`. On Ubuntu, `chromium-browser` is only a
+  Snap stub that does not run in containers; on x86_64 install Google Chrome's .deb
+  (`https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb`, then
+  `apt install ./google-chrome-stable_current_amd64.deb`).
+- **Root is handled.** As root on Linux the runtime launches Chrome with `--no-sandbox`
+  (Chrome refuses to start as root otherwise; the VM or container is the boundary).
+  Do not wrap Chrome to add flags yourself.
+- **Install location:** `curl -fsSL https://cli.5am.app/cli/latest/install.sh |
+  FIVEAM_INSTALL_DIR="$HOME/.local/bin" sh` needs no sudo and keeps the CLI and its
+  runtime beside the agent's own files.
 If the task explicitly states that the runtime is unavailable, produce only the
 requested diagnostic artifact. Do not include speculative generate/render/batch
 branches or treat local PATH/environment probes as deployment confirmation.
