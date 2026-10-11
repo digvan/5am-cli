@@ -1,6 +1,6 @@
 ---
 name: 5am
-description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate Veo video clips, concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), make motion graphics films from a brief (kinetic type, counters, charts, photos; Motion Studio's engine; free stills and contact sheets, 20-credit MP4 export), render a podcast WAV into a video (waveform overlay OR Veo b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music", "motion graphics", "kinetic typography", "animated title video", "launch film", "motion design", "5am motion", "motion studio".
+description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate AI video clips (gemini-omni-1.1-flash, which replaced Veo), concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), make motion graphics films from a brief (kinetic type, counters, charts, photos; Motion Studio's engine; free stills and contact sheets, 20-credit MP4 export), render a podcast WAV into a video (waveform overlay OR AI b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, read the sales pipeline a character keeps and drive its outreach approval queue, run a clip-outreach batch (one personalized Motion clip per prospect from a CSV, drafts staged in the pipeline, reviewed on a local page, sent from the user's own Gmail), or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music", "motion graphics", "kinetic typography", "animated title video", "launch film", "motion design", "5am motion", "motion studio", "5am pipeline", "sales pipeline", "outreach drafts", "approve the draft", "5am outreach", "clip outreach", "a clip for each prospect", "prospects csv", "send from my gmail".
 when_to_use: User mentions the `5am` CLI, the 5AM Media Hub, 5am.app, or wants to perform any media-hub action from the terminal. Also invoke when the user pastes a `5am ...` command and asks for help, or asks to script against the hub.
 ---
 
@@ -196,6 +196,24 @@ Sharing nuances:
 5am media update <mediaId> --clear-tags
 
 5am media delete <mediaId> --yes
+
+# A no-login page for one VIDEO (https://5am.app/c/<token>): the link to send
+# someone without a 5AM account. Private by its token and never indexed.
+5am media public-link enable <mediaId> --title "Clip for Sam" [--preview <gifMediaId>]   # idempotent; prints publicUrl (send that) and previewUrl (the GIF for an email)
+5am media public-link get <mediaId>                 # link, preview, counts (views, opens, plays, shares, downloads, clicks, sign-ups), text, the episode link, items, publish state (`indexable`), `claimed`/`role` (the prospect who claimed the page edits it beside the creator)
+5am media public-link disable <mediaId>             # the old link stops working at once
+
+# The same page, PUBLISHED: a readable URL (https://5am.app/clips/<slug>), a template,
+# text search engines read, extra media beside the clip. A page ranks only when
+# published, and publishing is a deliberate act: publish only pages meant for the
+# public, never a prospect's outreach page (the outreach flow never publishes).
+5am media public-link set <mediaId> --template episode --headline "Ten minutes on Rust tooling for Python developers" \
+  --description "What ruff, uv and Polars change for a Python team in 2026, in one clip." --body-file page.txt \
+  --item <imageId>:"The cold open" --item <videoId>       # only the flags passed change; --item replaces the list (max 12); --clear-items empties it
+5am media public-link set <mediaId> --source-url https://pod.example/ep/41 --source-title "Episode 41: ..."   # what the clip is about: the page links back to it, the writer writes about it
+5am media public-link draft <mediaId> [--notes "show notes..."|--notes-file notes.txt] [--apply]   # Gemini writes headline, description, body (300+ chars) ABOUT the episode/show (source link + notes; the clip is only the teaser); --apply saves (never publishes); spends Gemini access
+5am media public-link publish <mediaId> [--slug rust-for-python-devs]   # needs headline >= 10, description >= 40; indexable (sitemap, no noindex) only once body >= 300 chars (`indexable` in the answer); slug_taken -> pick another --slug
+5am media public-link unpublish <mediaId>            # leaves search again; the slug is kept, so publishing again restores the URL
 
 # AI video editing. Two DIFFERENT jobs — see the sections further down.
 #   clips     → N standalone shorts from one video (subtitles, titles, 9:16)
@@ -458,35 +476,39 @@ note. The same controls are exposed to AI characters through the
 `local_generate_image` skill args: `model`, `aspect_ratio`, `resolution`,
 `reference_images` (array of paths), and `grounding`.
 
-### Gemini video models (Veo) — `media generate video`
+### Gemini video model: `media generate video` (`gemini-omni-1.1-flash`)
 
-Supports the Veo 3.1 family via a **validated** `--model` (bad value exits `3`
-with the accepted list). Default `veo-3.1-generate-preview`. Clips are short
-(~8s) — generate several and join them with `media concat` (below).
+One model, `gemini-omni-1.1-flash`, through the Gemini Interactions API (it
+replaced the Veo 3.1 previews, which Google turns off on 2026-10-22).
+`--model` defaults to it; a retired `veo-*` id is accepted and mapped to it
+with a note on stderr; anything else exits `3`. Each call makes ONE clip of
+`--duration` 4, 6, 8 (default) or 10 seconds, in about half a minute at 720p,
+for about $0.10 per second of 720p. Generate several and join them with
+`media concat` (below).
 
-| `--model`                            | Notes                |
-| ------------------------------------ | -------------------- |
-| `veo-3.1-generate-preview` (default) | Highest quality.     |
-| `veo-3.1-fast-generate-preview`      | Faster / lower cost. |
-| `veo-3.1-lite-generate-preview`      | Lightest / cheapest. |
-
-Parameters: `--aspect-ratio` (`16:9`/`9:16`), `--resolution` (`720p`/`1080p`/`4k`;
-4k is NOT available on the Lite model, and higher resolutions render slower and
-cost more), `--duration` (seconds), `--negative-prompt`, and media inputs:
+Parameters: `--aspect-ratio` (`16:9` default / `9:16`), `--resolution`
+(`360p`/`720p` default/`1080p`/`4k`; the last two are upscaled), `--duration`
+(`4`/`6`/`8`/`10` seconds), `--negative-prompt` (folded into the prompt as
+"Do not include: ..."; the model has no such parameter), and media inputs:
 
 - `--image <path>` — initial/first frame (image-to-video).
 - `--last-frame <path>` — final frame for interpolation; **requires `--image`**.
-- `--reference-image <path>` (repeatable) — asset references; **cannot** combine
-  with `--image`/`--last-frame`.
-- `--extend <path>` — video extension: continue a clip from a previous Veo
-  generation (`.mp4`/`.mov`/`.webm`). The clip is uploaded through the Gemini
-  Files API first (deleted after), because the API takes extension input by
-  URI, not bytes. **720p only** (`--resolution` beyond 720p is rejected);
-  **cannot** combine with `--image`/`--last-frame`/`--reference-image`.
+- `--reference-image <path>` (repeatable): subject or style references;
+  **cannot** combine with `--image`/`--last-frame`. Name them in the prompt as
+  `<IMAGE_REF_0>`, `<IMAGE_REF_1>`, ... to say which is which.
+- `--extend <path>`: video extension, continues a clip (`.mp4`/`.mov`/`.webm`)
+  of 10 s or less (longer is refused before upload). The clip is uploaded
+  through the Gemini Files API first (deleted after). Describe the
+  continuation ("Continue the scene: ..."); `--duration` is the length to ADD
+  (4/6/8/10), else the model picks 3 to 10 s. `--reference-image` may join it
+  to introduce a character or object (`<IMAGE_REF_0>` in the prompt);
+  **cannot** combine with `--image`/`--last-frame`. Appends at the end only;
+  no new dialogue on an uploaded clip where someone talks. Google refuses
+  edits of uploaded videos in the EEA, Switzerland and the UK.
   Frame/reference images must be `.png`, `.jpg`/`.jpeg`, or `.webp`.
 
 ```sh
-5am media generate video --prompt "a river" --model veo-3.1-fast-generate-preview \
+5am media generate video --prompt "a river" \
   --aspect-ratio 16:9 --resolution 1080p --duration 8 --output river.mp4
 5am media generate video --prompt "slow zoom out" --image start.png --output clip.mp4
 5am media generate video --prompt "she fades" --image first.png --last-frame last.png --output interp.mp4
@@ -494,10 +516,14 @@ cost more), `--duration` (seconds), `--negative-prompt`, and media inputs:
   --extend butterfly.mp4 --output butterfly-extended.mp4
 5am media generate video --prompt "x" --last-frame end.png            # error: --last-frame requires --image
 5am media generate video --prompt "x" --image a.png --reference-image b.png  # error: mutually exclusive
-5am media generate video --prompt "x" --extend a.mp4 --resolution 4k  # error: extension is 720p-only
+5am media generate video --prompt "x" --duration 5                     # error: 4, 6, 8 or 10
+5am media generate video --prompt "Continue the scene: the camera pans up" --extend a.mp4 --duration 6  # adds about 6 s
+5am media generate video --prompt "Extend this video: have the character in <IMAGE_REF_0> enter and wave" \
+  --extend scene.mp4 --reference-image character.png --output scene-extended.mp4
+5am media generate video --prompt "x" --extend long-30s.mp4            # error: uploaded clips must be 10 s or less
 ```
 
-The simple text params (`model`, `aspect_ratio`, `duration`, `resolution`,
+The simple text params (`aspect_ratio`, `duration`, `resolution`,
 `negative_prompt`) are also exposed to AI characters via the
 `local_generate_video` skill. (Image inputs are CLI-only.)
 
@@ -532,7 +558,7 @@ printf '%s' "$LONG_PROMPT" | 5am media generate text --prompt -
 > answer, which looks like a working pipeline and is not.
 
 Models (`--model`, default `gemini-3-flash-preview`): `gemini-3-flash-preview`
-(fast), `gemini-3.7-flash` (flash), `gemini-3.8-flash` (newest flash),
+(fast), `gemini-3.8-flash` (newest flash),
 `gemini-3.5-flash-lite` (lightest), `gemini-3.1-flash-lite`,
 `gemini-3.1-pro-preview` (strongest). Anything else is refused before the
 API call (`internal/textmodels.Supported`). This backs the
@@ -547,7 +573,7 @@ via a local ffmpeg (resolved `--ffmpeg` → `$FFMPEG` → PATH, like `media
 visualize`). Needs **at least 2** clips. By default it **stream-copies**
 (lossless, instant) and **auto-falls-back to re-encode** if the clips' codecs
 don't match; `--reencode` forces re-encode. `--audio <file>` lays an audio track
-over the joined video (replaces clip audio, `-shortest`) — the Veo path for
+over the joined video (replaces clip audio, `-shortest`), the AI b-roll path for
 podcast audio→video. `--yes` overwrites the output.
 
 ```sh
@@ -774,6 +800,7 @@ image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
 5am motion render coffee-v2.motion.json -o coffee.mp4 --dry-run
 5am motion render coffee-v2.motion.json -o coffee.mp4 --fps 30 --new-album "Films"
 5am motion finalize <requestId>
+5am motion finalize --unfinished    # release the reservations of renders that stopped partway
 ```
 
 | Command | Costs | Prints |
@@ -783,7 +810,7 @@ image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
 | `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `frames`, `width`, `height`, `fonts`, `hash` |
 | `stills` / `sheet` | free (watermarked) | `files` / `output`, `frames` |
 | `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
-| `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of renders waiting |
+| `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of kept renders, each with `state` (`rendered`: pay it; `rendering`: another process is on it; `stopped`: killed partway, nothing to pay) and `next`; `--unfinished` releases the stopped ones' reservations: `released`, `kept`, `failed` |
 | `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
 | `fonts` | free | `dir`, `fonts`, `bytes` |
 
@@ -798,6 +825,16 @@ Agent rules:
   is refused, the MP4 is kept for 24 hours and the error names
   `5am motion finalize <requestId>`: run that after the user buys credits. A
   second `render` is a second export.
+- **Never kill a render.** Every render reserves its export before the first
+  frame and pays after the last; an account may hold 10 unpaid reservations.
+  Ctrl-C (SIGINT) or SIGTERM stops a render and releases its reservation, but a
+  killed process (SIGKILL, a command timeout that kills, a VM restart) keeps it
+  for 24 hours. Give renders time to finish (about a minute or two each; run a
+  long batch in the background and check on it) rather than a short timeout.
+  On `too_many_pending_exports` (429), the error says how many are held and when
+  the oldest clears: run `5am motion finalize` to see this machine's,
+  `5am motion finalize --unfinished` to release the stopped ones, and
+  `finalize <requestId>` for a `rendered` one; never retry `render` in a loop.
 - **Photos:** `--photo <file>` (JPEG, PNG, WebP, GIF, HEIC) or `--photo media:<id>`,
   up to 12. On `revise`, `--photo` REPLACES the film's photos. Local photos are
   stored as `file:<path relative to the film>`: keep them beside the film.
@@ -820,9 +857,167 @@ Agent rules:
 - **Cloud workflow runs** have the runtime and every font preinstalled
   (`FIVEAM_MOTION_FONTS`); render there like anywhere else.
 - **Not supported:** Ad Maker's unmarked export (every CLI render carries the
-  "Made with 5AM" mark), sending a film to the web studio.
+  "Made with 5AM.app" mark), sending a film to the web studio.
 
 Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/motion.md
+
+## Gemini from the CLI
+
+```sh
+5am ai ask --prompt "Which year did the Talk Python podcast start?" --search        # grounded in Google Search: text + sources[] {title,url,domain} + queries[]
+5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`
+```
+
+One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). This is the Gemini door for programs that drive the CLI: `outreach-monitor fix-feeds` uses it to find podcast feeds the directory does not know, and verifies every address it names before trusting it.
+
+## Pipeline: `5am pipeline`
+
+The sales pipeline an AI character (the Sales Director by default) keeps for
+its owner: items (prospects), contacts, append-only activities and the
+**outreach approval queue**. The character stages email DRAFTS; the owner
+approves them and sends from their own mailbox; nothing is sent by the
+platform. These commands READ the pipeline and drive the approval loop. Writes
+to items, contacts and activities stay with the character's skills
+(`5am characters skills execute <id> pipeline_upsert --input '{...}'`), which
+`5am outreach prepare` does for you.
+
+```sh
+5am pipeline items list                              # {items, stages}; complete (cap 200)
+5am pipeline items list --stage researched --search acme
+5am pipeline items list --csv prospects.csv          # one row per item with its primary contact
+5am pipeline items get <itemId>                      # + contacts, activities, outreach_drafts
+5am pipeline outreach list --status staged           # staged | approved | sending | rejected | sent
+5am pipeline outreach edit <draftId> --subject "..." --body-file message.txt   # while staged only
+5am pipeline outreach approve <draftId>
+5am pipeline outreach reject <draftId> --note "too long"                        # the character reads the note
+5am pipeline outreach mark-sent <draftId>            # after YOU sent it from your mailbox (or found a sending one in Gmail's Sent folder)
+5am pipeline outreach release <draftId>              # a sending draft that is NOT in Gmail's Sent folder: back to approved
+```
+
+- Rows are keyed `id`; the skills call the same thing `item_id` / `contact_id` /
+  `draft_id`. An item is open while `closed_at` is null; stage names are the
+  character's own vocabulary (`stages` lists them in order).
+- A draft moves `staged → approved → sent` or `staged → rejected`;
+  `5am outreach send` holds it in `sending` across its Gmail attempt
+  (`approved → sending → sent`, back to approved, or `rejected` with the
+  `review_note` "Gmail refused the message: <reply>" when Gmail refused it for
+  good). A token bound to an AI character may approve, reject or edit drafts
+  another character wrote, never its own (403 `own_draft_review_not_allowed`),
+  and cannot reserve, release, refuse or mark-sent at all (403
+  `cli_token_not_allowed_here`): sending is the owner's. A wrong-state approve,
+  reject or mark-sent answers **404** (exit 3), not 409: read the message;
+  `release` answers 409 naming the status. `edit` works only while staged, so
+  the stored draft is exactly what was sent. Settle a `sending` draft only after
+  the person looked in their Gmail Sent folder: never guess.
+- `--csv` writes `name,title,stage,website,notes,contact_name,contact_email,contact_role`,
+  the file `5am outreach prepare --csv` reads; `--overwrite` to replace it.
+
+## Clip outreach: `5am outreach`
+
+One personalized Motion clip per prospect from a CSV, in that prospect's own
+album with a **no-login page** (`https://5am.app/c/<token>`, the link to send),
+an email draft per prospect staged in the Pipeline, a local review page, and
+sending from the user's **own Gmail** after they approved each message. Six
+steps on one batch folder (`~/.5am/outreach/<batch>/`); each resumes.
+Walkthrough for a person: `cli/docs/OUTREACH_GETTING_STARTED.md`; reference:
+`cli/docs/OUTREACH.md`. The page's button is "Claim and publish this page":
+the prospect signs up, becomes the page's second editor (`claimed_by`) and
+publishes it under their name on their own Gemini access; the sender keeps
+editing rights, and the outreach flow itself never publishes a page.
+
+**Repeated outreach from a prospect sheet** (a clip for every new podcast
+episode or YouTube upload, with cooldowns, one email per episode and a ledger,
+on a schedule) is `outreach-monitor`, a separate binary that drives these
+commands. Install it and read its skill:
+<https://cli.5am.app/outreach-monitor/latest/SKILL.md>.
+
+```sh
+5am outreach mail setup --address you@gmail.com        # once: Gmail app password (2-step verification on)
+FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outreach mail setup --address you@gmail.com   # no terminal (an agent): from the environment, or a piped line
+5am outreach mail report --subject "Weekly digest" --body-file digest.md   # mails the file to YOURSELF (the stored address, nobody else): the self-report door for unattended programs
+5am pipeline items list --csv prospects.csv            # or write the CSV by hand: name[,email,instagram,website,source_url,source_title,observation,inference,line,context,show,site]
+5am motion generate --brief "A 10 second hello for a photographer" --format 9:16 --duration 10 -o template.motion.json
+# edit template.motion.json: put {{name}} (and optionally {{line}}) in the title or a text layer
+5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 --character "Sales Director"
+#   -> items created or matched, one film + contact sheet per prospect (FREE). Look at the sheets.
+5am outreach clips --batch oct_week_1 --dry-run        # price + toolchain check
+5am outreach clips --batch oct_week_1 --yes            # 20 AI credits each; album "Clip for <name>"; public link (headline = line, episode link = source_url); pipeline note
+5am outreach clips --batch oct_week_1 --yes --page-text   # + Gemini writes each page's text ABOUT the episode from the context column (spends Gemini access; never publishes)
+5am outreach draft --batch oct_week_1                  # one staged draft per prospect, the link inside
+5am outreach review --batch oct_week_1                 # a page on 127.0.0.1: watch, edit, Approve / Skip, Done
+5am outreach send --batch oct_week_1 --dry-run         # the exact messages
+5am outreach send --batch oct_week_1 --yes             # from your Gmail; mark-sent on each
+5am outreach stats --batch oct_week_1 --record         # views, opens, plays, shares, downloads, clicks, sign-ups per prospect (a sign-up = the prospect claimed the page)
+```
+
+| Command | Costs | Needs | Prints |
+|---|---|---|---|
+| `prepare` | free (Gemini is not called) | the motion runtime, Node 20+, Chrome, ffmpeg; a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed, `sheet`, `credits_needed` |
+| `clips` | **20 AI credits per prospect** | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
+| `draft` | free (`--personalize`: one Gemini chat per prospect) | the character | `drafted`, `held_no_email`, `failed` (a message check), per prospect `draft_id`; `notice` (the review card posted into the character's chat: `interaction_id`, `drafts`, or `error`, retried by the next `draft`; `--no-review-notice` skips it) |
+| `review` | free | a person and a browser | blocks until Done; `approved`, `skipped` |
+| `send` | free | the Gmail credential; **never in a workflow run** | `sent`, `failed` (not taken by Gmail; still approved, the next run retries), `skipped`, `uncertain`, `refused` (Gmail refused it for good; the draft is rejected, never retried), `stopped` (why the run ended early: Ctrl-C, a failed reservation), `messages[]` (each with `html` when the GIF part was added, `error` naming a failed check, Gmail's reply, or how to settle an uncertain one) |
+| `stats` | free | | `views`, `opens`, `plays`, `shares`, `downloads`, `clicks`, `signups` per prospect |
+
+Agent rules:
+- **Look before paying.** `prepare` draws a free contact sheet per prospect;
+  show them (or their paths) to the user before `clips`. `needs_fix` means the
+  name does not fit the template: shorten the name or widen the layer, then
+  `prepare` again. Never render a `needs_fix` film by hand.
+- **Never render twice.** `clips` resumes: a refused charge leaves the row
+  `pending_finalize` and the next `clips` run PAYS for the kept render instead
+  of rendering again. A second `motion render` is a second export.
+- **The person approves and the person sends.** `draft` posts the batch into
+  the character's chat with a review card and pushes the person's phone: tell
+  them to review there (web or iOS), on the web Outreach tab, or with `review`.
+  `review` is for a human at a browser (do not run it unattended; it blocks
+  until Done). `send` sends only
+  rows the person approved, refuses inside a workflow run, and stops on a
+  refused Gmail sign-in. It reserves each draft in the pipeline before Gmail
+  sees it, so overlapping runs never send one twice; a closed pipeline item is
+  skipped.
+- **An `uncertain` row is the person's call.** The connection broke after Gmail
+  had the message, so it may have gone. Ask the person to look in their Gmail
+  Sent folder, then run `5am pipeline outreach mark-sent <draftId>` (it is
+  there) or `release <draftId>` (it is not) as `messages[].error` says. Never
+  release one unchecked, and never resend it by hand: that is how a prospect
+  gets the same email twice.
+- **A `refused` row is closed.** Gmail refused that message for good (a bad
+  address, a message it will not take); the draft is rejected in the pipeline
+  with Gmail's reply as its note. Tell the person the reply; do not retry it.
+- **Links are the only thing in the email.** Every draft carries the prospect's
+  clip page once, with campaign labels (`utm_campaign` = the batch slug,
+  `utm_content` = `p01`, never a name), and the opt-out sentence. `--personalize`
+  output is kept only if it has that one link and nothing else.
+- **At most 100 prospects per batch** (`--limit`). The CSV
+  is validated and deduplicated; more rows than the limit is an error, not a cut.
+- **A second touch needs `--follow-up`.** `prepare` refuses a prospect who was
+  already emailed; with `--follow-up` it accepts them only once the last send is
+  at least `--min-days-since-sent` days old (3 by default), for a new episode
+  or a check-in. Never work around it with another name.
+- **Every step verifies its output; read the `failed` rows.** `clips` checks the
+  MP4 and that the page is on, `draft` refuses an unknown `{{placeholder}}` and a
+  message without exactly one clip link, and `send` verifies the server draft's
+  link and recipient against the batch: a skipped row's `error` says which check
+  failed. Fix the cause (shorten a name, restore the link in review), do not
+  resend by hand.
+- **The email shows the clip.** `clips` makes a GIF of each clip's first seconds
+  (`--no-gif` to skip) and `send` adds an HTML part with it linked to the page
+  (`--no-html` for text only); the plain-text part is always the draft itself.
+- **The film's sign-off is the show's card.** The gallery templates end on
+  `{{show}}` (the show's name) and "LISTEN AT `{{site}}`": the CSV's `show`
+  and `site` columns, else the name and the website's host, else `5am.app`;
+  the renderer's own "Made with 5AM.app" mark sits in the corner. The clip page's own address cannot be in the
+  film: it exists only after the render is uploaded.
+- **The page links back and can be written for you.** `clips` sets the page's
+  headline (the CSV `line`), a one-line description and the link back to what
+  the clip is about (`source_url`, titled by `source_title`, else `line`); the
+  page shows "Listen to the episode: <title>". `--page-text` (or
+  `5am media public-link draft <mediaId> --apply`) has Gemini write the
+  headline, description and body ABOUT that episode or show from `context`
+  (show notes), never about the clip; it spends the user's Gemini access and
+  never publishes. A page is indexable only once its body has 300 characters;
+  outreach pages are never published by this flow.
 
 ## API keys (third-party providers)
 
@@ -1184,7 +1379,7 @@ Provided by the CLI to characters in `chat`:
 - `run_command` — execute shell command. Destructive ops prompt even under `--auto-approve`. Uses `$SHELL` → `sh` → `bash` on Unix, `cmd.exe` on Windows; override with `5AM_SHELL=/path/to/shell`.
 - `local_ffmpeg` — invoke local FFmpeg. **Args take an array of strings**, e.g. `{"args": ["-i", "my photo.jpg", "out.mp4"]}` — no shell parsing, so filenames with spaces/special characters work. The legacy single-string form is rejected with a hint.
 - `local_generate_image` — render AI image, save locally. Accepts `provider` (`gemini`/`openai`) plus, on Gemini, `model` (the three Nano Banana models), `aspect_ratio`, `resolution`, `reference_images` (array of local paths), and `grounding`.
-- `local_generate_video` — render AI video (Veo), save locally. Accepts `model` (the three Veo 3.1 models), `aspect_ratio`, `duration`, `resolution`, `negative_prompt`. (Image inputs are CLI-only, not exposed to the skill.)
+- `local_generate_video`: render AI video (`gemini-omni-1.1-flash`), save locally. Accepts `aspect_ratio`, `duration` (4, 6, 8 default, or 10 seconds), `resolution`, `negative_prompt`; there is no model choice (a retired Veo `model` value is mapped to Omni). (Image inputs are CLI-only, not exposed to the skill.)
 - `local_generate_music` — render AI music, save locally
 - `local_generate_audio` — TTS, save locally
 
@@ -1601,11 +1796,12 @@ artifact for off-platform sharing):
 5am media upload ./episode.mp4 ./episode.wav --album "$ALBUM"
 ```
 
-### "Turn a podcast WAV into a Veo b-roll video"
+### "Turn a podcast WAV into an AI b-roll video"
 
-A richer alternative to the waveform overlay: generate a few Veo clips, join
-them, and lay the episode audio over the result. Each Veo clip is ~8s and takes
-minutes to render, so generate them as separate steps and `concat` deliberately.
+A richer alternative to the waveform overlay: generate a few clips, join them,
+and lay the episode audio over the result. Each clip is 4 to 10s (8s by
+default), takes about half a minute and costs about $0.10 per second of 720p,
+so generate them as separate steps and `concat` deliberately.
 
 ```sh
 # 1. Generate b-roll clips (one per scene). Match aspect ratio to the target.
@@ -1615,10 +1811,10 @@ minutes to render, so generate them as separate steps and `concat` deliberately.
   --aspect-ratio 16:9 --duration 8 --output v2.mp4
 
 # 2. Join the clips and lay the episode audio over them (replaces clip audio).
-5am media concat v1.mp4 v2.mp4 --audio ./episode.wav --output ./episode-veo.mp4
+5am media concat v1.mp4 v2.mp4 --audio ./episode.wav --output ./episode-broll.mp4
 
 # 3. (optional) upload the result alongside the WAV
-5am media upload ./episode-veo.mp4 ./episode.wav --album "$ALBUM"
+5am media upload ./episode-broll.mp4 ./episode.wav --album "$ALBUM"
 ```
 
 `media concat` stream-copies by default (instant) and falls back to re-encode if
@@ -1630,7 +1826,7 @@ Python, cross-platform) automates the whole flow: measure duration → generate
 enough clips → concat → mux audio → optionally burn in a transcript. When you
 pass a transcript (`-s`) and no `-p` prompts, it uses `media generate text` to
 write **per-scene b-roll prompts from the transcript**, so each clip tracks the
-conversation. Clips retry up to 3× on transient Veo failures (jittered backoff).
+conversation. Clips retry up to 3× on transient generation failures (jittered backoff).
 
 ```sh
 # Transcript-driven b-roll, vertical, with burned-in captions:
@@ -1640,12 +1836,13 @@ python3 scripts/podcast_to_video.py -i episode.wav -s episode.srt -a 9:16 -o ree
 python3 scripts/podcast_to_video.py -i episode.wav -s episode.srt --clips 2 --keep --workdir ./clips
 ```
 
-Flags: `-m/--model` (Veo model), `-p/--prompt` (your own scenes — overrides the
+Flags: `-m/--model` (default `gemini-omni-1.1-flash`, the only video model),
+`-p/--prompt` (your own scenes; overrides the
 transcript scene-writer), `--no-scene-prompts` (disable it), `-n/--clips`,
-`-d/--duration`, `--max-clips` (default 30), `-j/--jobs` (generate N clips in
+`-d/--duration` (4, 6, 8 default, or 10 seconds per clip), `--max-clips` (default 30), `-j/--jobs` (generate N clips in
 parallel; `-j 3`/`-j 4` is a good range), `--keep`/`--workdir` (clips land in
 `<workdir>/clip_NNN.mp4`). Run `--help` for the full list. Each
-Veo clip costs quota — start with `--clips 2`.
+8s clip costs about $0.80 at 720p (about twice the retired Veo 3.1 Lite), so start with `--clips 2`.
 
 ### "Find a media item by search and download it"
 
@@ -1859,6 +2056,25 @@ EOF
 #   "how many unique IPs hit web-1 in the last 24 hours?"
 ```
 
+### "Make a clip for each prospect in this CSV and email it to them"
+
+```sh
+# 1. once: the Gmail app password send uses
+5am outreach mail setup --address you@gmail.com && 5am outreach mail test
+# 2. a template film with {{name}} in a text layer (edit the JSON after generating)
+5am motion generate --brief "A 10 second hello for a wedding photographer, their name large" --format 9:16 --duration 10 -o template.motion.json
+# 3. the free half: items + one film + one contact sheet per prospect; STOP and show the sheets
+5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 > prepare.json
+jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
+# 4. after the user approves the sheets: render (20 credits each), draft, then the user reviews in a browser
+5am outreach clips --batch oct_week_1 --dry-run && 5am outreach clips --batch oct_week_1 --yes
+5am outreach draft --batch oct_week_1
+5am outreach review --batch oct_week_1          # a person clicks Approve per message, then Done
+# 5. send what was approved, from the user's Gmail; then watch the pages
+5am outreach send --batch oct_week_1 --dry-run && 5am outreach send --batch oct_week_1 --yes
+5am outreach stats --batch oct_week_1
+```
+
 ## Gotchas (read these before scripting)
 
 - **`--yes` is required to skip confirmation on `delete` commands.** Without it the command prompts on stdin: it blocks if stdin is open, and if stdin is at EOF it declines and exits `0` having deleted nothing, so the exit code cannot tell you the delete was skipped.
@@ -1886,7 +2102,7 @@ EOF
 - **For generation commands requiring a stored provider key, configure `5am keys set <provider>` first.** `media image-edit generate` uses the normal Gemini access flow (including supported proxy access), so do not assume a stored key is its only option. A missing key surfaces as a 4xx (exit 3), not a 5xx.
 - **`media generate image --model` is validated against the three Gemini image models** (`gemini-3.1-flash-image` default, `gemini-2.5-flash-image`, `gemini-3-pro-image`); anything else exits `3` with the accepted list. The `--aspect-ratio`, `--resolution`, `--image`, `--grounding`, and `--grounding-images` flags are **Gemini-only** (the OpenAI provider ignores them). `--resolution` is honored only by the 3.x models — `gemini-2.5-flash-image` is fixed at 1024px — and `--grounding-images` only by `gemini-3.1-flash-image`.
 - **`local_ffmpeg` args must be a JSON array of strings**, not a single space-separated string. `{"args": ["-i", "in.mp4", "out.mp3"]}` works; `{"args": "-i in.mp4 out.mp3"}` is rejected with a hint. Pass each token as its own array element so filenames with spaces are preserved.
-- **`5am media generate video --model` is validated** against the Veo 3.1 models (`veo-3.1-generate-preview` default, `veo-3.1-fast-generate-preview`, `veo-3.1-lite-generate-preview`); a bad value exits `3` with the list. `--last-frame` requires `--image`; `--reference-image` cannot combine with `--image`/`--last-frame` — both rejected before any API call. Veo is long-running (minutes) and synchronous; clips are ~8s, so use `5am media concat` to build longer videos.
+- **`5am media generate video` runs one model, `gemini-omni-1.1-flash`** (the Veo 3.1 previews retire on 2026-10-22). A retired `veo-*` `--model` is mapped to it with a stderr note; any other value exits `3`. `--duration` must be 4, 6, 8 (default) or 10 and is refused with `--extend`; `--last-frame` requires `--image`; `--reference-image` cannot combine with `--image`/`--last-frame`; all are rejected before any API call. A call is synchronous and takes about half a minute at 720p; for longer videos generate several clips and `5am media concat` them.
 - **`5am media concat` needs ≥2 clips and a local ffmpeg.** Same `--ffmpeg`→`$FFMPEG`→PATH resolution and install-hint behavior as `media visualize`. Default is stream-copy with an **automatic re-encode fallback** (it logs `stream-copy concat failed, retrying with re-encode...` to stderr and retries) — so a `copy`-vs-`reencode` result in the JSON `mode` field tells you which path ran. `--audio` muxes a track over the joined video with `-shortest`, so output length is the shorter of video/audio.
 - **`5am media visualize` depends on a local ffmpeg binary.** Looks up `--ffmpeg` → `$FFMPEG` → PATH. A missing binary surfaces as exit 1 with platform-specific install hints (`brew install ffmpeg` on macOS, `apt install ffmpeg` on Linux, `winget install ffmpeg` on Windows) — don't auto-install on the user's behalf; suggest the hint and let them confirm. HEIF covers are rejected client-side; convert with `5am media convert` first.
 - **`5am media visualize` watermarks unauthenticated runs.** A small "Powered by 5AM" overlay is added in the bottom-left corner if there's no token configured (no `5am login`, no `$5AM_TOKEN`). To remove: `5am login` (free). Rendering works fully offline either way. The JSON result includes `"watermark": true|false` and `"loggedIn": true|false`; branch on those if you need to know what shipped.
@@ -1901,6 +2117,11 @@ EOF
 - **Promote/demote orchestrators with `5am characters update <id> --orchestrator true|false`.** Or set the flag at create time with `--orchestrator true`. If `5am playground orchestrators` returns `[]`, that's the fix.
 - **Playground writes (sessions create, task, feedback, proposals approve/modify/use-existing, resume) require a paid plan.** Reads, deletes, metadata writes (`sessions update`), and proposal `reject` work on free plans so lapsed users keep cleanup access. 402 with `error: "paid_plan_required"` and `upgrade_url` for gated calls.
 
+- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_payment` row is paid by the NEXT `clips` run; never `motion render` it yourself.
+- **`5am outreach review` blocks until a person clicks Done** (or Ctrl-C) and opens a browser page on 127.0.0.1. Never run it unattended; `5am pipeline outreach list --status staged` shows the drafts without it.
+- **`5am outreach send` is refused in a workflow run** and never sends a draft the person did not approve. It stops the batch on a refused Gmail sign-in (fix with `mail setup`, then send again: the rows stay approved). A closed pipeline item is skipped, not emailed. An `uncertain` row waits for the person's Gmail Sent folder check (mark-sent or release); send never retries it on its own. A `refused` row (Gmail's permanent refusal) is closed: its draft is rejected with Gmail's reply and never sent again.
+- **Pipeline wrong-state moves are 404, not 409.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending both answer 404 with a message naming the state; `edit` works while staged only. `release` (and the reserve and refuse `send` makes) answer 409 with the current `status`.
+
 ## When to suggest `--pretty`
 
 Only when the user explicitly asks to _see_ the data ("show me my albums"). For any further processing (counting, filtering, piping to another command), use the default JSON output and `jq`.
@@ -1910,6 +2131,8 @@ Only when the user explicitly asks to _see_ the data ("show me my albums"). For 
 - `5AM_TOKEN` — auth token (overrides stored login)
 - `5AM_BASE_URL` — API base URL override
 - `5AM_PRETTY=1` — globally enable `--pretty` output
+- `FIVEAM_GMAIL_ADDRESS`, `FIVEAM_GMAIL_APP_PASSWORD`: the outreach Gmail credential, read before the stored one by `outreach send` and `outreach mail test|report`, and by `outreach mail setup` instead of asking
+- `5AM_DISABLE_KEYRING=1`: store secrets (the login token, the Gmail credential) in `config.toml` without trying the OS keychain first, as on a server with none
 - `5AM_SHELL` — shell binary used by the local `run_command` skill. Defaults to `$SHELL` on Unix (falling back to `sh`, then `bash`) and `cmd.exe` on Windows. Override with an absolute path when running inside minimal containers (e.g. Alpine without bash).
 - `5AM_ALLOW_OUTSIDE_WORKSPACE=1` — equivalent to `--allow-outside-workspace` on `chat`. Lets `read_file`/`write_file` skip the interactive prompt for paths outside CWD. Only use with explicit user consent.
 

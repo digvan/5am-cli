@@ -30,6 +30,9 @@ Requires CLI **v1.5.0** or later.
 
 The CLI finds Chrome through `--browser`, `CHROME_PATH` or the usual install
 locations, and FFmpeg through `--ffmpeg`, `$FFMPEG` or `PATH`. It downloads neither.
+On Linux as root (cloud agent VMs and containers), it starts Chrome without Chrome's
+own sandbox, which Chrome requires there.
+
 Fonts download from the 5AM fonts CDN on first use, checked against a hash, and are
 cached in `~/.5am/cache/motion/fonts`. To render without a network connection,
 download them all once and name the folder:
@@ -185,8 +188,8 @@ It exits 0 even with issues; read `fixes`.
 
 Free PNGs drawn exactly as the export would draw them, watermark included: chosen
 frames (up to 48), or a contact sheet of evenly spaced ones. Look at a sheet before
-you export. A checker cannot judge a weak contrast or a word on a busy part of a
-photo; your eyes can.
+you export. A checker cannot judge a weak contrast, a word on a busy part of a
+photo or a fact the brief never gave; your eyes can.
 
 ### `preview`
 
@@ -217,14 +220,17 @@ An export, in this order:
 4. It charges the reservation and writes the MP4. `--album` / `--new-album` also
    upload it to your library.
 
-Ctrl-C or a failed render releases the reservation.
+Ctrl-C, a stop signal (SIGTERM) or a failed render releases the reservation. A
+render killed outright (a command timeout that kills the process, a restart) cannot,
+so its reservation stays for 24 hours; see [`finalize`](#finalize) for releasing it
+sooner.
 
 `--dry-run` does step 1 and prints the price, size, frame count and whether the film
 has sound, without rendering or charging anything.
 
 The MP4 is H.264 and AAC, 1080 pixels on the short side by default (1440 with
 `--resolution 1440p`), at 60 fps by default. Every frame has motion blur, film
-grain and a small "Made with 5AM" mark. On a recent Mac, rendering runs at about 28
+grain and a small "Made with 5AM.app" mark. On a recent Mac, rendering runs at about 28
 frames a second at 1080x1920, so a 15-second film takes about 30 seconds at 60 fps,
 and half that at 30. `--workers` sets how many browser pages draw at once; the
 default suits the machine's cores and memory.
@@ -237,11 +243,27 @@ kept for 24 hours and the error names the command that pays for it:
 ```sh
 5am credits buy                          # a payment link (pay on any device), then waits
 5am motion finalize <requestId>          # pays and saves the MP4
-5am motion finalize                      # lists renders waiting for payment
+5am motion finalize                      # lists the renders kept on this computer
+5am motion finalize --unfinished         # releases the reservations of renders that stopped partway
 ```
 
 Do not render again to recover: a second render is a second export. `finalize`
 never charges twice, so it is also safe after an uncertain outcome.
+
+From CLI v1.6.1, the list gives each kept render a `state` and what to do next:
+
+| `state` | Meaning | What to do |
+|---|---|---|
+| `rendered` | every frame is in the kept MP4, waiting for payment | `5am motion finalize <requestId>` |
+| `rendering` | another process is still on it | wait for it to finish |
+| `stopped` | it ended before its last frame (killed or crashed): there is nothing to pay for | `5am motion finalize --unfinished` releases its reservation |
+
+**Unfinished exports.** An account can hold at most 10 reserved, unpaid exports at a
+time. Renders that finish, fail or are stopped with Ctrl-C never get near that, but
+each render killed partway keeps one for 24 hours, and an 11th export is refused with
+`too_many_pending_exports`. From CLI v1.6.1 the error says how many are held and when
+the oldest clears; run `5am motion finalize --unfinished` on the computer that made
+them, or wait for that time.
 
 ## The film file
 
@@ -286,7 +308,14 @@ are a good start, and `lint` checks a hand edit.
   `grid` (dot fields), `mesh` (3D points), `particles`, `rings` (text rings),
   `counter`, `clock`, `lines`, `note` (handwritten notes), `dial`, `graph` (curves
   and charts), `pill` (buttons and chips), `cursor`, `image` and `photos` (your
-  photos), `video` (your clips), and `group`.
+  photos), `video` (your clips), and `group`. From CLI v1.6.0 also `wave` (a
+  soundwave in nineteen styles: spectrum ribbons, a mono line, silk layers, a liquid
+  band, fine bars, a phosphor sweep, a dust cloud, a braid, a terminal trace, a
+  contour memory, a teletext mosaic, a vector scope, a wireframe terrain, an ASCII
+  stream, a spectral tape, a harmonic motor, calibrated horizons, a delay vernier, a
+  broken grid) and `figure` (a drawn character moving to the beat: ten playback
+  creatures, a speaking or listening profile, a songbird on a branch, a listener
+  nodding with an earbud).
 - **Scene transitions** (`enter`): `cut`, `circle`, `wipe`, `push`, `whip`, `zoom`,
   `split`, `blinds`, `tiles`, `shutter`, `glitch`, `morph`, `flood`, `iris`, and from
   CLI v1.5.1 `fly`: one layer of the previous scene (`"from"`, its id; by default its
@@ -308,6 +337,10 @@ totals are rescaled, and `lint` reports each repair as a warning.
   and no `.output`.
 - **Never repeat a paid render after an error.** A refused final charge is recovered
   with `5am motion finalize <requestId>`.
+- **Let a render finish.** A minute or two is normal. Give it a timeout that does not
+  kill it, or run it in the background and check on it: a render killed partway keeps
+  its reservation for a day, and ten of them stop every export (see
+  [`finalize`](#finalize)).
 - **AI-character tokens cannot export.** Use a personal access token with write scope.
 - **Never run `preview` unattended.** It waits for a person and never exits on its
   own; look at a film with `sheet`.
@@ -316,7 +349,7 @@ totals are rescaled, and `lint` reports each repair as a warning.
 
 ## Not in the CLI
 
-Exports without the "Made with 5AM" mark (Ad Maker on 5am.app), and sending a film
+Exports without the "Made with 5AM.app" mark (Ad Maker on 5am.app), and sending a film
 to Motion Studio on the web.
 
 ## Troubleshooting
@@ -330,7 +363,9 @@ to Motion Studio on the web.
 | `not enough AI credits: this export costs 20 credits and you have …` | `5am credits buy` (a payment link you can pay on your phone without signing in), then render; nothing was rendered or charged |
 | `AI credits are paused right now, so exports cannot be paid for` | AI credits are paused for a while on 5am.app; nothing was charged, try again later |
 | `ffmpeg not found` | Install FFmpeg, or pass `--ffmpeg /path/to/ffmpeg` |
-| Chrome not found | Install Chrome or Chromium, or pass `--browser` / set `CHROME_PATH` |
+| `too_many_pending_exports`, or `… unfinished exports are reserved on this account` | Renders were killed partway: `5am motion finalize --unfinished` on the computer that ran them (CLI v1.6.1 or later), or wait 24 hours from the oldest |
+| Chrome not found | Install Chrome or Chromium, or pass `--browser` / set `CHROME_PATH`. On Debian, `apt install chromium`; on Ubuntu, `chromium-browser` is only a Snap stub that does not run in containers, so install Google Chrome's .deb instead |
+| `Motion needs Node.js 20 or newer` | Install Node.js 20 or newer (Ubuntu 24.04 and Debian 12 ship 18 through `apt`) |
 | `video clips in Motion films are not enabled on this server` | Video clips are not available on that server yet; use photos |
 | `a clip this browser cannot decode needs a proxy made with ffmpeg` | Install FFmpeg, or pass `--ffmpeg` |
 | `The voice is …s long. Shorten the script to fit …s` | Shorten the script, or lengthen the film, and narrate again |
