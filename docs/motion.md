@@ -275,7 +275,11 @@ are a good start, and `lint` checks a hand edit.
   edge, `y: 1` the bottom), so a layout carries across 16:9, 9:16 and 1:1.
   `dx`/`dy` add offsets in design units.
 - **Animation:** any number can be animated with keyframes,
-  `[[beat, value, ease], ...]`.
+  `[[beat, value, ease], ...]`. An ease belongs to the key it arrives at, and most
+  eases stop at every key. From CLI v1.5.1, `smooth` on every key after the first
+  joins them into one continuous move that only starts and ends gently: use it for a
+  camera move through three or more keys (`generate` adds it to such camera moves
+  when the model names no ease).
 - **Colours** name a palette token (`bg`, `ink`, `paper`, `accent`, `accent2`,
   `muted`) or a hex value.
 - **Layers:** `text` (kinetic type), `shape` (morphing shapes), `path` (ribbons),
@@ -284,7 +288,11 @@ are a good start, and `lint` checks a hand edit.
   and charts), `pill` (buttons and chips), `cursor`, `image` and `photos` (your
   photos), `video` (your clips), and `group`.
 - **Scene transitions** (`enter`): `cut`, `circle`, `wipe`, `push`, `whip`, `zoom`,
-  `split`, `blinds`, `tiles`, `shutter`, `glitch`, `morph`, `flood`, `iris`.
+  `split`, `blinds`, `tiles`, `shutter`, `glitch`, `morph`, `flood`, `iris`, and from
+  CLI v1.5.1 `fly`: one layer of the previous scene (`"from"`, its id; by default its
+  biggest words) flies through the camera while this scene is already in place
+  underneath, so the headline or the logo becomes the cut (about a beat; `"beats"`
+  sets it).
 - **Fonts:** `inter`, `jetbrains-mono`, or a font from the 5AM catalog (Latin
   display faces, serif, handwriting, Japanese, Korean, Arabic and Persian).
 
