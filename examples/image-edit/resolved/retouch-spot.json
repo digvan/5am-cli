@@ -218,17 +218,17 @@
   "assets": {},
   "report": [],
   "environment": {
-    "browser": "Node.js/24.15.0 (@napi-rs/canvas 1.0.11; skia)",
-    "backend": "skia/simd",
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "backend": "webgl2+cpu/simd",
     "text": "system sans-serif",
     "runtime": "iedl-1.1.0",
-    "sha256:worker.js": "51003087f8cfa390638f0a2b8c0ada80401dfc385e3a5d47fda1c3b10320bd61",
+    "sha256:worker.js": "cf942f7d3655fd0b3621b36bbe02922d6bb7fd559cb7eeb6938b5de912220f6b",
     "sha256:kernels-scalar.wasm": "3c632c6a5f57440cc8d6fd309d7b875d415f1b70f6e074bc7c029c8fa9201a31",
     "sha256:kernels-simd.wasm": "faf1123d5ec723574c4954b45fe39133bcc454b7c08c074526f2a10a97a565c0",
     "sha256:runtime.js": "c87cd70fcc551a45e9f2fa0035af8f7b448654581111a55824d8340a56b64d50",
     "sha256:core.mjs": "cfce50532eac450842bb6ee5813333bf945887d8cb36b7a288f3e12087de6e99",
-    "sha256:runner.mjs": "9434067468131feea01e81dbfa3443b73e222a8c6f566a757ca0245edc688265",
-    "sha256:browser.mjs": "2bfae2e80a15d43b5fc756f2efd01c444f622900613e6eab1f0c3a0f99289956",
+    "sha256:runner.mjs": "01b3ea455579e2a23f0a70f01cbc96a1082579dd73f5956329948840764e0078",
+    "sha256:browser.mjs": "5cb548cb8c53a2446d7cdf31c0d8a306acb39adf69eef58b02b6df4f2760c4aa",
     "sha256:package.json": "cce6f8c1916d2248267b4182989f5e7184c405e8d784c8e9420082a02cc39353"
   }
 }

@@ -2,8 +2,7 @@
 
 IEDL constructs the same editable document used by the 5AM web image editor. The
 browser and CLI share the same rendering engine; the CLI runs recipes locally
-through its optional Node.js / Native Skia (`skia` by default, with `--engine chrome`
-as an optional Headless Chrome fallback) runtime. Filters are never translated into Go or FFmpeg.
+through its optional Node.js / Chromium runtime. Filters are never translated into Go or FFmpeg.
 
 ## Quick start
 
@@ -226,8 +225,7 @@ histograms and a linear-RGB lookup table. Whole-image and mask-geometry requests
 metering reads matching bounded image/mask bitmaps in the shared browser runtime,
 excludes image pixels below 50% effective mask coverage, then scans them locally.
 Each analysis report entry is limited to 16 KiB. Analysis needs no network, model
-download or Python deployment. The local CLI runtime (Native Skia `skia/simd` by
-default, or Headless Chrome via `--engine chrome`) uses the
+download or Python deployment. The local Chromium CLI runtime uses the
 same implementation. Source decoding and rendering preceding edits still have
 their normal image/document costs; the 512 limit bounds the analysis scan/readback.
 
@@ -267,7 +265,7 @@ explicitly on import. Only this unencrypted, uncompressed bundle format is
 accepted; ZIP64, compressed entries, unsafe paths, duplicates, CRC/hash failures
 and oversized inputs fail. Temporary remote URLs are never durable asset identity.
 
-Environment reports include browser (`Node.js/<version> (@napi-rs/canvas 1.0.11; skia)` on Native Skia or the Chrome user-agent on `--engine chrome`), rendering backend (`skia/simd` or `webgl2+cpu/simd` / `cpu/simd`), runtime (`iedl-1.1.0`) and packaged
+Environment reports include browser, rendering backend, runtime and packaged
 runtime hashes. Text currently uses system sans-serif. The same runtime on
 different operating systems, GPUs or codecs can produce different pixels. Replay
 preserves edit intent and inputs; it does not promise universal byte identity.
@@ -277,10 +275,8 @@ preserves edit intent and inputs; it does not promise universal byte identity.
 Install the optional image-edit runtime for your CLI release with
 `5am update --runtime-only` (or opt in during installation with
 `install.sh --with-image-edit`); ordinary CLI usage does not require it. The
-runtime requires Node.js 20+. Rendering and input-bound inspection run on Native
-Skia (`@napi-rs/canvas` 1.0.11, `skia` by default) in Node worker threads, with
-Headless Chrome (`--engine chrome` or `FIVEAM_IEDL_ENGINE=chrome`) available as a
-rollback path using an installed Chrome/Chromium browser. `--runtime` or
+runtime requires Node.js 20+; rendering and input-bound inspection also need an
+installed Chrome/Chromium browser. `--runtime` or
 `IEDL_RUNTIME` selects an explicitly managed runtime; otherwise the CLI discovers
 the versioned installed runtime automatically.
 
@@ -290,10 +286,8 @@ recipe, and writes canonical IEDL text without exposing credentials to the image
 runtime. One two-minute deadline covers prompt preparation, model request, and
 validation; responses are bounded to 1 MB. The runtime subprocess receives a minimal
 allowlist of OS/browser environment settings, excluding provider and CLI credentials.
-Update the CLI and runtime together so their versions match. `--engine skia|chrome`
-or `FIVEAM_IEDL_ENGINE` selects the rendering engine (`skia` by default);
-`--browser` or `CHROME_PATH` selects Chrome when `--engine chrome` is used. No
-browser is silently downloaded.
+Update the CLI and runtime together so their versions match. `--browser` or
+`CHROME_PATH` selects Chrome. No browser is silently downloaded.
 
 Validation of text/resolved JSON needs no browser, login or network. Inspect
 decodes/binds inputs and reports unresolved operations without calling AI. Render
@@ -303,17 +297,15 @@ and individually committed atomically. Existing destinations fail unless
 `--mask ID` produces original-space PNG. Reports and bundles are explicit outputs.
 
 Batch is nonrecursive and sorted, accepts PNG/JPEG/WebP, and processes up to four
-images concurrently (`--concurrency 1..4`, default `min(4, items.length)`) in
-isolated Node worker threads on Native Skia (`skia`) by default, or shares one
-Chrome instance across isolated browser contexts when `--engine chrome` is selected.
-Output names include the complete input filename to avoid extension collisions. Each
+images concurrently (`--concurrency 1..4`, default 4) in isolated contexts of one
+shared Chrome browser. Output names include the complete input filename to avoid extension collisions. Each
 successful item gets a resolved sidecar. Item failures are reported and processing
 continues; any failure yields a nonzero exit status.
 
 Remote operations use `--media-id`, mutually exclusive with `--input` and batch.
 The CLI downloads that library original and routes segmentation and generative
-edits through the authenticated API. Credentials stay out of worker threads,
-browsers, and recipes. Uploads remain a separate library command. Accepted
+edits through the authenticated API. Credentials stay out of the browser and
+recipes. Uploads remain a separate library command. Accepted
 ambiguous operations are never automatically resubmitted. Cancellation can stop
 local work and request job cancellation; it cannot reverse a completed remote
 operation or charge.
@@ -323,11 +315,7 @@ Limits: 4 million script characters, 10,000 operations, 256 layers, 256 masks,
 256MiB decoded assets, 384MiB bundles. Worker device budgets may be lower. Default
 execution deadline is two minutes (`--timeout` per CLI image). Batch concurrency
 is bounded from 1 to 4. Tile-cache budgets are not total-memory limits; export
-assembles a full canvas. On the default Native Skia engine, single-image renders
-complete in ~560–745 ms at 1 MP, ~1.52–1.65 s at 12 MP, ~2.12–2.36 s at 24 MP,
-and 0.54 s median per case across the 106-example public field guide (59.09 s
-cumulative vs. 169.61 s on Headless Chrome, 2.87× faster, with 0.0179 / 255 mean
-pixel MAE). No scripts can read arbitrary files, fetch URLs, run code or loop.
+assembles a full canvas. No scripts can read arbitrary files, fetch URLs, run code or loop.
 
 Generation uses the CLI's Gemini credential resolution, schema-constrained
 structured output, and the same validator/printer. It does not render or execute
@@ -467,19 +455,16 @@ does not invoke the model again. Aborting the client does not guarantee cancella
 of an already-running backend generation.
 
 
-### Engine selection and browser discovery (`--engine chrome`)
+### Installed browser discovery
 
-By default (`--engine skia`), rendering and input-bound inspection execute directly
-in Node worker threads with `@napi-rs/canvas` 1.0.11 (`skia/simd`) and do not
-require Chrome/Chromium. When `--engine chrome` (or `FIVEAM_IEDL_ENGINE=chrome`) is
-selected, the CLI runner locates an executable Chrome/Chromium using `--browser`, then
+The CLI runner locates an executable Chrome/Chromium using `--browser`, then
 `CHROME_PATH`, then common browser names on `PATH`, then platform installation
 locations. An invalid explicit override fails with an actionable error. Paths
 containing spaces are supported; discovery never invokes a shell, downloads a
 browser, or executes a candidate to probe it. `generate` and ordinary recipe
-`validate` never need Chromium regardless of engine. Node
-and the installed runtime are always required. When using `--engine chrome`,
-provision an installed Chrome or Chromium browser.
+`validate` do not need Chromium; rendering and input-bound inspection do. Node
+and the installed runtime are still required. Provision an installed Chrome or
+Chromium browser.
 
 ## Smart baseline and local metering (experimental)
 

@@ -170,42 +170,42 @@
             "visibleFraction": 1
           },
           "light": {
-            "mean": 0.2470060450331467,
+            "mean": 0.24548917656477515,
             "p05": 0.002932551319648094,
-            "median": 0.11339198435972629,
-            "p95": 0.8993157380254154,
+            "median": 0.11241446725317693,
+            "p95": 0.895405669599218,
             "p98MaxChannel": 1,
-            "contrast": 0.8963831867057673,
+            "contrast": 0.8924731182795699,
             "shadowClipFraction": 0,
-            "highlightClipFraction": 0.15578776041666667
+            "highlightClipFraction": 0.14800130208333334
           },
           "color": {
             "meanRGB": [
-              0.4141375868055546,
-              0.39388799530230817,
-              0.5667825265522672
+              0.41223355800654543,
+              0.3919802134395609,
+              0.5649781198937908
             ],
-            "meanSaturation": 0.3975978090547086,
-            "neutralFraction": 0.061360677083333336,
+            "meanSaturation": 0.4008411414965538,
+            "neutralFraction": 0.06082682291666667,
             "hueFractions": [
-              0.005778023413555745,
-              0.007242267856245648,
-              0.00007177668836715211,
-              0.00015790871440773466,
-              0.00035170577299904537,
-              0.0006459901953043691,
-              0.008103588116651473,
-              0.4122637649744116,
-              0.3805025803719468,
-              0.09854939312809985,
-              0.046963487198627626,
-              0.03936951356938294
+              0.005700753622353864,
+              0.007298692137710629,
+              0.00007917713364380367,
+              0.00014395842480691577,
+              0.000338302298296252,
+              0.0006262191479100836,
+              0.007975296734303134,
+              0.41305271037724306,
+              0.3793520431299441,
+              0.09881306278746697,
+              0.04703121738441938,
+              0.03958856682190184
             ]
           },
           "whiteBalance": {
             "profile": "neutral-log-v2",
-            "candidates": 9425,
-            "confidence": 0.08536466817756339,
+            "candidates": 9343,
+            "confidence": 0.08369957101601959,
             "strength": 0,
             "reason": "mixed-color",
             "temperature": 0,
@@ -224,7 +224,7 @@
           }
         },
         "sourceHash": "acdc2ad9823809819cc34ccb2fea99ea8abd3678a14634355091841a73cb3577",
-        "snapshotHash": "27c5ca6156883a9ac24baac8207a98eb8286e75748b2434ccc02ce06145dfcbb",
+        "snapshotHash": "2aae72f7dd08da2538e63472218e9738b5ef0f6eb58a5349d4eb4f849b8259a8",
         "input": "original",
         "cached": false
       }
@@ -240,17 +240,17 @@
     }
   ],
   "environment": {
-    "browser": "Node.js/24.15.0 (@napi-rs/canvas 1.0.11; skia)",
-    "backend": "skia/simd",
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "backend": "webgl2+cpu/simd",
     "text": "system sans-serif",
     "runtime": "iedl-1.1.0",
-    "sha256:worker.js": "51003087f8cfa390638f0a2b8c0ada80401dfc385e3a5d47fda1c3b10320bd61",
+    "sha256:worker.js": "cf942f7d3655fd0b3621b36bbe02922d6bb7fd559cb7eeb6938b5de912220f6b",
     "sha256:kernels-scalar.wasm": "3c632c6a5f57440cc8d6fd309d7b875d415f1b70f6e074bc7c029c8fa9201a31",
     "sha256:kernels-simd.wasm": "faf1123d5ec723574c4954b45fe39133bcc454b7c08c074526f2a10a97a565c0",
     "sha256:runtime.js": "c87cd70fcc551a45e9f2fa0035af8f7b448654581111a55824d8340a56b64d50",
     "sha256:core.mjs": "cfce50532eac450842bb6ee5813333bf945887d8cb36b7a288f3e12087de6e99",
-    "sha256:runner.mjs": "9434067468131feea01e81dbfa3443b73e222a8c6f566a757ca0245edc688265",
-    "sha256:browser.mjs": "2bfae2e80a15d43b5fc756f2efd01c444f622900613e6eab1f0c3a0f99289956",
+    "sha256:runner.mjs": "01b3ea455579e2a23f0a70f01cbc96a1082579dd73f5956329948840764e0078",
+    "sha256:browser.mjs": "5cb548cb8c53a2446d7cdf31c0d8a306acb39adf69eef58b02b6df4f2760c4aa",
     "sha256:package.json": "cce6f8c1916d2248267b4182989f5e7184c405e8d784c8e9420082a02cc39353"
   }
 }

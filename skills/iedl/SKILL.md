@@ -216,16 +216,16 @@ rendering itself writes local files. Do not overwrite the source.
 
 ## Runtime availability
 
-Validation needs Node (20 or newer) and the installed image-edit runtime (`5am update --runtime-only`). Rendering and
-input-bound inspection run on Native Skia (`@napi-rs/canvas` 1.0.11, `skia` by
-default) in Node worker threads, or on an installed Chrome/Chromium browser when `--engine chrome`
-(`FIVEAM_IEDL_ENGINE=chrome`) is selected. `IEDL_RUNTIME` locates an explicit runtime runner;
-`FIVEAM_IEDL_ENGINE` selects `skia` or `chrome`; `CHROME_PATH` locates Chrome/Chromium when `--engine chrome` is used. Use the caller's installed runtime; do not install
+Validation needs Node (20 or newer) and the packaged core/runner. Rendering and
+input-bound inspection also need Chromium and the package's `puppeteer-core`
+dependency. The complete bundle includes worker, WASM kernels, runtime, core,
+runner, browser-discovery helper, package manifest and hash manifest. `IEDL_RUNTIME` locates `runner.mjs`;
+`CHROME_PATH` locates Chromium. Use the caller's installed runtime; do not install
 browsers/dependencies or fetch arbitrary runtime bundles during a managed run.
 
 Managed workflows must advertise this capability explicitly. If absent, explain the missing rendering capability; direct recipe authoring may
 still return text, but do not produce a workflow
-that claims it can execute the edit. Batch concurrency (`--concurrency 1..4`) must respect memory limits;
+that claims it can execute the edit. Batch concurrency must respect memory limits;
 start serially for large originals and never derive concurrency from CPU count
 alone. The 512-pixel analysis preview does not bound full-image decode/render cost.
 
