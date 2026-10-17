@@ -1,3 +1,4 @@
+<!-- Purpose: Public repository overview and user guide for the 5am CLI, covering installation, IEDL image editing (Native Skia default engine), visual gallery generation, 5am motion, AI agents/workflows, and server agents. -->
 # 5am CLI — recipes, examples & guides
 
 Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create video/audio pipelines, and automate work through AI agents and managed workflows. This repository contains public documentation, agent skills, and runnable examples; it is not the CLI source distribution.
@@ -6,7 +7,7 @@ Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create vide
 
 **[IEDL visual field guide](examples/image-edit/GALLERY.md)** — 113 examples using one concert photograph: before/after comparisons, 20 presets, mask previews, and downloadable recipes. Browse the Markdown gallery directly on GitHub. For interactive sliders, clone the repo and open [`examples/image-edit/index.html`](examples/image-edit/index.html) in a browser; GitHub itself shows HTML source.
 
-The gallery uses **`iedl-1.1.0`**, released with CLI **v1.3.0** as the optional image-edit runtime. It includes conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-compatibility) before replaying its resolved bundles.
+The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas` 1.0.11, `skia/simd`)** engine, shipped with the optional image-edit runtime. It includes conservative auto white balance. See [runtime compatibility](examples/image-edit/README.md#runtime-compatibility) and [`engine_benchmark.md`](examples/image-edit/engine_benchmark.md) before replaying its resolved bundles.
 
 ![A concert photograph edited through IEDL](examples/image-edit/images/stage-balance.jpg)
 
@@ -43,7 +44,7 @@ Choose scopes for the work: server-agent queries can use `read`; library writes,
 
 ## Image editing: generate → validate → render
 
-Image editing is optional. Update the CLI first, install Node.js 20+ and Chrome/Chromium separately, then install the runtime matched to your CLI release (the same runtime carries motion graphics). To upgrade an existing installation and enable image editing:
+Image editing is optional. Update the CLI first, install Node.js 20+, then install the runtime matched to your CLI release (which installs `@napi-rs/canvas@1.0.11` for the default Native Skia engine and also carries motion graphics). To upgrade an existing installation and enable image editing:
 
 ```sh
 5am update
@@ -56,7 +57,7 @@ Image editing is optional. Update the CLI first, install Node.js 20+ and Chrome/
   -o edited.jpg --resolved edited.iedl-resolved.json --bundle edited.iedl.zip
 ```
 
-`generate` uses model quota. Go handles the Gemini request and credentials; the shared JS runtime prepares the prompt/schema and validates/prints the recipe. `generate` and `validate` need Node and the runtime, but no browser. Rendering and input-bound `inspect` need Chromium. Runtime installation downloads neither Node nor Chrome. Normal updates keep an opted-in managed runtime synchronized with the CLI.
+`generate` uses model quota. Go handles the Gemini request and credentials; the shared JS runtime prepares the prompt/schema and validates/prints the recipe. `generate` and `validate` need Node and the runtime, and no browser. Rendering and input-bound `inspect` run on the **Native Skia (`@napi-rs/canvas` 1.0.11, `skia/simd`)** engine in Node worker threads by default without needing a browser (or on Headless Chrome when `--engine chrome` or `FIVEAM_IEDL_ENGINE=chrome` is set). Runtime installation provisions `@napi-rs/canvas@1.0.11` next to the runtime; it does not download Node or Chrome. Normal updates keep an opted-in managed runtime synchronized with the CLI.
 
 To edit entirely locally, start from one of the checked-in recipes:
 
@@ -67,15 +68,15 @@ cd examples/image-edit
 5am media image-edit render concert.iedl.zip --input source.jpg -o replay.jpg
 ```
 
-IEDL supports adjustments, curves/HSL, masks, editable layers, retouching, liquify, presets, local analysis, and smart baseline edits. See the [language reference](docs/iedl.md), [visual gallery guide](examples/image-edit/README.md), and [focused authoring skill](skills/iedl/SKILL.md).
+IEDL supports adjustments, curves/HSL, masks, editable layers, retouching, liquify, presets, local analysis, and smart baseline edits. See the [language reference](docs/iedl.md), [visual gallery guide](examples/image-edit/README.md), [engine benchmark](examples/image-edit/engine_benchmark.md), and [focused authoring skill](skills/iedl/SKILL.md).
 
-- Use `--runtime`/`IEDL_RUNTIME`, `--node`, or `--browser`/`CHROME_PATH` for explicit paths.
+- Use `--runtime`/`IEDL_RUNTIME`, `--node`, `--engine skia|chrome`/`FIVEAM_IEDL_ENGINE`, or `--browser`/`CHROME_PATH` (when `--engine chrome`) for explicit overrides.
 - Reusable recipes resolve edits for each input. Resolved bundles preserve one result and require its matching source.
 - Hand-drawn masks transfer geometry, not subject recognition. Review them on every new photograph.
 - AI selections and masked generative edits use `--media-id` instead of `--input`, with authenticated backend access. They may incur credits. Do not automatically repeat an ambiguous paid edit.
 - Rendering writes local files. Uploading them is a separate operation. Existing output files require `--overwrite`.
 
-Directory batches are nonrecursive and accept PNG/JPEG/WebP. They share one Chrome browser and process up to four images in isolated contexts by default, saving resolved sidecars and per-image results:
+Directory batches are nonrecursive and accept PNG/JPEG/WebP. They process up to four images concurrently in isolated Node worker threads on Native Skia (`skia`) by default (or share one Chrome browser across isolated contexts when `--engine chrome` is selected), saving resolved sidecars and per-image results:
 
 ```sh
 5am media image-edit batch portrait.iedl --input-dir photos --output-dir edited --report batch.json
@@ -124,9 +125,8 @@ Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-e
   Never render again to recover: that is a second export.
 - **Your photos and clips.** `--photo` takes files (JPEG, PNG, WebP, GIF, HEIC) or
   `media:<id>` from your library, up to 12; `--clip` takes videos the same way, up
-  to 4 (clips Chrome cannot play are converted with FFmpeg).
-- **Speed.** About 28 frames a second at 1080x1920 on a recent Mac: a 15-second
-  film at 60 fps renders in about 30 seconds.
+  to 4 (clips are decoded with FFmpeg).
+- **Speed.** Renders on the default Native Skia (`@napi-rs/canvas` 1.0.11) engine in parallel worker threads (`--engine auto|skia|chrome`).
 
 ![Contact sheet of a sample film](examples/motion/sheets/terminal-launch.png)
 
@@ -141,7 +141,7 @@ See the [motion guide](docs/motion.md) for every command, the film format and tr
 | [`docs/iedl.md`](docs/iedl.md) | IEDL grammar, capabilities, presets, coordinate semantics, and runtime contract. |
 | [`docs/motion.md`](docs/motion.md) | `5am motion`: commands, costs, clips, narration, the preview, the export sequence, the film format, and troubleshooting. |
 | [`examples/motion/`](examples/motion/README.md) | Four sample MotionDoc films (16:9, 9:16, 1:1, one with a photo) with contact sheets. |
-| [`examples/image-edit/`](examples/image-edit/README.md) | Interactive HTML field guide, sample image, 113 recipes, real renders, masks, reports, and rebuild script. |
+| [`examples/image-edit/`](examples/image-edit/README.md) | Interactive HTML field guide, sample image, 113 recipes, real renders, masks, reports, [`engine_benchmark.md`](examples/image-edit/engine_benchmark.md), and rebuild script. |
 | [`docs/server-agent.md`](docs/server-agent.md) | Server-agent architecture, datasets, query operations, systemd deployment, and security. |
 | [`examples/install-agent.sh`](examples/install-agent.sh) | Install a persistent server agent under systemd. |
 | [`examples/sysmetrics.sh`](examples/sysmetrics.sh) | Linux/macOS CPU, memory, and disk samples as JSON lines. |
@@ -162,7 +162,7 @@ For direct IEDL authoring, provide the entire [`skills/iedl/`](skills/iedl/SKILL
 
 **Workflow Python should delegate recipe creation to `5am media image-edit generate --brief …`.** It then validates and renders through subprocess argument lists, checking each exit status. It does not need the full IEDL spec. When a user supplies an approved recipe, preserve it unchanged rather than generating a replacement.
 
-Managed runs need an explicitly provisioned image-edit runner. Machine size alone does not install Node, Chromium, or the runtime. Missing capabilities should produce diagnostics, not dependency installation or a substitute rendering engine during the run.
+Managed runs need an explicitly provisioned image-edit runner. Machine size alone does not install Node, Native Skia, or the runtime. Missing capabilities should produce diagnostics, not dependency installation or a substitute rendering engine during the run.
 
 For motion films, an agent should iterate on the film with `lint`, `sheet` and `revise` (free or cheap) and `render` once at the end; a failed export is recovered with `5am motion finalize`, never a second render. `5am motion preview` is for people: it never exits on its own, so scripts look at a film with `sheet`. See [agents and scripts](docs/motion.md#agents-and-scripts).
 

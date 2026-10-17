@@ -12,7 +12,7 @@ The `5am` binary is a Go CLI for the 5AM Media Hub (`https://5am.app`). It is **
 
 - **stdout = JSON, stderr = progress/footers.** Always pipe stdout to `jq` when consuming output. Never grep stderr for results.
 - **Exit codes are meaningful** — branch on them: `0` ok, `1` generic, `2` auth (401/403/missing token), `3` validation (4xx), `4` network/timeout, `5` server (5xx), `6` CLI version below the supported floor (run `5am update`).
-- **Errors are JSON on stderr**: `{"error", "category", "hint"}`. Category `credits` means AI credits stopped the command (exit `3` when they ran out, `5` when credits are paused platform-wide); its `credits` object says `reason` (`exhausted` | `paused`), `needed` / `available` (credits, when known) and `export: true` for an export, which a Gemini key does not pay for. Tell the user; never retry it in a loop.
+- **Errors are JSON on stderr**: `{"error", "category", "hint"}`. Category `credits` means AI credits stopped the command (exit `3` when they ran out, `5` when credits are paused platform-wide); its `credits` object says `reason` (`exhausted` | `paused`), `needed` / `available` (credits, when known) and `export: true` for an export, which a Gemini key does not pay for. Tell the user; never retry it in a loop. Category `network` with an error that starts "the network proxy at … refused to connect to 5am.app" (exit `4`) means this computer's own proxy (`HTTPS_PROXY`, an agent sandbox's egress) blocked the request before it left: 5AM never saw it, so neither your token nor the account is the problem. Tell the user the computer's network has to allow 5am.app; it is not an auth failure, and `5am login` will not fix it.
 - **Auth is required for almost every command.** Local image-edit validation, inspection, and local-only rendering/batching need no login; recipe generation uses normal Gemini access, and library-backed AI edits require auth. If `5am whoami` fails with exit 2, run `5am login` (or set `5AM_TOKEN`) before anything else.
 - **Pass `--yes` for destructive ops in scripts.** Without it, `delete` commands prompt.
 - **Use `--pretty` only for human display.** Never parse `--pretty` output.
@@ -787,8 +787,14 @@ stderr — rely on the JSON + exit code.
 Motion graphics from a brief: kinetic type, shapes, counters, charts and the
 user's photos, cut on a beat grid with a composed score, by the web Motion
 Studio's own engine. A film is a MotionDoc JSON file (`*.motion.json`). Needs the
-image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
-`sheet` and `render` also need Chrome/Chromium and ffmpeg (so does `--clip`).
+image-edit runtime (`5am update --runtime-only`, which also installs Skia, the render
+engine, with npm) and Node.js 20+; `stills`, `sheet` and `render` also need ffmpeg (so
+does `--clip`, which Skia reads through ffmpeg's ffprobe). Chrome/Chromium is needed
+only for the `--engine chrome` rollback and to probe the video clips of a `preview`
+(which plays in the default browser). `5am motion doctor` checks the engine renders
+use (Skia unless `FIVEAM_MOTION_ENGINE=chrome`) and fails only on that one; it reports
+the other in its JSON (`chrome: {ok, path, error}`, `skia: {ok, nativeCanvasVersion,
+error}`).
 
 ```sh
 5am motion generate --brief "A 10 second launch film for a coffee app" --format 9:16 --duration 10 -o coffee.motion.json
@@ -841,8 +847,9 @@ Agent rules:
   Local photos are described with Gemini once (cached) unless `--no-describe`.
 - **Video clips:** `--clip <file>` or `--clip media:<id>`, up to 4, on `generate`
   and `revise` (where it REPLACES the film's clips). Needs the server's video flag
-  (`video clips in Motion films are not enabled on this server` otherwise). Clips
-  Chrome cannot decode get a cached ffmpeg proxy automatically.
+  (`video clips in Motion films are not enabled on this server` otherwise). Skia
+  reads clips through ffmpeg (ProRes and HEVC included); with `--engine chrome`,
+  clips Chrome cannot decode get a cached ffmpeg proxy automatically.
 - **Narration:** `narrate` writes `<film>.narration.wav` + `.narration.json` beside
   the film; lint, stills, sheet, preview and render use them (`--no-narration` to
   leave them out). Settle the film's length first: a take longer than the film is
@@ -850,11 +857,19 @@ Agent rules:
   hash. After `revise --in-place` the old take still plays: narrate again with
   `--overwrite` if the words changed.
 - **Formats** 16:9, 9:16, 1:1; **duration** 6 to 60 s; `--fps` 60 or 30;
-  `--resolution` 1080p or 1440p. A 15-second film renders in about 30 s at 60 fps
-  (about 28 frames a second at 1080x1920 on a recent Mac; slower on small machines).
+  `--resolution` 1080p or 1440p. With Skia, a 15-second 9:16 film (1080x1920) took
+  42 to 54 s at 60 fps and 33 s at 30 fps on an Apple M1 Max with other work running
+  (17 to 22 frames a second at 60 fps); allow longer on small machines.
 - **Tokens:** `render` needs write scope; an AI character's token is refused for
   exports even with write scope.
-- **Cloud workflow runs** have the runtime and every font preinstalled
+- **Engine:** Skia by default; `--engine chrome` (or `FIVEAM_MOTION_ENGINE=chrome`) is
+  the only alternative, a rollback. There is no `auto` (`unknown motion engine "auto":
+  use skia or chrome`). Nothing falls back: on `Skia isn't installed: <reason>. Run
+  \`5am update --runtime-only\` again, or render with --engine chrome.` run
+  `5am update --runtime-only` (it prints the `skia` object: `installed`, `package`,
+  or the `error` that stopped it, and exits non-zero when Skia could not be installed
+  although the runtime was), then render again; nothing was charged.
+- **Cloud workflow runs** have the runtime, Skia and every font preinstalled
   (`FIVEAM_MOTION_FONTS`); render there like anywhere else.
 - **Not supported:** Ad Maker's unmarked export (every CLI render carries the
   "Made with 5AM.app" mark), sending a film to the web studio.
@@ -868,7 +883,7 @@ Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/mo
 5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`
 ```
 
-One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). This is the Gemini door for programs that drive the CLI: `outreach-monitor fix-feeds` uses it to find podcast feeds the directory does not know, and verifies every address it names before trusting it.
+One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
 
 ## Pipeline: `5am pipeline`
 
@@ -889,9 +904,25 @@ to items, contacts and activities stay with the character's skills
 5am pipeline outreach list --status staged           # staged | approved | sending | rejected | sent
 5am pipeline outreach edit <draftId> --subject "..." --body-file message.txt   # while staged only
 5am pipeline outreach approve <draftId>
+5am pipeline outreach unapprove <draftId>            # approved -> staged, so the owner can edit and approve again
 5am pipeline outreach reject <draftId> --note "too long"                        # the character reads the note
 5am pipeline outreach mark-sent <draftId>            # after YOU sent it from your mailbox (or found a sending one in Gmail's Sent folder)
+5am pipeline outreach mark-sent <draftId> --sent-at 2026-10-10T14:05:00Z   # a send made EARLIER, recorded now (time from Gmail's Sent folder)
 5am pipeline outreach release <draftId>              # a sending draft that is NOT in Gmail's Sent folder: back to approved
+```
+
+**Bulk review.** `approve`, `unapprove`, `reject` and `mark-sent` accept multiple
+IDs, `--batch <slug>`, or `--ids-file <file>` (one source); `--ids-file -` reads
+stdin. `--dry-run` lists IDs without mutation or checking their server states.
+Each result reports success/failure and a partial failure exits nonzero. Batch
+selection includes every saved draft ID, so ineligible states fail individually.
+`mark-sent` only records a send that already happened.
+
+```sh
+5am pipeline outreach approve --batch oct_week_1 --dry-run
+5am pipeline outreach approve <id1> <id2>
+5am pipeline outreach reject --ids-file drafts.txt --note "Revise the opening"
+5am pipeline outreach mark-sent --ids-file - < sent-drafts.txt
 ```
 
 - Rows are keyed `id`; the skills call the same thing `item_id` / `contact_id` /
@@ -909,6 +940,40 @@ to items, contacts and activities stay with the character's skills
   `release` answers 409 naming the status. `edit` works only while staged, so
   the stored draft is exactly what was sent. Settle a `sending` draft only after
   the person looked in their Gmail Sent folder: never guess.
+- **Recording an email that already went out** (sent by hand, or by you from
+  the person's Gmail, before the pipeline knew), so duplicate protection and
+  `--follow-up` know the prospect was emailed. No film, clip or contact sheet is
+  involved: never use `5am outreach prepare` or `draft` for this (they render
+  films). With the batch's character:
+
+  ```sh
+  5am characters skills execute <characterId> pipeline_query --input '{"mode":"get_item","name":"Acme Podcast"}'   # item_id, contacts[].contact_id, if it exists
+  5am characters skills execute <characterId> pipeline_upsert --input '{"entity":"item","name":"Acme Podcast","website":"https://acme.example","contacts":[{"name":"Sam Lee","email":"sam@acme.example","is_primary":true}]}'   # only if it does not
+  5am characters skills execute <characterId> stage_outreach --quiet-push \
+    --input '{"item_id":"…","recipient_name":"Sam Lee","recipient_email":"sam@acme.example","subject":"<as sent>","body":"<as sent>"}'
+  5am pipeline outreach approve <draftId>
+  5am pipeline outreach mark-sent <draftId> --sent-at 2026-10-10T14:05:00Z   # the time in the Gmail Sent folder
+  ```
+
+  - The subject and body exactly as sent; the address the email actually went
+    to (`recipient_email`, or `contact_id` when it was the contact on file):
+    duplicate protection is per address.
+  - `--quiet-push` skips the review notification a new draft sends the person;
+    this one is already out. It is a flag, never a key in `--input`.
+  - `--sent-at`: RFC 3339 with a zone (`Z` or `+02:00`); a bare date means noon
+    that day. Not in the future, at most 365 days back (`invalid_sent_at`).
+  - The draft keeps that time as `sent_at`, so a `--follow-up` counts its gap
+    from the real send, and the item's activity shows the email on that day,
+    "(recorded on <today>)". Duplicate protection goes by when it was
+    RECORDED: an approved draft to that address written before the record
+    never sends (`outreach send` closes it as rejected, "Not sent, to avoid a
+    duplicate"). Tell the person if one was waiting.
+  - `duplicate_draft` from `stage_outreach`: a staged draft to that address
+    already waits on the item. Make it the record instead: `5am pipeline
+    outreach edit <draftId> --subject "<as sent>" --body-file sent.txt`, then
+    approve and `mark-sent --sent-at` it.
+  - Approving here is a bookkeeping step, not a review: the words already left.
+    Do it only for an email the person confirms went out.
 - `--csv` writes `name,title,stage,website,notes,contact_name,contact_email,contact_role`,
   the file `5am outreach prepare --csv` reads; `--overwrite` to replace it.
 
@@ -925,17 +990,86 @@ the prospect signs up, becomes the page's second editor (`claimed_by`) and
 publishes it under their name on their own Gemini access; the sender keeps
 editing rights, and the outreach flow itself never publishes a page.
 
-**Repeated outreach from a prospect sheet** (a clip for every new podcast
-episode or YouTube upload, with cooldowns, one email per episode and a ledger,
-on a schedule) is `outreach-monitor`, a separate binary that drives these
-commands. Install it and read its skill:
-<https://cli.5am.app/outreach-monitor/latest/SKILL.md>.
+**Sender and templates.** Configure `outreach config set --sender-name --mailbox`
+before new batches. The config is saved at `~/.5am/outreach/config.json` and binds
+to the signed-in account; `config show --check-account` verifies it. `--mailbox`
+is the expected Gmail address, separate from `outreach mail setup` credentials.
+`config set --subject --body-file` saves templates (the body file is copied when
+configured). Email placeholders are `{{name}}`, `{{show}}`, `{{line}}`,
+`{{clip_url}}` and `{{sender}}`; the body must contain `{{clip_url}}`.
+`draft --subject`, `--body-file` and `--sender-name` override defaults for new
+messages. Saved batch/row templates, text and sender survive retries. A legacy
+batch without explicit or saved identity can fall back to the account profile;
+use `draft --require-sender` in scripts to require configured or explicit identity.
+
+**Preview and correct.** `draft --dry-run` shows sender, mailbox, subject, body,
+clip URL, planned action and validation errors without saving, staging, notifying
+or calling a model. It cannot run with `--personalize`. `--refresh-staged`
+deliberately replaces existing staged text with current templates; use `--only`
+to bound the change. The owner must first return an approved draft with
+`pipeline outreach unapprove <id>` (or **Return to review** in the local review
+page), then edit and approve again. Unapprove clears the review decision and
+can fail if the staged slot is occupied or the 100-draft queue is full. Approved
+drafts can also be rejected. Sending/sent drafts cannot be unapproved or edited.
+The send command validates and sends the freshly reserved server message.
+
+**Select rows.** `prepare`, `clips`, `draft` and `send` accept
+`--only slug,email@example.com`. Unknown selectors fail. Use the same selection
+for `clips --dry-run` and the paid run. Prepare matches rows by stable `work_id`
+or email across CSV reordering; the CSV validation and batch limits still apply.
+
+**Per-row templates.** Add optional `template_file` paths to the CSV to mix
+Motion designs in one batch. Use absolute paths; relative paths resolve from
+the CLI's working directory. A blank cell uses the required `--template`
+fallback. `prepare --require-row-templates` rejects any row missing that cell,
+useful for scripts that assign every design explicitly. Each selected editable
+row's template is validated before pipeline item mutations. Batch JSON and
+prepare output retain `template_file`, `template_name` (filename stem) and
+`template_hash` (SHA-256 of the source JSON, with surrounding whitespace trimmed).
+The local review card shows the name and short hash. Completed rows keep their
+original template attribution on retries. The CLI uses the choices in your CSV;
+it does not randomize them or aggregate results by template. For analysis, join
+the saved attribution to `5am outreach stats --batch <slug>` by prospect slug.
+
+**Branding and manual edits.** The CSV's optional `brand_file` is a local JSON
+path, containing `colors` (`background`, `text`, `accent`, optional `accent2`,
+all `#RRGGBB`), `fonts` (`display`, `body`, Motion font IDs such as `inter`) and optional
+`artwork` (`src`, `width`, `height`). Use absolute paths for local files. A Motion
+image layer with `photo: "podcast-artwork"` displays that artwork. Colors/fonts
+can be supplied without artwork. Prepare auto-fits text down to a floor of 28
+for larger text; layers over 160 characters are held without truncation.
+Prepare preserves hand-edited films and rechecks lint/contact sheets. If the
+source also changed, reconcile the film or deliberately use `--regenerate
+--only ...`. Rows with export checkpoints remain intact.
+
+Reusable films should use palette tokens for graphics and omit text `color`
+so the renderer chooses a contrasting foreground. A light sample brand is
+`{"background":"#F5EEDC","text":"#172A28","accent":"#34806D","accent2":"#C56C45"}`
+inside `colors`; fixed hex paint inside layers will not follow it. Motion's
+`sound.style` (`minimal`, `pulse`, `house`, `ambient`) supplies synthesized
+music and animation cues; `none` silences them. It does not excerpt podcast audio.
+
+**Recover and inspect.** After interruption, rerun `clips` to resume saved
+exports/uploads and `draft` to stage rendered rows. Paid checkpoints cost no
+new export credits; missing paid files or ambiguous receipts stop for inspection.
+Never render the film separately to bypass recovery. Prepare/clips/draft share
+a batch operation lock. `clips --progress-file clips.log` appends timestamped
+progress; stdout stays JSON and warnings/progress stay on stderr. Use
+`tail -f clips.log`, keeping `2>&1` out of JSON pipelines. `motion doctor` checks
+that Skia (the render engine) loads, and reports whether Chrome launches, without an
+export; Chrome is needed only with `--engine chrome` / `FIVEAM_MOTION_ENGINE=chrome`,
+and then prepare/clips take `--browser` (else `CHROME_PATH` or discovery).
+See [OUTREACH.md](docs/OUTREACH.md) and the public
+[Clip Outreach reference](https://5am.app/cli/docs/outreach).
 
 ```sh
+5am outreach config set --sender-name "Your name" --mailbox you@gmail.com --subject "A teaser for your podcast: {{show}}"
+5am outreach config show --check-account
+5am motion doctor                                    # checks Skia (and reports Chrome); no paid export
 5am outreach mail setup --address you@gmail.com        # once: Gmail app password (2-step verification on)
 FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outreach mail setup --address you@gmail.com   # no terminal (an agent): from the environment, or a piped line
 5am outreach mail report --subject "Weekly digest" --body-file digest.md   # mails the file to YOURSELF (the stored address, nobody else): the self-report door for unattended programs
-5am pipeline items list --csv prospects.csv            # or write the CSV by hand: name[,email,instagram,website,source_url,source_title,observation,inference,line,context,show,site]
+5am pipeline items list --csv prospects.csv            # or write the CSV by hand: name[,email,instagram,website,source_url,source_title,observation,inference,line,context,show,site,work_id,brand_file,template_file]
 5am motion generate --brief "A 10 second hello for a photographer" --format 9:16 --duration 10 -o template.motion.json
 # edit template.motion.json: put {{name}} (and optionally {{line}}) in the title or a text layer
 5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 --character "Sales Director"
@@ -943,6 +1077,7 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outrea
 5am outreach clips --batch oct_week_1 --dry-run        # price + toolchain check
 5am outreach clips --batch oct_week_1 --yes            # 20 AI credits each; album "Clip for <name>"; public link (headline = line, episode link = source_url); pipeline note
 5am outreach clips --batch oct_week_1 --yes --page-text   # + Gemini writes each page's text ABOUT the episode from the context column (spends Gemini access; never publishes)
+5am outreach draft --batch oct_week_1 --dry-run        # inspect sender, subject, body and clip before staging
 5am outreach draft --batch oct_week_1                  # one staged draft per prospect, the link inside
 5am outreach review --batch oct_week_1                 # a page on 127.0.0.1: watch, edit, Approve / Skip, Done
 5am outreach send --batch oct_week_1 --dry-run         # the exact messages
@@ -952,7 +1087,7 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outrea
 
 | Command | Costs | Needs | Prints |
 |---|---|---|---|
-| `prepare` | free (Gemini is not called) | the motion runtime, Node 20+, Chrome, ffmpeg; a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed, `sheet`, `credits_needed` |
+| `prepare` | free (Gemini is not called) | the motion runtime with Skia, Node 20+, ffmpeg (Chrome only with `--engine chrome`); a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed, `sheet`, `credits_needed` |
 | `clips` | **20 AI credits per prospect** | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
 | `draft` | free (`--personalize`: one Gemini chat per prospect) | the character | `drafted`, `held_no_email`, `failed` (a message check), per prospect `draft_id`; `notice` (the review card posted into the character's chat: `interaction_id`, `drafts`, or `error`, retried by the next `draft`; `--no-review-notice` skips it) |
 | `review` | free | a person and a browser | blocks until Done; `approved`, `skipped` |
@@ -960,10 +1095,12 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outrea
 | `stats` | free | | `views`, `opens`, `plays`, `shares`, `downloads`, `clicks`, `signups` per prospect |
 
 Agent rules:
+
 - **Look before paying.** `prepare` draws a free contact sheet per prospect;
-  show them (or their paths) to the user before `clips`. `needs_fix` means the
-  name does not fit the template: shorten the name or widen the layer, then
-  `prepare` again. Never render a `needs_fix` film by hand.
+  show them (or their paths) to the user before `clips`. `needs_fix` means a
+  layout or input check still needs attention after fitting. Follow the row's
+  remedy, edit the film and run `prepare` again. Text over 160 characters must
+  be shortened. Never render a `needs_fix` film by hand.
 - **Never render twice.** `clips` resumes: a refused charge leaves the row
   `pending_finalize` and the next `clips` run PAYS for the kept render instead
   of rendering again. A second `motion render` is a second export.
@@ -995,6 +1132,11 @@ Agent rules:
   already emailed; with `--follow-up` it accepts them only once the last send is
   at least `--min-days-since-sent` days old (3 by default), for a new episode
   or a check-in. Never work around it with another name.
+- **An email sent outside a batch is recorded, never drafted again.** When the
+  person (or you) emailed a prospect before the pipeline knew, record it with
+  `mark-sent --sent-at` (Pipeline, "Recording an email that already went
+  out"); then `prepare` treats them as emailed. Running `prepare` and `draft`
+  for it renders a film nobody needs and stages a second message.
 - **Every step verifies its output; read the `failed` rows.** `clips` checks the
   MP4 and that the page is on, `draft` refuses an unknown `{{placeholder}}` and a
   message without exactly one clip link, and `send` verifies the server draft's
@@ -2059,7 +2201,8 @@ EOF
 ### "Make a clip for each prospect in this CSV and email it to them"
 
 ```sh
-# 1. once: the Gmail app password send uses
+# 1. once: the sender identity and Gmail app password send uses
+5am outreach config set --sender-name "Your name" --mailbox you@gmail.com
 5am outreach mail setup --address you@gmail.com && 5am outreach mail test
 # 2. a template film with {{name}} in a text layer (edit the JSON after generating)
 5am motion generate --brief "A 10 second hello for a wedding photographer, their name large" --format 9:16 --duration 10 -o template.motion.json
@@ -2068,6 +2211,7 @@ EOF
 jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 # 4. after the user approves the sheets: render (20 credits each), draft, then the user reviews in a browser
 5am outreach clips --batch oct_week_1 --dry-run && 5am outreach clips --batch oct_week_1 --yes
+5am outreach draft --batch oct_week_1 --dry-run
 5am outreach draft --batch oct_week_1
 5am outreach review --batch oct_week_1          # a person clicks Approve per message, then Done
 # 5. send what was approved, from the user's Gmail; then watch the pages
@@ -2077,6 +2221,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 
 ## Gotchas (read these before scripting)
 
+- **Global flags (`--token`, `--base-url`) go before or after the subcommand, but need a value.** `5am --token "$T" catalog create --name Y` and `5am catalog create --name Y --token "$T"` are the same. If `$T` is empty the flag swallows the next word, so the CLI exits 3 with `--token needs a value, but the next word is the command "catalog"`. Check the variable, or write `--token="$T"`.
 - **`--yes` is required to skip confirmation on `delete` commands.** Without it the command prompts on stdin: it blocks if stdin is open, and if stdin is at EOF it declines and exits `0` having deleted nothing, so the exit code cannot tell you the delete was skipped.
 - **Use `media clips` for N shorts; never loop `media highlight`.** `clips` produces all N from one transcription and one model call. Looping `highlight` re-analyses the entire video every iteration — minutes of wasted compute and N× the Gemini spend on a long source — and yields composed reels rather than standalone moments. They are different commands for different jobs, not two speeds of the same one.
 - **`media clips` and `media highlight` share the transcript cache** (`~/.5am/transcripts`). Running both on one video, or re-running either with a different `--brief`, pays for transcription once. Do not add your own caching layer, and do not pass `--force-transcribe` in a loop.
@@ -2117,10 +2262,10 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **Promote/demote orchestrators with `5am characters update <id> --orchestrator true|false`.** Or set the flag at create time with `--orchestrator true`. If `5am playground orchestrators` returns `[]`, that's the fix.
 - **Playground writes (sessions create, task, feedback, proposals approve/modify/use-existing, resume) require a paid plan.** Reads, deletes, metadata writes (`sessions update`), and proposal `reject` work on free plans so lapsed users keep cleanup access. 402 with `error: "paid_plan_required"` and `upgrade_url` for gated calls.
 
-- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_payment` row is paid by the NEXT `clips` run; never `motion render` it yourself.
+- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_finalize` row is paid by the NEXT `clips` run; never `motion render` it yourself.
 - **`5am outreach review` blocks until a person clicks Done** (or Ctrl-C) and opens a browser page on 127.0.0.1. Never run it unattended; `5am pipeline outreach list --status staged` shows the drafts without it.
 - **`5am outreach send` is refused in a workflow run** and never sends a draft the person did not approve. It stops the batch on a refused Gmail sign-in (fix with `mail setup`, then send again: the rows stay approved). A closed pipeline item is skipped, not emailed. An `uncertain` row waits for the person's Gmail Sent folder check (mark-sent or release); send never retries it on its own. A `refused` row (Gmail's permanent refusal) is closed: its draft is rejected with Gmail's reply and never sent again.
-- **Pipeline wrong-state moves are 404, not 409.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending both answer 404 with a message naming the state; `edit` works while staged only. `release` (and the reserve and refuse `send` makes) answer 409 with the current `status`.
+- **Pipeline state errors depend on the action.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending answer 404; `edit` works while staged only. `unapprove` on a non-approved draft and `release` (plus the reserve/refuse actions used by send) answer 409 with the current `status`. Unapprove can also return 409 `review_queue_conflict`.
 
 ## When to suggest `--pretty`
 
@@ -2158,8 +2303,10 @@ the editing intent and constraints in the brief. Workflows must still invoke
 `media image-edit validate` on the saved file before publishing it as an artifact or rendering it, including
 recipe-only workflows. Stop on validation failure. `generate` and `validate` need
 Node and the runtime but no browser. `inspect portrait.iedl --input photo.jpg`
-needs a browser and reports bindings and unresolved operations; it does not
-generate masks or apply analysis.
+and `render` run on Native Skia (`@napi-rs/canvas` 1.0.11, `skia` by default) in
+Node worker threads without a browser (or on Headless Chrome with `--engine chrome` /
+`FIVEAM_IEDL_ENGINE=chrome`); `inspect` reports bindings and unresolved operations
+and does not generate masks or apply analysis.
 `render` writes local output; uploading or publishing artifacts is a separate CLI
 operation. Keep originals intact. Use subprocess argument lists, check each exit
 status, and stop if generation/validation fails. Do not call the model SDK,
@@ -2182,9 +2329,10 @@ replay.
 Use actual declared mask IDs for `--mask`. Bundles reuse resolved adjustments and
 stored generated assets; they require the matching source image, not another
 photo. Mask export produces original-space PNG. `batch` is nonrecursive and accepts
-PNG/JPEG/WebP; it cannot use `--media-id`. It shares one Chrome browser and runs up
-to four images in isolated contexts by default. Set `--concurrency 1` through `4`
-to control memory and CPU use. Use local-only recipes for directory batches. It
+PNG/JPEG/WebP; it cannot use `--media-id`. It runs up to four images in isolated
+Node worker threads on Native Skia (`skia`) by default (or shares one Chrome
+browser across isolated contexts with `--engine chrome`). Set `--concurrency 1`
+through `4` to control memory and CPU use. Use local-only recipes for directory batches. It
 continues after per-image failures, writes results in input order, and exits
 nonzero if any image failed. Inspect the report before publishing results.
 
@@ -2194,14 +2342,16 @@ replacing output files. A valid recipe still needs visual review: preserve facia
 detail and inspect mask edges before approving a look for batch reuse.
 
 Image editing is opt-in: `5am update --runtime-only` installs the version-matched
-runtime and locked JS dependencies. Alternatively pass `--with-image-edit` to
-the installer (`curl .../install.sh | sh -s -- --with-image-edit`). Setup itself
-does not invoke Node or Chrome; image-edit execution needs Node 20+, and rendering
-and input-bound inspection need Chrome/Chromium. Core CLI installation and use
+runtime, locked JS dependencies, and Skia (`@napi-rs/canvas` 1.0.11)
+with Node's npm. Alternatively pass `--with-image-edit` to
+the installer (`curl .../install.sh | sh -s -- --with-image-edit`). Image-edit
+execution, rendering, and input-bound inspection need Node 20+ and Skia (installed
+by `5am update --runtime-only`); Chrome/Chromium is only needed for the
+`--engine chrome` (`FIVEAM_IEDL_ENGINE=chrome`) rollback. Core CLI installation and use
 remain independent of these dependencies. Normal updates synchronize an opted-in
 managed runtime; core-only updates do not download one.
 
-The runner discovers compatible installed Chrome/Chromium automatically;
+When `--engine chrome` is used, the runner discovers compatible installed Chrome/Chromium automatically;
 `--browser` or `CHROME_PATH` overrides discovery. `--runtime` or `IEDL_RUNTIME`
 locates an explicitly managed bundle; `--node` overrides the Node executable.
 Missing dependencies produce setup guidance. A larger workflow machine alone does
@@ -2216,7 +2366,7 @@ Muse). Outside managed runs, install what the commands ask for:
   filters clips, collage, mix and highlight use.
 - **Node.js 20+:** `apt install nodejs` gives 18 on Ubuntu 24.04 and Debian 12; install
   20 or newer from nodejs.org or NodeSource instead.
-- **Chrome:** on Debian, `apt install chromium`. On Ubuntu, `chromium-browser` is only a
+- **Chrome (optional, only for `--engine chrome` rollback or `motion preview`):** on Debian, `apt install chromium`. On Ubuntu, `chromium-browser` is only a
   Snap stub that does not run in containers; on x86_64 install Google Chrome's .deb
   (`https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb`, then
   `apt install ./google-chrome-stable_current_amd64.deb`).
@@ -2234,3 +2384,569 @@ For direct IEDL authoring when explicitly requested, use the focused
 [IEDL skill](skills/iedl/SKILL.md) in the repository. Workflow code generation
 needs only the CLI guidance above. The public [IEDL reference](https://5am.app/cli/docs/iedl)
 covers presets, local analysis, masks, and the complete language.
+
+---
+
+## Agentic Content Supply Chain (`brand-kits`, `ads`, `catalog`, `campaign`, `campaigns`, `telemetry`)
+
+Creative supply chain commands for ingesting product SKU catalogs, running ad campaigns on
+them, generating on-brand localized video ads with Ad Maker, recording staged ad
+deployments under CMO budget guardrails, and re-rendering ads that their conversion results
+mark as tired (pulled hourly from Meta or Google for published ads, uploaded for the rest).
+
+The campaign (`5am campaign`, singular) is the unit everything runs on: it draws from one
+catalog, has its networks, locales, formats, per-network budgets and the workflow that
+builds its ads, tracks which SKUs it has rendered, and has its own AI character. The ad
+deployments (`5am campaigns`, plural) are the variants that belong to a campaign.
+
+**Where approved ads go.** The account owner connects ad accounts on the web, never with
+the CLI. An ad approved while the account's Meta ad account is connected is published on
+Meta (`network_dispatch: "meta"`); one approved while its Google Ads account is connected
+is published on Google, in a Demand Gen campaign (`network_dispatch: "google"`). Each
+published ad carries `dispatch_state` (`queued`, `publishing`, `published`, `failed`, with
+`dispatch_error`), `external_ad_id` (Meta's ad id, or Google's AdGroupAd resource name),
+`network_status` and `network_review`. The network reviews every ad before it runs:
+- **Meta:** `network_status` is Meta's `effective_status` (`PENDING_REVIEW`, `ACTIVE`,
+  `DISAPPROVED`, ...), and `network_review` holds Meta's feedback and issues.
+- **Google:** `network_status` is Google's approval or review state (in review, approved,
+  approved limited, disapproved: `REVIEW_IN_PROGRESS`, `APPROVED`, `APPROVED_LIMITED`,
+  `DISAPPROVED`), and `network_review` holds Google's policy topics.
+- **A disapproved ad** comes back `rejected`, with the network's reasons, and spends
+  nothing.
+
+Every other ad is simulated: `active` is a status here, not an ad running anywhere
+(`network_dispatch: "simulated"`, `sim_` external ids). `5am campaigns list --pretty`
+says where each ad stands ("Live on Meta", "In review on Google", "Approved on Google
+(limited): Alcohol", "Disapproved by Google: <topics>", "Simulated"). The `catalog`,
+`campaign`, `campaigns` and `telemetry` commands answer 404 unless the server has the
+content supply chain switched on.
+
+For a published ad, a local pause is a request to the network. The CLI shows
+"Pausing on Meta" / "Pausing on Google" until the remote status confirms the pause,
+then "Paused on Meta" / "Paused on Google". A failed remote pause displays
+"Failed: <dispatch_error>" even when `dispatch_state` remains `published`.
+A local `paused` status alone does not confirm that spending has stopped.
+
+### Account Brand Kits (`5am brand-kits`)
+
+```sh
+5am brand-kits list
+5am brand-kits get default
+```
+
+- `brand-kits get <id|default>` resolves a kit by UUID, name, or `default`.
+- Pass `--brand-kit default` (or a kit ID) to `5am ads draft` and `5am ads generate` to
+  apply the brand's palette, catalog fonts, logo mark, and default CTA.
+- A kit that does not exist exits `3` with `code` `brand_kit_not_found` (the message names
+  it). Any other failure to read the kit (401, 403, a server error) stops the command with
+  that error: an ad never goes out silently without the kit you named.
+
+### Headless Ad Maker (`5am ads`)
+
+```sh
+5am ads templates
+5am ads draft --template signature-reveal --format 9:16 --duration 15 \
+  --name "AeroRun Carbon" --audience "Marathon runners" \
+  --benefit "4% faster marathon pace" --cta "Shop Now" --offer "Free 2-Day Shipping" \
+  --brand-kit default --photo media:<mediaId> -o draft.motion.json --overwrite
+
+5am ads generate --adapt draft.motion.json --locale es-MX --format 9:16 \
+  --name "AeroRun Carbon" --audience "Corredores de maratón" \
+  --benefit "4% más rápido en día de carrera" --cta "Comprar Ahora" \
+  --brand-kit default -o ad-es-mx.motion.json --overwrite
+
+5am motion render ad-es-mx.motion.json -o ad-es-mx.mp4 --overwrite
+```
+
+- `ads draft` builds a complete `.motion.json` deterministically in code from one of the
+  16 curated Ad Maker templates: no model writes the ad and it costs `0` credits.
+  `--duration` defaults to 30 seconds, as on the web. As on the web, a photo without a
+  description is described once with Gemini (cached per photo, on your Gemini access) so
+  the template can place it; `--no-describe` skips that and the draft then uses no Gemini
+  at all.
+- `ads generate` composes a new ad or adapts (`--adapt`) and localizes (`--locale`) a draft
+  with Gemini using Ad Maker's advertising rules (`adIntent`) and enforces the Brand Kit.
+  An adapted draft keeps its own format and duration unless you pass `--format` or
+  `--duration`.
+- Render an ad with `5am motion render` (the Motion export, 20 credits). Like every CLI
+  render it carries the "Made with 5AM.app" mark: there is no unmarked local export. The
+  unmarked 500-credit ad export is Ad Maker's, on the web.
+- A campaign's ads render unmarked on 5AM's servers instead, with `5am campaign render`
+  (Business plan; see below). Build those films with library photos and clips (`--photo
+  media:<id>`, `--clip media:<id>`): the server cannot read a local file.
+
+**An ad for a catalog SKU: `--catalog <catalog-id> --sku <sku-id>`** (both commands).
+
+```sh
+5am catalog import-media <catalog-id> --sku SHOE-1 --limit 4 --wait --wait-timeout 5m
+5am ads draft --catalog <catalog-id> --sku SHOE-1 --template signature-reveal --format 9:16 \
+  -o draft.motion.json --overwrite
+5am ads generate --adapt draft.motion.json --locale es-MX --catalog <catalog-id> --sku SHOE-1 \
+  -o ad-es-mx.motion.json --overwrite
+```
+
+- The campaign fields come from the SKU, so the ad states only the merchant's own claims.
+  Flags you pass win. Never write a SKU's claims yourself:
+  - name: `title`;
+  - benefit: `benefit`, else the first sentence of `description`;
+  - audience: `audience`, else the catalog's `default_audience`, else "Shoppers looking for
+    <category>";
+  - cta: `cta`, else the catalog's `default_cta`, else "Shop now";
+  - offer: `offer`, else a sale line from `sale_price` and `price` ("Now $99.00, was $129.00");
+  - proof: `proof` only;
+  - destination: the product page;
+  - photos: the SKU's first 4 images in the catalog's order, unless you pass `--photo`. The
+    owner chooses a product's ad images in the catalog (on the web): the order (the first
+    is the hero), images kept out of ads (`use_in_ads: false` in the SKU's `media`, never
+    used), and images of their own (`origin: "owner"`). Feed images arrive with
+    `catalog import-media`;
+  - clips (`ads generate` only): the SKU's imported videos that are READY (processed) and
+    used in ads, in the same order, at most 4, unless you pass `--clip` or the adapted draft
+    has clips. `clips` in the output
+    counts them. A video still processing is left out with a line in `warnings`: wait for it
+    with `catalog import-media <catalog-id> --sku <sku-id> --wait`.
+  - brand kit: the catalog's, unless you pass `--brand-kit`. If the catalog's kit no longer
+    exists, the ad is made without one and `warnings` says so; any other failure to read
+    it stops the command.
+- **No template uses video:** Ad Maker's 16 code templates draw photos only, so `ads draft`
+  never adds clips; it names the SKU's videos in `warnings`. The SKU's videos reach an ad
+  through `ads generate` (adapting the draft, as above).
+- The output's `campaign` object shows the fields used.
+- **Refusals exit 2 with a `code`** on the stderr JSON error; `sku` names the SKU:
+  - `missing_benefit`: no benefit and no description. Add one to the feed and sync, or pass
+    `--benefit`.
+  - `sku_out_of_stock`: the SKU is out of stock.
+  - `sku_removed`: the SKU was removed from the catalog.
+  - No file is written for any of them. Exit 2 with one of these codes is NOT an auth
+    failure: skip the SKU.
+- `ads generate --adapt` keeps the draft's photos (and clips). It uses the SKU's images only
+  when the draft has none.
+
+### SKU Catalogs & SHA-256 Delta Ingestion (`5am catalog`)
+
+```sh
+5am catalog list
+5am catalog create --name "Summer Footwear SKUs" --source json --brand-kit default --locales en-US,es-MX \
+  --default-audience "Road runners" --default-cta "Shop now"
+5am catalog update <catalog-id> --default-cta "Run with us" --auto-trigger=false   # owner only
+5am catalog sync <catalog-id> --from-file skus.json --import-media
+5am catalog sync <catalog-id> --from-file all-skus.csv --full      # the file is the whole catalog
+5am catalog sync <catalog-id> --from-file products_export.csv --store-domain mystore.com --currency USD   # a Shopify export
+5am catalog import-media <catalog-id>                  # --sku <id>; --limit N; --wait
+5am catalog skus <catalog-id> --limit 50
+5am catalog skus <catalog-id> --limit 50 --offset 50   # the next page
+5am catalog skus <catalog-id> --all                    # every SKU
+5am catalog delete-media <catalog-id> <media-id> --yes             # owner only
+5am catalog sku delete <catalog-id> <sku-id-or-external> --yes     # owner only
+5am catalog delete <catalog-id> [--delete-media] --yes             # owner only
+```
+
+- **Feed columns** beyond the product facts (title, description, price, sale_price,
+  currency, product_url, image_urls, category, locales, promo_badge):
+  - product videos: `video_urls` (at most 4, http or https; in a CSV `video_url` or
+    `video_urls`, several separated by `|`);
+  - stock: `in_stock` (true/false/yes/no/1/0) and `availability` (`in_stock`,
+    `out_of_stock`, `preorder`, `backorder`; "in stock" and "out of stock" also work);
+  - the merchant's ad claims: `audience`, `benefit`, `cta`, `offer` and `proof`.
+  - A sync that changes a SKU's claims, or takes it out of stock, pauses its staged and
+    active ads in every campaign (`paused.deployments`, `paused.campaigns`).
+- **A Shopify product export** (Shopify admin, Products, Export) syncs as it is, one SKU per
+  product (not per variant), keyed by its handle. It is recognized by its columns (`URL handle`
+  and `Price` in the 2026 export, `Handle` and `Variant Price` in the older one).
+  - `--store-domain` and `--currency` are required for it (the export has neither): without
+    them the command exits non-zero with "This is a Shopify product export: pass
+    --store-domain and --currency". `product_url` is `https://<store-domain>/products/<handle>`.
+  - price: the lowest price a variant can be sold at; a higher compare-at price becomes
+    `price`, with the variant's as `sale_price`. A range of prices goes in
+    `metadata.price_min` / `price_max`.
+  - stock: in stock when any variant can be sold (not tracked, policy continue, or a
+    quantity above 0 or none given), else `in_stock` false, `out_of_stock`.
+  - `image_urls`: the product's images by position, then variant images, at most 10.
+    `description`: the HTML as plain text. `category`: Type, else the taxonomy's last part.
+    `metadata`: source `shopify_csv`, vendor, tags, variant_count.
+  - Drafts, archived and unlisted products, products not published on the online store
+    (their page may not be live), gift cards, and products without a title or a price are
+    left out, counted in the output's `shopify` block: `{ rows, products, skipped: { draft,
+    archived, unlisted, other_status, unpublished, gift_card, no_title, no_price,
+    no_handle }, store_domain, currency }`. With `--full` they are removed from the catalog.
+  - No claim (benefit, audience, offer, proof, cta) comes from an export: the benefit falls
+    back to the description's first sentence, and the catalog's defaults apply.
+    `--full` and `--import-media` work as for any feed.
+- **`catalog sync` sends 5,000 rows per request.** Larger feeds go in several batches,
+  each reported in `batches` with the counts added up:
+  - a batch the server refuses on its own (a bad row, which `row` names, a duplicate SKU
+    id, the plan's SKU limit) is listed as `failed`, the next batch still goes, and the
+    command exits non-zero;
+  - 401, 402, 403 or 404 stops the sync, and the rest are listed as `not_sent`.
+- **`catalog import-media`** turns feed image and video URLs into library media (the older
+  `catalog import-images` is the same command for images only).
+  - It downloads each file the server lists as not yet imported, on this machine (http or
+    https), and checks what it is from its bytes: an image at most 20 MB and 45 s, JPEG,
+    PNG, WebP, GIF or HEIC; a video at most 500 MB and 15 minutes, MP4, MOV or WebM.
+  - Feed downloads require direct internet access: they ignore proxy environment
+    variables, including `HTTP_PROXY` and `HTTPS_PROXY`. Each connection, including
+    redirects, checks the actual destination IP and refuses private, loopback,
+    link-local, CGNAT and other non-public destinations, including private IPv4
+    addresses embedded in RFC 6052 NAT64. Backend API calls and uploads keep their
+    existing proxy behavior.
+  - It uploads each into the catalog's own album (internal, never in the library; videos
+    over 64 MB in parts) and records it on the SKU, so `ads draft|generate --catalog --sku`
+    use it. Uploads count against storage like library uploads.
+  - `--limit N` takes at most N images and N videos this run, including failed
+    attempts. The importer advances past pages of already-attempted failures, so
+    1,000 broken targets do not hide later URLs when the run's limit permits them.
+  - `imported` and `failed` (with the `kind` and the `stage`: download, upload or record)
+    list what happened; files that could not be used are skipped, and the exit is 0. A
+    video over the server's cap fails with `code` `file_too_large`.
+  - A URL is imported once, and a re-sync never imports it again.
+  - Storage full, or a permission or catalog refusal, stops it (`stopped`, non-zero exit).
+  - **Videos are processed on 5AM's servers after upload** (poster, length, an MP4 for a
+    .mov or a source over 1080p), and an ad uses one only once it is ready (a SKU's
+    `media[]` entry has `ready`). `--wait` waits for them (the `--sku` SKU's videos, else
+    this run's) for at most `--wait-timeout` (default 10m), and prints `wait`: `status`
+    ready or timeout, the videos in `ready` and `not_ready`. A timeout exits 0; the videos
+    finish on their own. The timeout bounds the whole polling phase, including
+    in-flight SKU requests; no new poll starts after the deadline. The lists reflect
+    observed video states and can be incomplete if the deadline interrupts polling.
+  - `catalog sync --import-media` runs it after a sync with no failed batch, and prints it in
+    `media` (the older `--import-images` imports the new images only).
+- **`catalog skus`** pages feed content with `--limit` (1..500, default 100) and
+  `--offset` (zero or greater, default 0). Increase offset by the returned row count
+  until a short page, or use `--all` to gather every page from the start. `--all`
+  cannot be combined with a positive `--offset`. Keep filters such as
+  `--include-removed` unchanged between pages; concurrent catalog changes can move rows.
+- **`catalog sync --full`** says the file is the WHOLE catalog. The batches go as one sync
+  session; once every batch went through, the session is finished, which removes the
+  catalog's SKUs the file does not have (`session.removed`). If any batch failed or was not
+  sent, nothing is removed (`session.status` not_finished, non-zero exit): fix the feed and
+  run the full sync again. Without `--full` a sync never removes a SKU.
+- **Deletes** (owner only: refused with 403 `cli_token_not_allowed_here` in workflow runs
+  and AI character sessions; each asks for confirmation unless `--yes`):
+  - `catalog delete-media <catalog-id> <media-id>` deletes one imported photo or video. Its
+    feed URL stays recorded as deleted (`excluded`), so it is not imported again while the
+    feed lists it (the owner can allow it again on the web). 409 `media_in_use` while an ad
+    render uses it.
+  - `catalog sku delete <catalog-id> <sku>` removes one product. A removed SKU (here or by
+    a full sync): its live, waiting and tired ads pause in every campaign (`paused_reason`
+    `sku_removed`, never resumed), it is pending nowhere, render and stage refuse it (409
+    `sku_removed`), and its imported media are deleted after a grace period. A later sync
+    that lists it brings it back, pending again.
+  - `catalog delete <catalog-id>` deletes the catalog and its products. Its imported photos
+    and videos move into the library as an ordinary album (`photos_album_id`), or with
+    `--delete-media` are deleted (`media_deleted`). Campaign ads albums stay. 409
+    `renders_in_progress` while any of its campaigns has an ad render queued or rendering.
+  - `catalog skus --include-removed` also lists removed products (each with `removed_at`).
+- **A product's ad images are the owner's to choose, on the web** (the catalog page): their
+  order, "don't use in ads", and images of their own added from the library or uploaded.
+  The choices survive every sync and every campaign's future ads use them; they are not
+  claims, so changing them never pauses an ad or makes a SKU pending. In `catalog skus`
+  (and a campaign's `campaign skus`) each SKU's `media` is in that order, and each entry
+  has `origin` (`feed` or `owner`), `position` (null until the owner orders them),
+  `use_in_ads`, `thumbnail_url`, `src` and `excluded`. `--pretty` sums them up per SKU as
+  `<used>/<total> in ads, <n> yours`. There is no CLI command to change them.
+- **A new version of an ad with new images is the owner's, on the web.** After changing a
+  product's images, the campaign page's "Make a new version" makes the SKU pending again
+  in that campaign (`campaign skus` shows `new_version_at`); the next run makes the new
+  ads, and the old ad stays until the owner approves the new one. The server refuses it to
+  workflow runs and AI characters (403 `cli_token_not_allowed_here`), so there is no
+  `5am campaign new-version`: an agent asked for one tells the owner to use the campaign
+  page.
+- **`catalog update`** changes only the flags passed: name, `--locales`, `--brand-kit`
+  (a UUID or `default`), `--auto-trigger`, and `--default-audience` / `--default-cta` (the
+  fallbacks for SKUs that name none; an empty value clears one). It is the owner's only.
+
+- A catalog holds **feed content only**. One catalog can feed several campaigns, and each
+  campaign tracks which SKUs it has rendered, so render state lives on the campaign:
+  `5am campaign skus <campaign-id> --pending`.
+- `catalog sync` computes a deterministic SHA-256 `content_hash` per SKU. Only new or
+  modified SKUs count in `dirty_delta`; each becomes pending again for every campaign that
+  has it, and unchanged SKUs are never re-rendered. With the catalog's auto trigger on,
+  `triggered_campaigns` lists the running campaigns whose SKU filter matches a changed SKU:
+  their workflows are woken. A change outside every filter wakes none.
+- `catalog list` reports `sku_count` and `campaign_count` (campaigns that have not ended).
+
+### Ad Campaigns (`5am campaign`)
+
+```sh
+5am campaign create --catalog <catalog-id> --name "Summer launch MX" \
+  --goal "Launch the summer line in Mexico" --networks meta,google \
+  --locales es-MX,en-US --formats 9:16,1:1 --budget meta=5000,google=2500 \
+  --category Running --workflow <workflow-id>
+5am campaign list                      # running first; --include-ended adds ended ones
+5am campaign get <campaign-id>
+5am campaign update <campaign-id> --budget meta=8000 --locales es-MX
+5am campaign skus <campaign-id> --pending --all      # every pending SKU
+5am campaign skus <campaign-id> --all                # every SKU, including rendered/paused/excluded
+5am campaign skus <campaign-id> --cursor <next>      # one later page with the same filters
+5am campaign render <campaign-id> ad-es-mx.motion.json --sku <sku-id> --locale es-MX --key <retry-key>
+5am campaign render-status <campaign-id> --key <retry-key> --include-doc --wait
+5am campaign mark-rendered <campaign-id> <sku-id-or-external>
+5am campaign pause <campaign-id>
+5am campaign resume <campaign-id>      # owner only
+5am campaign end <campaign-id> --yes   # owner only, final
+5am campaign update <campaign-id> --digest daily     # owner only: off (default), daily or weekly
+5am campaign delete <campaign-id> --character keep --yes   # owner only; keep or delete its character
+```
+
+- **Campaigns are a store feature.** `create` needs the Business plan (402 with
+  `required_plan` business otherwise), and the plan sets how many campaigns that have not
+  ended an account may have (409 `too_many_campaigns`).
+- **Each campaign gets its own AI character,** created with the campaign. Its chat is where the campaign's ads are
+  reviewed: the character reviews each staged ad (`review_status` ok or flagged, with
+  `review_notes`) but never approves; the owner approves or rejects in that chat (or with
+  `5am campaigns approve|reject`). Ending a campaign archives the character; its chat
+  stays readable.
+- **The digest** (`update --digest daily|weekly`, off by default): the character posts the
+  campaign's numbers for the last UTC day or Monday-to-Monday week into its chat, with a
+  push, from 14:00 UTC the day after. Its words are written by the character's model on
+  your Gemini access from those numbers only; without access it is a numbers-only text.
+- **Deleting a campaign** (`delete --character keep|delete`, the choice is required): a
+  running or paused campaign is ended first. Its ads stay as history with no campaign, its
+  "ads" album stays, 5AM's campaign program goes with it (your own workflow stays), and the
+  character goes with its chat (`delete`) or stays archived (`keep`). 409
+  `renders_in_progress` while an ad renders, 409 `run_in_progress` while its program runs.
+- **Scope.** `--catalog` is fixed at create. `--category` and `--sku` (repeatable) narrow
+  the campaign to part of the catalog; with neither it covers the whole catalog. Defaults:
+  networks `meta`, locales `en-US`, formats `9:16`.
+- **Budget.** `--budget network=cents` is the campaign's own daily cap per network, on top
+  of the account's `campaigns policy` cap. A network without one is bound only by the
+  account cap.
+- **Google's daily floor.** A Google campaign needs at least $5 a day, or the account's
+  local minimum. A Google budget under it is refused with 409
+  `budget_below_network_minimum` on `create`, `update --budget`, `campaigns approve` and
+  `campaigns resume`. The error names the floor
+  ("Google needs a daily budget of at least 5.00 USD (minimum_cents 500) for this
+  campaign"), and its `hint` gives the `5am campaign update <campaign-id> --budget
+  google=<cents>` that raises it. `--budget` replaces every network's budget, so name the
+  others too.
+- **`update`** changes only the flags passed. `--budget` replaces every network's budget,
+  `--category`/`--sku` replace the whole filter (`--whole-catalog` clears it), and
+  `--workflow none` detaches the workflow. An ended campaign is read-only.
+  Adding locales, formats or networks clears the campaign's SKU render stamps;
+  expanding its product filter also wakes an enabled trigger. Settings, render
+  invalidation and the trigger update commit together, so a failed edit is safe to retry.
+- **Who may do what.** `create`, `update`, `resume` and `end` are the owner's only:
+  refused with 403 `cli_token_not_allowed_here` inside workflow runs and AI character
+  sessions. `pause` is also allowed to the campaign's own character, since it only reduces
+  spend; it stops the campaign's runs and pauses its active and tired ads. `resume` brings
+  back the ads the pause paused, under the caps (`ads.still_paused` counts the ones that
+  did not fit).
+  Pause and end commit local campaign/deployment changes and queued network pauses in
+  one transaction. Repeating the stop reconciles unfinished local work. Network delivery
+  is asynchronous: a local pause alone does not confirm that the network stopped spending.
+- **`campaign skus`** lists the campaign's SKUs with THIS campaign's state:
+  `campaign_status` is `pending` (never rendered here, changed since, or the owner asked
+  for a new version: `new_version_at`), `rendered`, `fatigued`, `paused` or `excluded`.
+  Each SKU carries its `media` in the order its ads use them (see the catalog's images).
+  `--pending` narrows the result to ones to (re)render, never out-of-stock SKUs.
+  Both filtered and unfiltered lists support `--limit` (1..500, default 100),
+  `--cursor <next>` and `--all`. `next` is null on the last page; `--all` follows
+  every page and cannot be combined with `--cursor`. Keep `--pending` and other
+  filters unchanged when following a cursor.
+- **`campaign render`** posts a MotionDoc and renders it unmarked on 5AM's servers; the MP4
+  goes into the campaign's album. It needs the Business plan. Each delivered ad comes out
+  of the plan's monthly bundle of catalog ads (`paid_with: "bundle"`, `credits: 0`), then
+  costs AI credits at the catalog rate (out of credits: category `credits`, exit 3); a
+  failed render is refunded. The film's format must be one of the campaign's, 6 to 60
+  seconds, with library photos and clips (at most 4 clips, each processed, else 400
+  `clip_not_ready`); a film with clips is charged at the catalog video rate. A SKU out of
+  stock or removed from the catalog is refused (409 `sku_out_of_stock`, `sku_removed`). It waits
+  until the render is `delivered` (`media_id`, `asset_url`) or `failed` (exit non-zero);
+  `--no-wait` returns while it is queued, and `--timeout` bounds the wait. The same
+  `--key` answers the existing render (`replayed: true`, no new charge), so a retry never
+  pays twice for a non-failed render, and running it again with the key keeps waiting.
+  The same SKU, locale and format replay the original doc even if a different doc is
+  submitted under that key; use a new key for an intentional new creative. A failed
+  render frees its key, so a new POST can render and charge again.
+- **`campaign render-status`** reads the latest attempt for an exact `--key`, without
+  generation, submission or a charge. `--include-doc` returns its saved MotionDoc;
+  `--wait` waits for an existing render within `--timeout`. Missing keys answer
+  `{ "render": null }`; a failed render is printed and exits non-zero. Check this before
+  importing or generating on a retry. Reuse the saved doc and delivered asset, or wait
+  for the queued render, even when the retry runs in a fresh container.
+- **`campaign mark-rendered`** is the only render stamp: staging an ad never marks its SKU
+  rendered. Call it once per SKU after its whole set of variants is staged, so a run that
+  stops partway leaves the SKU pending. A SKU rendered for one campaign stays pending for
+  every other campaign that has it.
+
+### Ad Deployment Records & CMO Guardrails (`5am campaigns`)
+
+```sh
+5am campaigns policy
+5am campaigns policy --network meta --daily-budget-cap-cents 100000 --min-roas 2.5 --max-staged 300
+5am campaigns policy --network meta --fatigue-window-days 7 --attribution-days 3 \
+  --min-spend-cents 4000 --thumbstop-threshold 0.2
+5am campaigns stage --campaign <campaign-id> --network meta --campaign-name "Summer_AeroRun_es-MX_9x16" \
+  --sku <sku-id> --locale es-MX --aspect 9:16 \
+  --template signature-reveal --hook "4% más rápido" --cta "Comprar Ahora" \
+  --asset-url https://... --daily-budget-cents 2500 --mode stage
+5am campaigns stage --campaign <campaign-id> --render <render-id> --network meta \
+  --campaign-name "Summer_AeroRun_es-MX_9x16" --mode stage --key <retry-key>
+5am campaigns list --campaign <campaign-id> --status staged
+5am campaigns list --campaign <campaign-id> --status staged --all  # follow every page
+5am campaigns list --campaign <campaign-id> --cursor <next>        # one later page
+5am campaigns list --campaign <campaign-id> --pretty   # a table: where each ad stands on its network
+5am campaigns approve <deployment-id>                   # Human-only: staged -> active
+5am campaigns approve <id-1> <id-2> <id-3>              # Human-only: several at once
+5am campaigns reject <deployment-id> --note "Off-brand hook"   # Human-only
+5am campaigns resume <deployment-id>    # Human-only: paused -> active (or back to review)
+5am campaigns pause <deployment-id>
+```
+
+- **Every deployment belongs to a campaign.** Pass `--campaign` (400 `campaign_required`
+  without it). Inside a workflow run of the campaign's own workflow the campaign is
+  inferred; a different `--campaign` there is 409 `campaign_mismatch`. The network must
+  be one of the campaign's (409 `network_not_in_campaign`), `--catalog` (optional) must be
+  the campaign's catalog (409 `catalog_mismatch`), `--sku` must be in that catalog and
+  match the campaign's filter (409 `sku_not_in_campaign`), and an ended campaign takes
+  nothing (409 `campaign_ended`).
+- **`campaigns list`** returns `{ deployments, next }`, newest first by
+  `(updated_at, id)`, with `--limit` as the page size (1..500, default 100).
+  Preserve the filters and pass `next` as `--cursor` until it is null, or use `--all`.
+  `--all` and `--cursor` cannot be combined.
+  Use every page when counting live campaigns, networks or committed budgets. Invalid
+  cursors are 400 `invalid_cursor`. Paging is not a snapshot: concurrent updates can
+  move rows, so refresh the list when processing live changes.
+- **`--render <render-id>`** stages a delivered `campaign render` of the same campaign:
+  the server fills the asset, and the SKU when `--sku` is absent. With `--campaign`, a
+  `--locale` or `--aspect` you leave out is read from the render; without it, pass both.
+- **The daily cap.** The account cap (`daily_budget_cap_cents`, per network) sums the
+  daily budgets of the CAMPAIGNS that have an `active` or `fatigued` ad on that network
+  (a tired ad keeps spending until paused); an ad of an already-live campaign adds
+  nothing. It is checked when an ad goes live (approve, resume, or a stage that goes
+  straight to `active`) and answers 400 `budget_cap_exceeded`; a campaign with no daily
+  budget for the network answers 409 `campaign_budget_required`. It counts committed
+  budgets, not measured spend. Networks may overspend a day's budget: Meta by up to 75%,
+  Google up to twice a day's budget (never more than 30.4 times it in a month). A Google
+  campaign's budget must also reach Google's daily floor (409
+  `budget_below_network_minimum`; see "Google's daily floor" above).
+- **Staging spends nothing,** so it is bounded by count instead: at most `max_staged`
+  ads waiting for review per network (default 500), else 409 `too_many_staged`.
+- **`stage` is safe to retry.** Inside a workflow run the same variant (SKU, network,
+  locale, aspect, template) answers the existing deployment with `replayed: true`
+  (HTTP 200) instead of a duplicate; outside a run pass `--key <your-key>` for the
+  same.
+- **An agent's live request is staged instead.** Inside a workflow run or an AI
+  character session, `--mode live` becomes `status = "staged"` with
+  `guardrail_downgraded: true` and a `downgrade_reason` rather than an error when one of
+  these stands in the way: `auto_publish_off` (the owner has not enabled
+  `auto_publish_enabled` on that network), `campaign_paused`, `budget_cap`,
+  `campaign_budget`, a network's code (`locale_needs_country`, `dsa_required`, ...) or
+  `review_flagged` (the automatic review checks flagged the ad: a price or offer the
+  SKU does not carry, no call to action, no product link, off brand, a locale outside
+  the campaign, a missing asset; its `review_reasons` say which). A person's live
+  stage into a paused campaign is 409 `campaign_paused`, and over a cap it is the 400
+  above.
+- **Every staged ad is checked, never refused for it:** a failed check sets
+  `review_status: "flagged"` and `review_reasons` (`[{source, code, text}]`, `source`
+  `check` or `ai`). Only the owner can approve a flagged ad.
+- **Statuses:**
+  - `approve` takes only a `staged` ad; an `active` one answers unchanged, and any
+    other status is 409 `not_approvable`. With several ids (at most 200) it approves them
+    in order until a cap stops it and prints `approved` and `refused` (each refusal with
+    its `code`; a `budget_below_network_minimum` refusal also has `minimum_cents`,
+    `currency` and `network`).
+  - `reject` takes only a `staged` ad; `--note` is kept as `rejected_note`, and the
+    campaign's character reads it. A rejected ad never comes back.
+  - `resume` takes only a `paused` ad.
+  - `pause` takes staged, active and tired ads; a rejected one is 409 `not_pausable`.
+- `campaigns approve`, `reject`, `resume` and `policy` updates are **human-only**: refused
+  with 403 `cli_token_not_allowed_here` inside workflow runs and AI character sessions. Do
+  not retry them; report that the owner must approve (in the campaign's chat).
+  `campaigns pause` is allowed everywhere, since it only reduces spend.
+- **Policy values out of range** (a fraction of a cent, an amount above 10^14 cents, a
+  CTR above 1, fewer than 100 impressions, a window outside 1 to 30 days, an attribution
+  age outside 0 to 30 days, a thumbstop floor above 1) are refused with 400
+  `invalid_policy`. Amounts are cents of the account's currency (1/100 of its major
+  unit, for every currency): a dong or rupiah account types large numbers.
+- **`campaigns policy` prints one of two shapes:** `{policies: [...]}` (meta, then google)
+  with neither `--network` nor an update flag, and `{policy: {...}}` (one network) with
+  `--network` or after an update.
+
+### Closed-Loop Conversion Telemetry (`5am telemetry`)
+
+```sh
+5am telemetry ingest --deployment <deployment-id> --date 2026-10-14 \
+  --impressions 12000 --clicks 60 --conversions 2 --spend-cents 15000 --revenue-cents 18000 \
+  --video-3s-views 3000
+5am telemetry ingest --from-file telemetry.json    # [{ "deployment_id": ..., "date": "2026-10-14", "impressions": ... }]
+5am telemetry report --campaign <campaign-id>
+5am telemetry fatigued --campaign <campaign-id> --all
+```
+
+- **Published ads need no uploads.** An ad published on a connected Meta or Google account
+  has its results pulled from the network every hour. `telemetry ingest` is for simulated
+  ads, or numbers from elsewhere.
+- **Every event is ONE UTC DAY's numbers** for one deployment, never lifetime totals:
+  `date` is `YYYY-MM-DD` (default today, UTC; at most 1 day ahead or 90 days back, else
+  400 `invalid_telemetry` naming the event). An event SETS that day's value of each field
+  it carries (`"replace": false` in a file adds to it instead); a field it leaves out keeps
+  the day's value. A deployment's `impressions`, `clicks`, ... are the sum of its days.
+  To backfill, send one event per day.
+- `telemetry ingest --deployment` sends only the metric flags you pass; the day keeps
+  every metric you leave out.
+- **Fatigue reads a rolling window**: the network policy's last `fatigue_window_days` UTC
+  days, ending today (default 3). CTR (`fatigue_ctr_threshold`) and thumbstop
+  (`video_3s_views` over impressions, against `thumbstop_threshold`, default 0.2) need
+  `fatigue_min_impressions` in the window; thumbstop counts only days that report
+  3-second views, so it never applies to Google ads (Google reports none). ROAS (`min_roas_threshold`) and CPA (`max_cpa_cents`) wait until the ad
+  is `attribution_days` old (default 3) and the window spent `min_spend_cents` (default
+  4000), so late conversions do not flag a new ad. Only an `active` deployment can
+  become `fatigued`, and it records the `fatigue_window` it was judged on. That marks its SKU fatigued for its own campaign only
+  (pending again in that campaign's `campaign skus --pending`, untouched in any other
+  campaign) and wakes that campaign's workflow; `triggered_campaigns` lists the campaigns
+  woken. Staged, paused, rejected and already-fatigued deployments only get their metrics
+  updated, so a replaced ad that keeps reporting poor numbers does not trigger another
+  re-render. One unknown deployment id refuses the whole batch (404) before anything is
+  written.
+- `telemetry report` returns `summary` (with `blended_thumbstop` and `fatigue_windows`, the
+  window each network judges on now), `winning_patterns` (top template/hook/aspect_ratio
+  combinations by ROAS, with `thumbstop`), and `fatigued_deployments` (each with its
+  `fatigue_window`) so a re-render can reuse proven winning templates. Filter it with
+  `--campaign`, `--catalog` or `--network`.
+- A winning pattern clears its network policy's own bars, listed in `thresholds`: ROAS at
+  least `min_roas` (the policy's `min_roas_threshold`) or CTR at least `min_ctr` (twice its
+  `fatigue_ctr_threshold`).
+- `telemetry report` returns one page of `fatigued_deployments` (`--limit` 1..500,
+  default 100); pass the answer's `next` as `--cursor` until it is null.
+  `summary.fatigued_count` counts them all. The report has no `--all` option.
+- `telemetry fatigued` returns `{ deployments, next }` and accepts `--limit`
+  (1..500, default 100), `--cursor <next>` or `--all` to collect every page.
+  `--all` and `--cursor` cannot be combined. Preserve filters when following cursors.
+- **Money is in the account's currency**: `currency` on the report, on every deployment and
+  on every policy (the connected Meta ad account's, else `USD`). Every `*_cents` field is
+  1/100 of that currency's major unit, for every currency (1,234 yen is `123400`), so read
+  amounts in it and never assume dollars. A report whose scope holds money in two
+  currencies answers `currency: null`, with null money totals and each network's own in
+  `summary.by_network`.
+
+### The campaign-centred flow
+
+A workflow program builds one campaign's ads. The campaign names it with `--workflow`,
+and the campaign's trigger runs it when the campaign has pending work (a member SKU
+changed in a sync, or one of its ads went tired).
+
+1. The program declares a required string input named `campaign_id`; a campaign trigger
+   fills it. Read the campaign's networks, locales and formats with
+   `5am campaign get <campaign_id>`.
+2. Read the work with `5am campaign skus <campaign_id> --pending --all`: only SKUs never
+   rendered for this campaign, changed since, or tired, every page. Process that list
+   once; do not loop until it is empty.
+3. For each SKU, import its images and videos with
+   `5am catalog import-media <catalog_id> --sku <sku> --limit 4 --wait --wait-timeout 5m`.
+   Never download them yourself.
+4. Build each ad with `5am ads draft --catalog <catalog_id> --sku <sku>` (code templates,
+   no model call) and, to localize or adapt it,
+   `5am ads generate --adapt ... --locale <locale> --catalog <catalog_id> --sku <sku>`.
+   The claims come from the SKU; never write them. `ads generate` adds the SKU's ready
+   videos as clips. Skip and report a SKU refused with `missing_benefit`,
+   `sku_out_of_stock` or `sku_removed` (exit 2).
+5. Render each film with `5am campaign render` (unmarked, on 5AM's servers). A 409
+   `sku_out_of_stock` or `sku_removed` here, or from the stage (also `sku_changed`), skips
+   the SKU: report it and never mark it rendered.
+6. Stage each variant with `5am campaigns stage --campaign <campaign_id> ...` (inside the
+   campaign's own workflow run the campaign is inferred anyway).
+7. After a SKU's whole set of variants (every network, locale and format) is staged, run
+   `5am campaign mark-rendered <campaign_id> <sku>`.
+8. The campaign's AI character reviews the staged ads in its chat, and the owner approves
+   them there. The program never approves.

@@ -1,8 +1,9 @@
 # Image Edit DSL (IEDL 1)
 
-IEDL constructs the same editable document used by the web image editor. The
-TypeScript core lives in `Web-Frontend/lib/image-editor/iedl`; the Go CLI invokes
-its packaged Node/Chromium runner. Filters are never translated into Go or FFmpeg.
+IEDL constructs the same editable document used by the 5AM web image editor. The
+browser and CLI share the same rendering engine; the CLI runs recipes locally
+through its optional Node.js / Native Skia (`skia` by default, with `--engine chrome`
+as an optional Headless Chrome fallback) runtime. Filters are never translated into Go or FFmpeg.
 
 ## Quick start
 
@@ -70,8 +71,8 @@ including values nested inside JSON. There is no string interpolation or code.
 
 `.iedl.json` is `{ "version": 1, "operations": [{ "op": "input",
 "args": ["image"], "fields": {} }] }`. Every operation uses the same model and
-validation as text. `jsonSchema()` exports the registry-derived structural
-schema; binding adds semantic checks. Canonical printing sorts fields and does
+validation as text. Binding adds semantic checks against the source image, parameters,
+and declared assets. Canonical printing sorts fields and does
 not retain comments or whitespace. Invalid input is rejected, never repaired.
 
 Diagnostics include a stable code, line, column, operation and suggestion; JSON
@@ -80,7 +81,7 @@ unsupported capability/version, missing bindings, source mismatch and limits.
 
 ## Capability reference
 
-The exported `registry` is authoritative for field types and numerical ranges.
+The command registry is authoritative for field types and numerical ranges.
 Unknown fields fail rather than being ignored. Omitted fields use the existing
 document defaults: zero adjustments, identity curves, neutral HSL, enabled layers,
 normal blend/opacity 1; empty masks have density 1 and no refinement.
@@ -108,7 +109,7 @@ normal blend/opacity 1; empty masks have density 1 and no refinement.
 | `wand MASK` | Required `x y tolerance` | Original-image contiguous selection → raster mask |
 | `select MASK subject\|background\|sky\|object\|skin` | Object requires `x y`; experimental skin forbids coordinates | Remote original-image segmentation → raster mask |
 | `erase MASK` | Required `id` for raster layer | Existing Magic Eraser integration |
-| `generative-edit` | Required `id`, `mask`, `prompt` (1–4000 characters, nonblank) | Prompt-guided masked edit through the existing Magic Eraser backend |
+| `generative-edit` | Required `id`, `mask`, `prompt` (1–4000 characters, nonblank) | Prompt-guided masked edit through the Magic Eraser service |
 | `output` | `format=jpeg\|png\|webp quality=0.1…1` | Export request |
 
 Layer kinds: adjustment, retouch, raster, text, frequency. Blend modes: normal,
@@ -125,7 +126,7 @@ Edge-aware brushes require their explicitly sampled RGB `color` and tolerance.
 Stroke kinds: clone, heal, spot, patch, dodge, burn, red-eye, liquify,
 liquify-smooth, reconstruct. Clone/heal/patch require a `source` point; patch
 also requires a layer mask. Brushes expose `size hardness opacity flow spacing
-pressure smoothing`. Pressure is 0…1. Defaults match `defaultBrush`; spacing is
+pressure smoothing`. Pressure is 0…1. Defaults match the standard editor brush; spacing is
 0.01…1. Scalar dimensions include brush size, feather, expansion, font size and
 frequency radius. Frequency controls remain strengths on a single layer.
 
@@ -225,7 +226,8 @@ histograms and a linear-RGB lookup table. Whole-image and mask-geometry requests
 metering reads matching bounded image/mask bitmaps in the shared browser runtime,
 excludes image pixels below 50% effective mask coverage, then scans them locally.
 Each analysis report entry is limited to 16 KiB. Analysis needs no network, model
-download or Python deployment. The existing local Chromium CLI runtime uses the
+download or Python deployment. The local CLI runtime (Native Skia `skia/simd` by
+default, or Headless Chrome via `--engine chrome`) uses the
 same implementation. Source decoding and rendering preceding edits still have
 their normal image/document costs; the 512 limit bounds the analysis scan/readback.
 
@@ -257,8 +259,7 @@ dimensions, missing assets, invalid fields and unsupported runtime versions.
 
 Generated selections and adjustments are materialized; replay does not call AI
 or run auto analysis. Editor export does not infer a subject, blemish or clean
-clone source from painted geometry. `documentRecipe()` explicitly converts literal
-document geometry into an authoring recipe for callers that want that operation.
+clone source from painted geometry.
 
 `.iedl.zip` is a ZIP STORE archive containing `manifest.json` and
 `assets/SHA256` bytes. Exported bundles omit the original, which must be bound
@@ -266,34 +267,33 @@ explicitly on import. Only this unencrypted, uncompressed bundle format is
 accepted; ZIP64, compressed entries, unsafe paths, duplicates, CRC/hash failures
 and oversized inputs fail. Temporary remote URLs are never durable asset identity.
 
-Environment reports include browser, rendering backend, runtime and packaged
-worker/WASM hashes. Text currently uses system sans-serif. The same runtime on
+Environment reports include browser (`Node.js/<version> (@napi-rs/canvas 1.0.11; skia)` on Native Skia or the Chrome user-agent on `--engine chrome`), rendering backend (`skia/simd` or `webgl2+cpu/simd` / `cpu/simd`), runtime (`iedl-1.1.0`) and packaged
+runtime hashes. Text currently uses system sans-serif. The same runtime on
 different operating systems, GPUs or codecs can produce different pixels. Replay
 preserves edit intent and inputs; it does not promise universal byte identity.
 
 ## Runtime, security and CLI behavior
 
-Build with `cd Web-Frontend && npm run build:image-editor`. The worker, WASM,
-`runtime.js`, `core.mjs`, `runner.mjs` and `manifest.json` are one release unit.
-The runtime needs Node.js 20+; rendering and input-bound inspection also need
-`puppeteer-core` and installed Chrome. Install the matching optional runtime with
-`5am update --runtime-only`; ordinary CLI usage needs none of these dependencies.
-`--runtime` or `IEDL_RUNTIME` selects an explicitly managed runner; otherwise the
-CLI discovers the versioned installed runtime, legacy adjacent runtime, or source
-checkout. Chrome remains an explicit system dependency. No Next.js server is required.
+Install the optional image-edit runtime for your CLI release with
+`5am update --runtime-only` (or opt in during installation with
+`install.sh --with-image-edit`); ordinary CLI usage does not require it. The
+runtime requires Node.js 20+. Rendering and input-bound inspection run on Native
+Skia (`@napi-rs/canvas` 1.0.11, `skia` by default) in Node worker threads, with
+Headless Chrome (`--engine chrome` or `FIVEAM_IEDL_ENGINE=chrome`) available as a
+rollback path using an installed Chrome/Chromium browser. `--runtime` or
+`IEDL_RUNTIME` selects an explicitly managed runtime; otherwise the CLI discovers
+the versioned installed runtime automatically.
 
-Recipe generation uses two credential-free runtime actions (`generate-prepare`
-and `generate-finish`, generation protocol 1). Shared JS owns the prompt, schema,
-response decoding, validation and printing. Go sends the Interactions HTTP request
-using the normal proxy/BYOK resolver and token-only retry wrapper. No Gemini SDK
-is packaged in the image runtime. One two-minute deadline covers preparation,
-access resolution, HTTP/retry and validation; responses are bounded to 1 MB.
-The subprocess receives an allowlist of OS/browser environment settings, excluding
-provider/CLI credentials and Node injection flags. This is not an OS sandbox:
-explicit runtime executables and local filesystem access remain trusted.
-Update the CLI and runtime together; an incompatible prepare action fails before
-any model request. The website continues using the same language/compiler code.
-`--browser` or `CHROME_PATH` selects Chrome. No browser is silently downloaded.
+Recipe generation calls the Gemini API through the CLI's normal authenticated
+access flow using schema-constrained structured output, validates the returned
+recipe, and writes canonical IEDL text without exposing credentials to the image
+runtime. One two-minute deadline covers prompt preparation, model request, and
+validation; responses are bounded to 1 MB. The runtime subprocess receives a minimal
+allowlist of OS/browser environment settings, excluding provider and CLI credentials.
+Update the CLI and runtime together so their versions match. `--engine skia|chrome`
+or `FIVEAM_IEDL_ENGINE` selects the rendering engine (`skia` by default);
+`--browser` or `CHROME_PATH` selects Chrome when `--engine chrome` is used. No
+browser is silently downloaded.
 
 Validation of text/resolved JSON needs no browser, login or network. Inspect
 decodes/binds inputs and reports unresolved operations without calling AI. Render
@@ -302,47 +302,44 @@ and individually committed atomically. Existing destinations fail unless
 `--overwrite` is supplied. `--format`/`--quality` override recipe output settings;
 `--mask ID` produces original-space PNG. Reports and bundles are explicit outputs.
 
-Batch is nonrecursive and sorted, accepts PNG/JPEG/WebP, and uses one fresh browser
-per image. Output names include the complete input filename to avoid extension
-collisions. Each successful item gets a resolved sidecar. Item failures are
-reported and processing continues; any failure yields a nonzero exit status.
+Batch is nonrecursive and sorted, accepts PNG/JPEG/WebP, and processes up to four
+images concurrently (`--concurrency 1..4`, default `min(4, items.length)`) in
+isolated Node worker threads on Native Skia (`skia`) by default, or shares one
+Chrome instance across isolated browser contexts when `--engine chrome` is selected.
+Output names include the complete input filename to avoid extension collisions. Each
+successful item gets a resolved sidecar. Item failures are reported and processing
+continues; any failure yields a nonzero exit status.
 
 Remote operations use `--media-id`, mutually exclusive with `--input` and batch.
-The CLI downloads that library original and hosts only the existing segmentation
-and Magic Eraser routes through an authenticated adapter. Credentials stay out of
-Chromium and recipes. Uploads remain a separate library command. Segmentation
-retains backend Standard-plan checks; browser jobs use shared SSE and reconnect
-reconciliation, CLI jobs use bounded status backoff. Accepted ambiguous operations
-are never automatically resubmitted. Cancellation can stop local work and request
-job cancellation; it cannot reverse a completed remote operation or charge.
+The CLI downloads that library original and routes segmentation and generative
+edits through the authenticated API. Credentials stay out of worker threads,
+browsers, and recipes. Uploads remain a separate library command. Accepted
+ambiguous operations are never automatically resubmitted. Cancellation can stop
+local work and request job cancellation; it cannot reverse a completed remote
+operation or charge.
 
 Limits: 4 million script characters, 10,000 operations, 256 layers, 256 masks,
 128 assets, 100,000 points, one million interpolated dabs, 60MP input images,
 256MiB decoded assets, 384MiB bundles. Worker device budgets may be lower. Default
 execution deadline is two minutes (`--timeout` per CLI image). Batch concurrency
-is one. Tile-cache budgets are not total-memory limits; export assembles a full
-canvas. No scripts can read arbitrary files, fetch URLs, run code or loop.
+is bounded from 1 to 4. Tile-cache budgets are not total-memory limits; export
+assembles a full canvas. On the default Native Skia engine, single-image renders
+complete in ~560–745 ms at 1 MP, ~1.52–1.65 s at 12 MP, ~2.12–2.36 s at 24 MP,
+and 0.54 s median per case across the 106-example public field guide (59.09 s
+cumulative vs. 169.61 s on Headless Chrome, 2.87× faster, with 0.0179 / 255 mean
+pixel MAE). No scripts can read arbitrary files, fetch URLs, run code or loop.
 
-Generation uses the existing CLI Gemini credential resolution, schema-constrained
-Interactions output, `store=false`, and the same validator/printer. It does not
-render or execute remote edits. Validation errors surface instead of silently
-repairing model output. See the [official structured-output contract](https://ai.google.dev/gemini-api/docs/structured-output).
+Generation uses the CLI's Gemini credential resolution, schema-constrained
+structured output, and the same validator/printer. It does not render or execute
+remote edits. Validation errors surface instead of silently repairing model output.
 
-## Verification
+## Recipe verification and lab review
 
-- `iedl.test.ts`: parser/printer stability, invalid inputs, all local operation
-  families, typed bindings, dynamic snapshots, document conversion and limits.
-- Browser IEDL regressions: real workers, parity, auto/wand resolution, bundles,
-  corrupt assets and replay; existing editor regressions cover CPU/GPU/WASM,
-  filter/retouch/liquify seams, masks, EXIF/geometry and UI history.
-- Go tests cover command binding, runtime protocol, remote host and batch behavior.
-- `node scripts/build-image-editor.mjs --check` checks all runtime artifacts.
+- Use `5am media image-edit validate <recipe.iedl>` to check syntax, parameter types, identifier uniqueness, and operation limits without rendering or making network calls.
+- Use `5am media image-edit inspect <recipe.iedl> --input <photo.jpg>` to bind an input image, check dimensions, and inspect unresolved automatic or AI operations before rendering.
+- Replay a saved `.iedl.zip` bundle or `.iedl-resolved.json` sidecar against the original image to verify deterministic reproduction of materialized selections and adjustments without re-running remote AI operations.
 
-Remote model quality and paid generation need authenticated acceptance testing;
-automated tests must not incur paid calls. Real 24–50MP sessions and Safari/Firefox
-remain necessary device-level acceptance checks, as documented in IMAGE_EDITOR.md.
-
-The browser recipe lab (see repository `docs/IMAGE_EDITOR.md`, “Recipe lab and skin selection”) at `/image-editor/lab` provides starter recipes, parameter tuning, cached selections, comparisons and saved experiments. `select skin skin` is experimental soft coverage; inspect facial details and edges before smoothing.
+The browser recipe lab at `/image-editor/lab` provides starter recipes, parameter tuning, cached selections, visual comparisons, and saved experiments. `select skin skin` is experimental soft coverage; inspect facial details and edges before smoothing.
 
 ## Versioned presets
 
@@ -354,8 +351,7 @@ use `id` to reference the layer later. Collisions are rejected. Selection itself
 is never implicit or included in the preset. Expanded operations count toward
 normal operation/layer budgets and retain the invocation's diagnostic location.
 Resolved reports contain the version and expansion; replay uses the ordinary
-resolved document. Human approval and proposal export live in the
-collection feedback workflow in repository `docs/IMAGE_EDITOR.md`.
+resolved document.
 
 ### Look catalog
 
@@ -455,15 +451,13 @@ generative-edit id=sunset mask=sky prompt=$instruction
 `mask` references a previously declared mask: AI, painted, geometric or imported.
 `id` names a new raster layer. The runner sends the preceding composite at full
 original dimensions (crop, rotation and flips reset), the rendered mask, and the
-exact prompt to the authenticated Node Magic Eraser route. Python uses the server's
-configured image-generation model and blends the result; IEDL adds it through the
-same mask. Presentation transforms remain in the final document. Soft edges may
-be blended by both the backend and layer mask.
+exact prompt to the authenticated generative-edit service, then composites the
+returned image through the same mask. Presentation transforms remain in the final
+document. Soft edges may be blended by both the service and the layer mask.
 
-A library media ID and the existing Magic Eraser credentials/credits access are
-required. This is remote generation, not local image analysis. No new Python API
-or deployment is needed for prompt forwarding. Existing `erase MASK id=cleanup`
-continues to use the backend's default removal prompt. Neither command selects a
+A library media ID and authenticated editing access/credits are required. This is
+remote generation, not local image analysis. Existing `erase MASK id=cleanup`
+continues to use the default removal prompt. Neither command selects a
 mask implicitly. Missing/unknown masks, missing IDs, blank/oversized prompts and
 unsupported fields fail before submitting the operation. The runner does not retry
 an ambiguous paid request. Lab automatic previews do not initiate generation;
@@ -473,16 +467,19 @@ does not invoke the model again. Aborting the client does not guarantee cancella
 of an already-running backend generation.
 
 
-### Installed browser discovery
+### Engine selection and browser discovery (`--engine chrome`)
 
-The CLI runner locates an executable Chrome/Chromium using `--browser`, then
+By default (`--engine skia`), rendering and input-bound inspection execute directly
+in Node worker threads with `@napi-rs/canvas` 1.0.11 (`skia/simd`) and do not
+require Chrome/Chromium. When `--engine chrome` (or `FIVEAM_IEDL_ENGINE=chrome`) is
+selected, the CLI runner locates an executable Chrome/Chromium using `--browser`, then
 `CHROME_PATH`, then common browser names on `PATH`, then platform installation
 locations. An invalid explicit override fails with an actionable error. Paths
 containing spaces are supported; discovery never invokes a shell, downloads a
 browser, or executes a candidate to probe it. `generate` and ordinary recipe
-`validate` do not need Chromium; rendering and input-bound inspection do. Node
-and the packaged runtime are still required. Provision a browser compatible with
-the bundle's pinned Puppeteer Core version. The bundle now includes `browser.mjs`.
+`validate` never need Chromium regardless of engine. Node
+and the installed runtime are always required. When using `--engine chrome`,
+provision an installed Chrome or Chromium browser.
 
 ## Smart baseline and local metering (experimental)
 
