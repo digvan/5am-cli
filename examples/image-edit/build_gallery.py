@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Render local IEDL examples and build HTML and GitHub Markdown galleries. No paid calls."""
+"""Render local IEDL examples and build HTML and GitHub Markdown galleries. No paid calls.
+
+Usage (from examples/image-edit/ or repo root):
+  python3 build_gallery.py --render --overwrite --jobs 2
+
+When to use:
+  Regenerates local IEDL example renders, masks, replay bundles, results.json,
+  index.html, and GALLERY.md against source.jpg (or a custom --input image).
+  Prerequisites: 5am CLI, Node.js 20+, and the IEDL runtime (`5am update --runtime-only`,
+  which installs the default Native Skia `@napi-rs/canvas` 1.0.11 engine).
+  Local execution only; never calls remote models or cloud resources.
+"""
 import argparse
 import concurrent.futures
 import hashlib
@@ -120,8 +131,9 @@ def main():
     parser.add_argument('--render', action='store_true', help='Execute local recipes using the installed CLI')
     parser.add_argument('--cli', default='5am')
     parser.add_argument('--runtime', help='Optional explicit runner.mjs')
-    parser.add_argument('--browser', help='Optional explicit Chrome executable')
-    parser.add_argument('--jobs', type=int, choices=(1,2), default=1, help='Bound parallel browsers; default serial')
+    parser.add_argument('--engine', choices=('skia', 'chrome'), help='Optional execution engine (default: skia)')
+    parser.add_argument('--browser', help='Optional explicit Chrome executable (when --engine chrome)')
+    parser.add_argument('--jobs', type=int, choices=(1,2,4), default=1, help='Bound parallel workers; default serial')
     parser.add_argument('--only', help='Comma-separated case IDs to rerender')
     parser.add_argument('--overwrite', action='store_true')
     parser.add_argument('--input', type=Path, help='Create a gallery with your own JPEG, PNG, or WebP')
@@ -177,6 +189,7 @@ def main():
     def call(action, *argv):
         command = [args.cli,'media','image-edit',action,*map(str,argv)]
         if args.runtime: command += ['--runtime',args.runtime]
+        if args.engine: command += ['--engine',args.engine]
         if args.browser: command += ['--browser',args.browser]
         result = subprocess.run(command,cwd=ROOT,env=env,capture_output=True,text=True,timeout=150)
         if result.returncode: raise RuntimeError((result.stderr or result.stdout).strip()[-1600:])
