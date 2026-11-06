@@ -1,56 +1,50 @@
-<!-- Purpose: Comprehensive performance and pixel-parity benchmark report comparing the IEDL Native Skia (skia/simd) engine against Headless Chrome across 1 MP–24 MP synthetic workloads, batch/conformance suites, and all 106 local rendered examples in the IEDL visual field guide. -->
-# IEDL Engine Benchmark: Native Skia (`skia/simd`) vs. Headless Chrome
+# IEDL engine benchmark: Native Skia vs. Headless Chrome
 
-This document records the performance, memory footprint, and pixel-level parity benchmarks comparing the default **Native Skia (`@napi-rs/canvas` 1.0.11 + Node WebAssembly SIMD, `skia/simd`)** engine against **Headless Chrome (`puppeteer-core`, `webgl2+cpu/simd` / `--disable-gpu`)** for the 5AM IEDL (`5am media image-edit`) runtime.
-
----
-
-## 1. Executive Summary & Environment
-
-- **Runtime Version**: `iedl-1.1.0`
-- **Native Engine (Default)**: `Node.js/24.15.0 (@napi-rs/canvas 1.0.11; skia)`, backend `skia/simd` (`kernels-simd.wasm` + `node:worker_threads`)
-- **Browser Engine (`--engine chrome`)**: `HeadlessChrome/152.0.0.0`, backend `webgl2+cpu/simd` (desktop GPU) and `--disable-gpu` (Cloud Run container parity)
-- **Key Architectural & CPU Optimizations**:
-  1. **Zero Browser Startup & IPC**: Running `worker.ts` inside `node:worker_threads` with `@napi-rs/canvas` 1.0.11 eliminates Chromium process tree startup (`~0.8–1.5 s`), loopback HTTP staging, and DevTools WebSocket serialization.
-  2. **4,096-Entry Linear/WB/sRGB Transfer LUT & Identity-Curve Fast Path (`processing.ts`)**: Replaces 6 per-pixel `Math.pow` calls in `applyAdjustments` with 4,096-entry linearly interpolated `Float32Array` lookup tables (`buildGainLut`, max error `< 8e-8` or `0.00002` of an 8-bit code value, **8.25× faster**) plus `isIdentityCurve` bypass.
-  3. **Lazy Multi-Scale Box Blur & Single-Pass Luma Detail (`processing.ts`)**: Evaluates `fine`, `medium`, and `broad` box blurs in `applyDetail` only for non-zero detail sliders and uses a single RGB pass when `colorNoise === 0` (**up to 10.5× faster**, zero numerical difference).
-  4. **Cache-Friendly Vertical Box Blur & Mask Geometry (`masks.ts`)**: Uses a row-major `Float64Array` sliding-window accumulator for the vertical pass in `boxBlur` (**1.76× faster**) and hoisted row constants in radial/linear mask evaluation.
-  5. **Tile Float/Byte Packing (`worker.ts`)**: Replaces division by `255` with `* (1 / 255)` and uses a direct clamping fast path when `!request.maskOnly && !overlay`.
+This report measures CLI image-edit rendering (`5am media image-edit`) on the default Native Skia engine against Headless Chrome (`--engine chrome`): speed, memory and pixel parity.
 
 ---
 
-## 2. Multi-Resolution End-to-End Render & Batch Benchmarks
+## 1. Environment
 
-### 2.1 Single-Image End-to-End Render Latency & Memory
+- **Runtime version**: `iedl-1.1.0`
+- **Native Skia (default)**: `Node.js/24.15.0 (@napi-rs/canvas 1.0.11; skia)`, backend `skia/simd`, rendering in Node worker threads with no browser
+- **Headless Chrome (`--engine chrome`)**: `HeadlessChrome/152.0.0.0`, measured with a GPU (backend `webgl2+cpu/simd`) and without one (`--disable-gpu`, as on servers)
+- **Date**: 2026-10-17. The `layer-text` pixel parity was re-measured on 2026-11-05 with CLI v1.8.8, after its text fix; every other render is byte-identical to this run's.
+
+---
+
+## 2. Single-image and batch renders
+
+### 2.1 Single-image render latency and memory
 
 Workload: `analyze` + `auto exposure` + radial feathered mask + `family-natural@1` preset + `4:5` crop + JPEG `0.92` export.
 
-| Resolution | Native Skia (Before Opt) | Native Skia (After Opt) | Skia Opt Speedup | Cloud Run Chrome (`--disable-gpu`) | Desktop Chrome (WebGL2 GPU) | Native Skia vs. Cloud Run Chrome | Native Skia vs. Desktop GPU Chrome | Native Skia Peak RSS |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **1 MP (`1000×1000`)** | 1,372 ms | **560–745 ms** | **1.84–2.45×** | 3,740–4,600 ms | 2,412–2,761 ms | **5.0–6.2× faster** | **3.2–4.9× faster** | **220.7 MiB** |
-| **12 MP (`4000×3000`)** | 9,276–10,271 ms | **1,519–1,651 ms** | **6.1–6.76×** | 3,293–9,422 ms | 3,540–3,701 ms | **2.0–5.7× faster** | **2.24–2.33× faster** | **546.9 MiB** |
-| **24 MP (`6000×4000`)** | 13,721–14,258 ms | **2,117–2,362 ms** | **6.0–6.73×** | 4,091–12,935 ms | 4,341–4,867 ms | **1.73–5.5× faster** | **2.05–2.06× faster** | **731.0 MiB** |
+| Resolution | Native Skia | Chrome without GPU | Chrome with GPU | Skia vs. Chrome without GPU | Skia vs. Chrome with GPU | Skia peak memory (RSS) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **1 MP (`1000×1000`)** | **560–745 ms** | 3,740–4,600 ms | 2,412–2,761 ms | **5.0–6.2× faster** | **3.2–4.9× faster** | **220.7 MiB** |
+| **12 MP (`4000×3000`)** | **1,519–1,651 ms** | 3,293–9,422 ms | 3,540–3,701 ms | **2.0–5.7× faster** | **2.24–2.33× faster** | **546.9 MiB** |
+| **24 MP (`6000×4000`)** | **2,117–2,362 ms** | 4,091–12,935 ms | 4,341–4,867 ms | **1.73–5.5× faster** | **2.05–2.06× faster** | **731.0 MiB** |
 
-### 2.2 Batch & Conformance Harness Latency
+Across these runs, single-image renders on Native Skia were 1.7–6.2× faster than Headless Chrome, depending on resolution and whether Chrome had a GPU. Chrome's memory use was not measured.
 
-| Workload | Native Skia (Before Opt) | Native Skia (After Opt) | Headless Chrome | Result |
-| --- | ---: | ---: | ---: | --- |
-| **8× 2 MP Batch (`concurrency=4`)** | 4,119 ms | **2,290 ms** (745 MiB RSS) | 6,625 ms | **2.89× faster than Chrome** |
-| **4-Item Batch (`test-iedl-batch.mjs`)** | 1,485 ms | **1,360 ms** | 11,814 ms | **8.68× faster than Chrome** |
-| **Worker Integration (`test-iedl-browser.mjs`)** | 20,432 ms | **7,260 ms** | 6,536 ms | **2.81× faster than before** |
-| **829-Case Conformance (`test-iedl-conformance.mjs`)** | 35,428 ms | **17,781 ms** | 16,308 ms | **2.0× faster than before** (829/829 pass) |
-| **24 MP Browser Export (`test-image-editor-large.mjs`)** | ~8,400 ms | **1,944 ms** | — | **4.3× faster** in browser worker |
+### 2.2 Batch render
+
+| Workload | Native Skia | Headless Chrome | Result |
+| --- | ---: | ---: | --- |
+| **8× 2 MP batch (`--concurrency 4`)** | **2,290 ms** (745 MiB RSS) | 6,625 ms | **2.89× faster than Chrome** |
 
 ---
 
-## 3. 113-Example Visual Field Guide Benchmark (`examples/image-edit`)
+## 3. Visual field guide (113 examples)
 
 The IEDL visual field guide (`examples/image-edit`) exercises all **26 IEDL commands** and **20 photographic presets** across **113 examples** (**106 local rendered cases** + **39 exported grayscale masks** via `.iedl.zip` bundle replay + **7 remote recipe validations**) on the `640×960` concert photograph (`source.jpg`, SHA-256 `acdc2ad9823809819cc34ccb2fea99ea8abd3678a14634355091841a73cb3577`).
 
-In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess invocations:
+`build_gallery.py` runs 2 or 3 CLI commands for each local case:
 1. `5am media image-edit validate recipes/<id>.iedl`
 2. `5am media image-edit render recipes/<id>.iedl --input source.jpg -o images/<id>.<ext> --resolved resolved/<id>.json [--bundle bundles/<id>.iedl.zip]`
 3. *(For the 39 masked cases)* `5am media image-edit render bundles/<id>.iedl.zip --input source.jpg --mask <mask> -o masks/<id>.png`
+
+Each case's time covers its `validate` and `render` commands (the mask export is not timed), so it includes CLI and runtime startup.
 
 ### 3.1 Overall Gallery Timing Summary (106 Local Rendered Cases)
 
@@ -61,7 +55,7 @@ In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess in
 | **Mean Time per Case** | 1.600 s | **0.557 s** | **2.87× faster** |
 | **Median (P50) Time per Case** | 1.59 s | **0.54 s** | **2.94× faster** |
 | **P95 Time per Case** | 1.80 s | **0.68 s** | **2.65× faster** |
-| **Min / Max Time per Case** | 1.33 s / 2.14 s | **0.44 s / 0.84 s** | — |
+| **Min / Max Time per Case** | 1.33 s / 2.14 s | **0.44 s / 0.84 s** | n/a |
 
 ### 3.2 Timing & Pixel Parity by Category
 
@@ -72,7 +66,7 @@ In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess in
 | **Presets** | 20 | 1.60 s | **0.64 s** | **2.48×** | `0.000` | `4` |
 | **Curves & HSL** | 12 | 1.74 s | **0.55 s** | **3.18×** | **`0.000`** | **`0`** |
 | **Masks** | 20 | 1.62 s | **0.55 s** | **2.94×** | `0.001` | `9` |
-| **Layers** | 10 | 1.56 s | **0.52 s** | **2.99×** | `0.059` | `244` *(text antialiasing)* |
+| **Layers** | 10 | 1.56 s | **0.52 s** | **2.99×** | `0.027` | `238` *(text: glyph-edge antialiasing)* |
 | **Geometry** | 6 | 1.48 s | **0.49 s** | **3.01×** | `0.187` | `57` *(2.5° rotation)* |
 | **Retouch & liquify** | 11 | 1.58 s | **0.57 s** | **2.80×** | `0.000` | `5` |
 | **Analysis & automation** | 8 | 1.59 s | **0.58 s** | **2.77×** | `0.001` | `3` |
@@ -82,7 +76,7 @@ In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess in
 
 | Parity Metric | Result Across 106 Rendered Images | Result Across 39 Exported Mask PNGs |
 | --- | --- | --- |
-| **Overall Mean Absolute Error (MAE, `0..255`)** | **`0.0179`** | **`0.0006`** |
+| **Overall Mean Absolute Error (MAE, `0..255`)** | **`0.0149`** | **`0.0006`** |
 | **Bit/Pixel-Identical (`maxDelta == 0`, `PSNR = ∞`)** | **62 / 106 (`58.5%`)** | **17 / 39 (`43.6%`)** |
 | **Sub-Half-LSB (`MAE <= 0.5 / 255`)** | **105 / 106 (`99.1%`)** | **39 / 39 (`100.0%`)** |
 | **Sub-1-LSB (`MAE <= 1.0 / 255`)** | **105 / 106 (`99.1%`)** | **39 / 39 (`100.0%`)** |
@@ -91,7 +85,7 @@ In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess in
 #### Root-Cause Breakdown of the Only 4 Cases with `MAE > 0.02 / 255`
 
 1. **`geometry-rectangle`** (`MAE = 1.120`, `PSNR = 41.49 dB`, `maxDelta = 57`): Applies an arbitrary `rotate 2.5` degree 2D canvas transform before cropping. Standalone Skia (`@napi-rs/canvas`) and Chromium Blink/Skia differ slightly in bilinear subpixel sampling during angled image rotation, compounded by `quality = 0.9` JPEG quantization.
-2. **`layer-text`** (`MAE = 0.494`, `PSNR = 29.06 dB`, `maxDelta = 244`, only `0.65%` of pixels differ by `> 2`): Renders a system sans-serif text layer (`fillText`). Subpixel glyph edge antialiasing differs slightly along glyph boundaries.
+2. **`layer-text`** (`MAE = 0.178`, `PSNR = 34.56 dB`, `maxDelta = 238`, only `0.72%` of pixels differ by `> 2`): Renders a system sans-serif text layer. Skia now sets it in Chrome's face (Helvetica) on Chrome's baseline; what remains is glyph-edge antialiasing (Skia draws slightly lighter strokes). Before that fix, the first run of this benchmark drew the generic `sans-serif` in the first font Skia found and set the `top` baseline about a quarter em higher (`MAE = 0.494`, `PSNR = 29.06 dB`, `maxDelta = 244`). Re-measured with CLI v1.8.8; the row's timings are from the original run.
 3. **`output-webp`** (`MAE = 0.142`, `PSNR = 53.15 dB`, `maxDelta = 11`): Lossy WebP quantization difference at `quality = 0.9` between `@napi-rs/canvas` and Chromium `libwebp`.
 4. **`layer-raster`** (`MAE = 0.091`, `PSNR = 53.87 dB`, `maxDelta = 15`): 2D canvas `drawImage` scaling of the composited raster overlay asset.
 
@@ -176,7 +170,7 @@ In `build_gallery.py`, each local case executes 2–3 separate CLI subprocess in
 | 73 | `blend-overlay` | Layers | No | 1.56 | **0.48** | **3.25×** | `0.0000` | ∞ | `0` | 0.00% |
 | 74 | `blend-soft-light` | Layers | No | 1.50 | **0.50** | **3.00×** | `0.0000` | ∞ | `0` | 0.00% |
 | 75 | `blend-luminosity` | Layers | No | 1.50 | **0.50** | **3.00×** | `0.0000` | ∞ | `0` | 0.00% |
-| 76 | `layer-text` | Layers | No | 1.61 | **0.56** | **2.88×** | `0.4938` | 29.06 | `244` | 0.65% |
+| 76 | `layer-text` | Layers | No | 1.61 | **0.56** | **2.88×** | `0.1775` | 34.56 | `238` | 0.72% |
 | 77 | `layer-raster` | Layers | No | 1.79 | **0.57** | **3.14×** | `0.0910` | 53.87 | `15` | 1.13% |
 | 78 | `layer-frequency` | Layers | Yes | 1.59 | **0.56** | **2.84×** | `0.0034` | 69.95 | `6` | 0.03% |
 | 79 | `layer-lifecycle` | Layers | No | 1.46 | **0.51** | **2.86×** | `0.0000` | ∞ | `0` | 0.00% |

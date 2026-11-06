@@ -11,9 +11,9 @@ The `5am` binary is a Go CLI for the 5AM Media Hub (`https://5am.app`). It is **
 ## Operating principles
 
 - **stdout = JSON, stderr = progress/footers.** Always pipe stdout to `jq` when consuming output. Never grep stderr for results.
-- **Exit codes are meaningful** — branch on them: `0` ok, `1` generic, `2` auth (401/403/missing token), `3` validation (4xx), `4` network/timeout, `5` server (5xx), `6` CLI version below the supported floor (run `5am update`).
-- **Errors are JSON on stderr**: `{"error", "category", "hint"}`. Category `credits` means AI credits stopped the command (exit `3` when they ran out, `5` when credits are paused platform-wide); its `credits` object says `reason` (`exhausted` | `paused`), `needed` / `available` (credits, when known) and `export: true` for an export, which a Gemini key does not pay for. Tell the user; never retry it in a loop.
-- **Auth is required for almost every command.** Local image-edit validation, inspection, and local-only rendering/batching need no login; recipe generation uses normal Gemini access, and library-backed AI edits require auth. If `5am whoami` fails with exit 2, run `5am login` (or set `5AM_TOKEN`) before anything else.
+- **Exit codes are meaningful** — branch on them: `0` ok, `1` generic, `2` auth (401/403/missing token), `3` validation (4xx, and a command line the CLI refuses: an unknown command, subcommand or flag, a bad flag value, a missing argument or required flag, an input path that does not exist), `4` network/timeout, `5` server (5xx), `6` CLI version below the supported floor (run `5am update`).
+- **Errors are JSON on stderr**: `{"error", "category", "hint"}`. Category `not_found` (exit `3`) is a 404: the id does not exist or this account cannot see it. Category `credits` means AI credits stopped the command (exit `3` when they ran out, `5` when credits are paused platform-wide); its `credits` object says `reason` (`exhausted` | `paused`), `needed` / `available` (credits, when known) and `export: true` for an export, which a Gemini key does not pay for. Tell the user; never retry it in a loop. Category `network` with an error that starts "the network proxy at … refused to connect to 5am.app" (exit `4`) means this computer's own proxy (`HTTPS_PROXY`, an agent sandbox's egress) blocked the request before it left: 5AM never saw it, so neither your token nor the account is the problem. Tell the user the computer's network has to allow 5am.app; it is not an auth failure, and `5am login` will not fix it.
+- **Auth is required for almost every command.** Local image-edit validation, inspection, and local-only rendering/batching need no login; recipe generation uses normal Gemini access, and library-backed AI edits require auth. If `5am whoami` fails with exit 2, run `5am login` (or set `FIVEAM_TOKEN`) before anything else.
 - **Pass `--yes` for destructive ops in scripts.** Without it, `delete` commands prompt.
 - **Use `--pretty` only for human display.** Never parse `--pretty` output.
 - **Use `--json` on `chat` to get structured tool-call / media-URL data.** Default chat mode prints text to stdout and footers to stderr.
@@ -42,6 +42,7 @@ Release manifest (sizes + sha256 hashes): `https://cli.5am.app/cli/latest/manife
 5am login                              # paste personal access token at prompt
 5am login --token <TOKEN>              # non-interactive
 5am whoami                             # verify; exit 2 if no/bad token
+5am doctor                             # setup check: version, ffmpeg, login, Node, runtime; .ready says what can run
 ```
 
 `whoami` nests the account under `user` — the email is **`.user.email`**, not a
@@ -64,15 +65,15 @@ SCOPES=$(5am whoami | jq -r '.scopes | join(",")')
 
 Token sources (in precedence order):
 
-1. `--token` flag on `login`
-2. `5AM_TOKEN` env var
+1. `--token` flag (on any command; on `login` it is the token to save)
+2. `5AM_TOKEN` env var, then `FIVEAM_TOKEN` (the spelling a shell can set: `export FIVEAM_TOKEN=…`)
 3. Stored credential from `5am login`
 
 Base URL override (default is baked in at build time):
 
 ```sh
 5am --base-url http://localhost:8080 whoami
-5AM_BASE_URL=http://localhost:8080 5am whoami
+FIVEAM_BASE_URL=http://localhost:8080 5am whoami
 ```
 
 Mint tokens in the web UI: **Settings → CLI Access Tokens → Generate token**. Scopes are `read`, `write`, `admin`. Token is shown once.
@@ -87,7 +88,8 @@ Mint tokens in the web UI: **Settings → CLI Access Tokens → Generate token**
 ## Albums
 
 ```sh
-5am albums list                                    # albums OWNED by the user — JSON array
+5am albums list                                    # albums OWNED by the user — JSON array of every one
+5am albums list --search trip --limit 50           # one page: {total, offset, next_offset, albums}; --offset <next_offset> for more
 5am albums list-shared                             # albums shared WITH the user by others (with price, payment status, access)
 5am albums get <albumId>
 5am albums create --name "Trip 2026" --description "..."
@@ -171,13 +173,31 @@ Sharing nuances:
 5am media list --limit 100
 5am media list --limit 100 --offset 100
 
+# Order: --sort taken (the default: capture date, newest first, undated items
+# last) or uploaded. date_taken is the capture date only (absent when the file
+# has none; created_at is the upload time), both RFC 3339. URLs are whole but
+# signed-in: fetch with `media download`. --album takes an id or a name.
+5am media list --album "Trip 2026" --sort uploaded
+
 # Semantic search — match by meaning, not literal tokens. Backed by Gemini
 # embeddings over images.ai_description. Distinct from `--search` above:
 # use this when the user describes what they want ("sunsets at the beach")
 # rather than text they expect in the filename.
 5am media semantic-search "sunsets at the beach"
-5am media semantic-search "wedding photos" --album <albumId> --limit 20
+5am media semantic-search "wedding photos" --album <albumId> --limit 20 --min-score 0.65
+5am media semantic-search "a dog on the beach" --rank-with-model   # a model keeps only FULL matches, best first (a few credits)
+# Read `similarity` on each match: only matches >= min_similarity (0.6) come
+# back, but a PARTIAL match passes too ("a dog on the beach" can return a beach
+# with no dog at ~0.62). `status`: ok | no_match (best_similarity = how close)
+# | not_indexed. `index.unindexed` counts items a search cannot find yet (a new
+# upload is indexed once it has a description: `media upload --describe` or
+# `albums generate-summary <id>`); `hint` says so. `cost`: under 1 AI credit
+# (paid_with ai_credits) or the user's own key.
 
+# A file already in the library (same content, any album) uploads AGAIN as a
+# second copy: its result has `duplicate_of` and stderr warns. Pass
+# --skip-existing to leave such files out (status skipped). --album with a name
+# two albums share is refused (exit 3): pass the id.
 5am media upload ./photos/*.jpg --album <albumId> --concurrency 8
 5am media upload ./photos -r --album <albumId>                            # walk a directory
 5am media upload ./photos -r --include '*.jpg,*.mp4' --album <albumId>    # filter by basename glob
@@ -195,7 +215,7 @@ Sharing nuances:
 5am media update <mediaId> --name "demo-vertical.mp4" --date-taken 2026-08-10T09:00:00Z
 5am media update <mediaId> --clear-tags
 
-5am media delete <mediaId> --yes
+5am media delete <mediaId> --yes    # admin scope (a read/write token gets 403); without --yes and no terminal: exit 3
 
 # A no-login page for one VIDEO (https://5am.app/c/<token>): the link to send
 # someone without a 5AM account. Private by its token and never indexed.
@@ -405,7 +425,7 @@ Download notes:
 
 Requires API keys configured via `5am keys set` (see API Keys). All generators write the resulting file locally **and** return a JSON manifest on stdout (`media generate text` is the exception — it prints the text itself).
 
-**Take the next step's input path from the manifest's `output`, never from the string you passed to `--output`.** `media generate image` corrects the extension to match the bytes the provider actually returned, so `--output cover.png` can write `cover.jpg` — the rename is announced on stderr, and `output` is always the path that exists:
+**Take the next step's input path from the manifest's `output`, never from the string you passed to `--output`.** `media generate image` keeps a `.png`, `.jpg`/`.jpeg` or `.webp` `--output` and converts the provider's bytes to that format when they differ (Gemini answers JPEG; the JSON then carries `converted_from`), but any other extension, or none, takes the bytes' own, so `--output cover` writes `cover.jpg` (or `cover_1.jpg` beside an existing `cover.jpg`, never over it). The stderr line says which happened, and `output` is always the path that exists:
 
 ```sh
 path=$(5am media generate image --prompt "a cybernetic owl" --output owl.png | jq -r .output)
@@ -470,9 +490,11 @@ ignores all of them):
   --model gemini-3.1-flash-image --grounding-images --output quetzal.png
 ```
 
-The output extension is auto-corrected to the bytes actually returned (PNG /
-JPEG / WebP), so `--output cover.png` may be saved as `cover.jpg` with a stderr
-note. The same controls are exposed to AI characters through the
+A `.png`, `.jpg`/`.jpeg` or `.webp` `--output` is honoured: bytes in another
+format are converted to it (`converted_from` in the JSON, a stderr note), so
+`--output cover.png` is a PNG even though Gemini answers JPEG. Without one of
+those extensions the file takes the bytes' own (`cover` saves `cover.jpg`).
+The skill below saves the same way. The same controls are exposed to AI characters through the
 `local_generate_image` skill args: `model`, `aspect_ratio`, `resolution`,
 `reference_images` (array of paths), and `grounding`.
 
@@ -589,10 +611,14 @@ ffmpeg progress streams to stderr — rely on the JSON + exit code, not stderr.
 
 `5am media mix --voice <dialogue> --music <bed> --output <mix>` mixes a
 voice/dialogue track over background music with **automatic ducking** via a
-local ffmpeg ≥ 4.4 (resolved `--ffmpeg` → `$FFMPEG` → PATH, like `media
-visualize`): the music is loudness-staged under the voice, sidechain-ducked
-while the voice speaks, and ducked deeper in the 250 Hz–4 kHz speech band (a
-dynamic **EQ pocket**). Output length = voice length; shorter music loops and
+local ffmpeg ≥ 5.1, 8 tested (resolved `--ffmpeg` → `$FFMPEG` → PATH, like `media
+visualize`): the music is loudness-staged under the voice, ducked under the
+speech, and ducked deeper in the 250 Hz–4 kHz speech band (a dynamic **EQ
+pocket**). The duck **looks ahead** by default (`--duck-mode lookahead`): the
+speech in the voice track is found first, and the music starts dipping before
+each sentence and holds through the breaths between words; `--duck-mode
+sidechain` reacts to the voice as it plays (also used when no speech is
+found). Output length = voice length; shorter music loops and
 fades out at the end. Output format from the `--output` extension: `.wav`,
 `.mp3`, `.m4a`, `.flac`. Inputs must be audio files (video containers are
 rejected — extract audio first with `ffmpeg -i in.mp4 -vn audio.m4a`).
@@ -614,7 +640,8 @@ Unauthenticated runs append a short spoken "Powered by 5AM" tag at the very
 end of the mix (removed by `5am login`; rendering is fully offline). JSON result:
 inputs, `style`, measured `voiceLufs`/`musicLufs`/durations, applied
 `voiceGainDb`/`musicGainDb`, all resolved duck parameters, `multiband`
-(EQ-pocket vs full-band fallback), `watermarkTag`, `ffmpeg`. ffmpeg progress
+(EQ-pocket vs full-band fallback), `duckMode` (`lookahead` or `sidechain`) and
+`speechRegions`, `watermarkTag`, `ffmpeg`. ffmpeg progress
 streams to stderr — rely on the JSON + exit code.
 
 ### AI highlight reels & the video-edit DSL — `media edit` / `media transcribe` / `media highlight`
@@ -623,32 +650,145 @@ Turn a long talking video into a highlight reel. The interchange format is
 `.vedl` — a line-based edit DSL (cuts, transitions, text/image overlays,
 color grading, ducked music bed, normalize, fades) executed by a
 deterministic ffmpeg engine (local ffmpeg, `--ffmpeg` → `$FFMPEG` → PATH).
-Transcription + edit generation need a Gemini key. Spec:
-`cli/docs/VIDEO_EDIT_DSL.md`.
+Transcription + edit generation need a Gemini key. Reference:
+https://5am.app/cli/docs/vedl.
 
 ```sh
 5am media highlight talk.mp4 --output reel.mp4 --brief "a 60s teaser" --target-duration 60
 5am media highlight talk.mp4 --output reel.mp4    # always writes reel.vedl + reel.transcript.json + reel.ops.json
+5am media highlight talk.mp4 --output reel.mp4 --dry-run    # the export's price and balance, and whether the transcript is cached; nothing runs
 5am media highlight talk.mp4 --music bed.mp3 --output reel.mp4    # ducked bed (media mix pipeline)
+5am media highlight episode.mp3 --output reel.mp4 --picks-only    # the chosen moments only (start, end, why, text): no render, no fee, audio works
+5am media highlight talk.mp4 --output reel.mp4 --transcript talk.transcript.json    # reuse a transcript instead of transcribing
 
 5am media transcribe talk.mp4                                     # → talk.transcript.json (or --format srt|vtt)
 5am media edit generate --transcript talk.transcript.json --source talk.mp4 -o talk.vedl
-5am media edit render talk.vedl --output cut.mp4 [--aspect 9:16] [--upload-album <id|name>]
+5am media edit render talk.vedl --output cut.mp4 [--aspect 9:16] [--transcript talk.transcript.json] [--upload-album <id|name>]
+5am media edit render talk.vedl --output draft.mp4 --draft        # free, with the "Powered by 5AM" mark
+5am media edit render talk.vedl --output cut.mp4 --dry-run        # the export's price and whether it can be paid; renders nothing
+5am media edit finalize [id]                                      # pay for and deliver an export whose fee was refused
 5am media edit export talk.vedl --new-album "Edit sources"        # → web video-editor project (login required)
+
+5am media edit sample [dir]                  # sample.vedl + an 8 s test video (ffmpeg only, no login)
+5am media edit check talk.vedl [--pretty]    # every parse error on its line, then the media; exit 3 if it would not render
+5am media edit ops --pretty                  # every op, one line each (offline)
+5am media edit ops card                      # one op as JSON: args, options, values, ranges, a line that parses
+5am media edit inspect talk.vedl --pretty    # the timeline a render builds, in seconds and frames; renders nothing
+5am media edit sheet talk.vedl -o sheet.jpg  # labelled contact sheet of the key frames, as render draws them
+5am media edit stills talk.vedl --out-dir stills [--times 2,7.5]   # chosen frames as JPEGs
+5am media edit measure cut.mp4 --doc talk.vedl [--strict]          # check the render against its document
+5am media edit tighten talk.vedl --transcript talk.transcript.json -o tight.vedl [--preset natural|tight] [--dry-run]
+                                             # take the quiet pauses and fillers out (join=tight pieces)
 ```
+
+The same loop is an MCP server: `5am mcp` (stdio; add it with
+`claude mcp add 5am -- 5am mcp`) serves `edit_ops`, `edit_validate` (errors on
+their lines), `edit_change` (structured line edits; returns the changed lines,
+`save` writes them back), `edit_write`, `edit_check` (validate, the timeline
+and a contact sheet in one call), `edit_inspect`, `edit_stills` and
+`edit_sheet` (frames come back as images), `edit_render` (with progress and
+cancel; it measures the render too), `edit_finalize` (delivers an export whose
+fee was refused), `edit_web_editor_export` (a web Video Editor project of the edit, for
+the user to finish by hand), `edit_measure`, `edit_transcript` (a
+transcript's segments with their times, on the source's timeline or an
+edit's) and `edit_tighten` (the quiet pauses and fillers out of the cut lines,
+returning the changed lines). Every tool takes the script inline (`vedl`, with `base_dir` for its
+media) or as a path. The
+resources `vedl://guide` (a primer) and `vedl://ops/{name}` teach the language.
+`edit_generate` and `media_highlight` start an edit from a recording. The same
+server also serves the media commands (`media_list`, `media_upload`,
+`media_transcribe`, ...), IEDL image recipes (`image_edit_*`, recipes inline as
+`recipe_text`; `iedl://guide`), motion films (`motion_*`; `motion://guide`),
+albums (`albums_*`) and clip outreach with the pipeline's review queue and clip
+pages (`outreach_*`, `pipeline_*`, `media_public_link_*`; `outreach://guide`),
+each running the matching `5am` command; `--tools edit,image` serves fewer, and
+the presets `--tools local` (what runs signed out: free drafts; signed in, edit_render exports unless draft: true) and `--tools podcast`
+(an episode to clips) serve 27 tools each instead of 89. A tool refuses an
+argument it does not take.
+Those tools type their common flags; `options` takes any other flag of the
+command by name, and `cli_help` lists them all (and every in-server tool's
+parameters). `credits`, `credits_buy` (a payment link, returned at once),
+`credits_wait` and `files_list` (a folder's files by kind) come with every
+toolset; `motion_show` reads a film's words, sound and narration. See
+https://5am.app/cli/docs/mcp.
 
 Key facts for agents:
 
 - The AI edit is **segment-index anchored** — cut points always land on
   transcript boundaries; repairs are deterministic and reported in the JSON
   result (`warnings`/`repairs`).
+- Before writing an op you have not used, read it with `edit ops <op>`: its
+  options, allowed values, ranges and what must accompany a value (a split
+  scene needs two photos) come from the same table the parser is tested
+  against. A parse error lists every bad line at once.
+- Check an edit with `edit inspect` before rendering: canvas, rate, the exact
+  frame count the render writes, each segment's source in/out and output
+  start/end in seconds and frames, the join into it, every text, caption,
+  card, overlay and insert window, music, chapters, warnings and a `doc_hash`.
+- **Look at a sheet before rendering.** `edit sheet` draws each segment's
+  middle, each join's middle and each title, overlay and insert just after it
+  appears, labelled with frame, timecode and why; `edit stills` writes chosen
+  frames. Both are the render's own frames (same layers, same tone mapping),
+  local and free; open the image, fix the `.vedl`, look again, then render.
+- `edit render` draws everything Clip Maker draws: titles, caption lines,
+  cards, speaker chips, chapters, and transcript captions for a `captions`
+  line. The transcript comes from `--transcript talk.transcript.json` (source
+  times, mapped through the cuts; `--transcript-timeline output` for a file
+  already on the edit's timeline) or, by default, a `<name>.transcript.json`,
+  `transcript.json` or `<name>.srt` beside the script (a Clip Maker job folder
+  works as is). `inspect` says which file it found (`captions_from`).
+- `voice clean=auto` (or `light`, `strong`) cleans the recording's speech:
+  rumble, mains hum, room noise, sibilance, level, presence, with amounts
+  measured from the kept speech (`hum=50|60|off`, `nr=` pin them), and turns
+  the room down between words (`expand=dB`, 0 = off; auto 12). It never
+  touches a `prepend`/`append` clip. The render's JSON has `voice` (what it
+  measured and ran).
+- `--soft-captions auto|on|off` also muxes the captions as a subtitle track
+  players turn on and off: by default when the script says `captions
+  style=none` (captions wanted, not burned). An MP4 shows a lone track by
+  default, so for a track over burned captions that starts off, render `.mkv`.
+- Chapters for YouTube: `inspect` and `render` print `youtube_chapters` (the
+  description lines, `ok`, and `problems`: the first must be at 0:00, at least
+  three, each at least 10 s). `media clips` writes `clip-NN.vtt` beside each
+  `.srt` for web players.
+- **Check the render with `edit measure`.** It compares the file with its
+  document: frame count and rate (what `inspect` promised), BT.709 tags,
+  loudness and true peak against `normalize` or the music style, black frames
+  no fade explains, frozen video and dead air (warnings at a cut), the music
+  bed between lines, and every title, caption and card against the title-safe
+  margin. Each finding has a stable `code`; `--strict` exits 1 when any is a
+  warning or an error, also when libass or the embedded fonts are missing or
+  a `frame=face` was never resolved.
+- **An export costs AI credits.** `edit render` (and `media highlight`'s
+  render) delivers the file without a mark for a flat fee: **50 AI credits**
+  at the current price (prices may change), on every account, a personal
+  Gemini key included. The balance is checked before anything renders; the fee
+  is charged once the file exists, and the same file never costs twice.
+  `--draft` renders for free with the "Powered by 5AM" mark, and so does every
+  render while signed out (the JSON says `draft`, `credits`, `watermarked`).
+  Render drafts while iterating and export once, after asking the user. A
+  refused fee (category `credits`) keeps the render for 24 hours: after the
+  user buys credits, `5am media edit finalize <id>` pays and delivers it. Never
+  render again instead.
 - To iterate on an edit, edit the `.vedl` (plain text, `#` comments) and
-  re-run `edit render` — no AI call needed. `cut` keeps, `delete` removes
+  re-run `edit render --draft` — no AI call needed. `cut` keeps, `delete` removes
   (one style per script); `atsrc`/`fromsrc` = source time, `at`/`from` =
   output time. No straight apostrophes in `text` (use `’`).
 - `music`/`normalize` reuse the `media mix` staging/duck math and its style
-  presets; grading degrades with warnings on old ffmpeg; logged-out renders
-  are watermarked (rendering itself is fully offline).
+  presets: the bed dips before each sentence (from the transcript, else the
+  speech it hears; `duck_mode=sidechain` for the old compressor), and
+  `normalize` evens out recordings of different loudness first (`match=off`
+  leaves them); the render result's `mix` says which duck ran and the gains.
+  `grade lut "look.cube" [mix=0.7]` applies a 3D LUT (a Rec.709 creative look;
+  camera-log LUTs look wrong). Grading degrades with warnings on old ffmpeg.
+- `edit tighten` takes the quiet pauses and filler words (um, uh, erm...) out
+  of a cut document from the source's transcript (word timings: the `.json`
+  from `media transcribe`): presets `natural` (pauses of 1 s and over, keep
+  0.15 s) and `tight` (0.45 s, 0.08 s). A pause is cut only when it is quiet,
+  so laughter and applause stay. Each cut becomes its pieces joined by
+  `join=tight` (a butt cut, no transition) and timed ops move with them (one wholly
+  inside removed time is taken out). A draft renders fully
+  offline; an export needs the network for its fee.
 - `edit export` uploads the referenced media into an album and creates the
   project via the video-editor API; ducking/fades/HSL are not representable
   web-side (carried as `vedl*` fields — the CLI render is authoritative).
@@ -704,6 +844,14 @@ Flags:
   source has no audio or its speech is too sparse — `clips` falls back rather
   than failing, so a silent video still produces clips.
 
+Each clip is an export, as in the web Clip Maker: **50 AI credits per clip**
+at the current price (prices may change; every account, a Gemini key
+included), the same receipts as `5am studio`. The balance is checked for
+`--count` clips before the transcription; the clips render in a hidden folder
+beside `--out-dir` and move into it once paid. `--draft` renders free clips
+with the "Powered by 5AM" mark. A refused fee keeps them for `5am media edit
+finalize <id>`.
+
 Outputs, per clip, in `<name>-clips/`: `clip-NN.mp4`, `clip-NN.srt`, and an
 editable `clip-NN.vedl` (one cut, optional title, edge fades). Plus
 `manifest.json` and `transcript.json`. To adjust a cut point or retitle, edit
@@ -729,8 +877,8 @@ Agent-relevant facts: loopback only; accepts connections solely from 5am.app
 pages (and localhost in dev) signed into the **same account** as the CLI; lists
 videos from Movies, Desktop and Downloads plus any `--dir`; finished jobs
 survive a restart. Safari cannot reach loopback from an https page — tell the
-user to use Chrome, Edge or Firefox. Full protocol + security model:
-`cli/docs/STUDIO.md`.
+user to use Chrome, Edge or Firefox. Guide:
+https://5am.app/cli/docs/ai-video-clip.
 
 ### Memory collage video — `media collage`
 
@@ -787,13 +935,26 @@ stderr — rely on the JSON + exit code.
 Motion graphics from a brief: kinetic type, shapes, counters, charts and the
 user's photos, cut on a beat grid with a composed score, by the web Motion
 Studio's own engine. A film is a MotionDoc JSON file (`*.motion.json`). Needs the
-image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
-`sheet` and `render` also need Chrome/Chromium and ffmpeg (so does `--clip`).
+image-edit runtime (`5am update --runtime-only`, which also installs Skia, the render
+engine, with npm) and Node.js 20+; `stills`, `sheet` and `render` also need ffmpeg (so
+does `--clip`, which Skia reads through ffmpeg's ffprobe). Chrome/Chromium is needed
+only for the `--engine chrome` rollback and to probe the video clips of a `preview`
+(which plays in the default browser). `5am motion doctor` checks the engine renders
+use (Skia unless `FIVEAM_MOTION_ENGINE=chrome`) and fails only on that one; it reports
+the other in its JSON (`chrome: {ok, path, error}`, `skia: {ok, nativeCanvasVersion,
+error}`).
 
 ```sh
 5am motion generate --brief "A 10 second launch film for a coffee app" --format 9:16 --duration 10 -o coffee.motion.json
 5am motion revise coffee.motion.json "warmer colours, slower ending" -o coffee-v2.motion.json   # or --in-place
 5am motion narrate coffee-v2.motion.json --script "Mornings, sorted. Order ahead." --voice Kore
+# on a soundtrack: one scene per cue ({"cues":[{"at":0,"show":"..."}]}), the recording as the take and length
+5am motion generate --brief "A podcast clip" --format 9:16 --cues cues.json --audio voice.m4a -o pilot.motion.json
+5am motion fit pilot.motion.json --cues cues.json --in-place      # re-time onto the cues: free, no model call
+# a podcast clip in one go: Gemini picks the clips and writes narrator lines, then voice, soundtrack and film
+5am motion podcast episode.mp3 --brief "A minute for people who build with agents" -o clip.motion.json
+5am motion podcast episode.mp3 --script-only -o clip.motion.json   # review clip.script.json, edit it, then:
+5am motion podcast episode.mp3 --script clip.script.json -o clip.motion.json   # changed lines alone are spoken again
 5am motion lint coffee-v2.motion.json
 5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
 5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills
@@ -809,7 +970,7 @@ image-edit runtime (`5am update --runtime-only`) and Node.js 20+; `stills`,
 | `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
 | `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `frames`, `width`, `height`, `fonts`, `hash` |
 | `stills` / `sheet` | free (watermarked) | `files` / `output`, `frames` |
-| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
+| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
 | `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of kept renders, each with `state` (`rendered`: pay it; `rendering`: another process is on it; `stopped`: killed partway, nothing to pay) and `next`; `--unfinished` releases the stopped ones' reservations: `released`, `kept`, `failed` |
 | `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
 | `fonts` | free | `dir`, `fonts`, `bytes` |
@@ -841,20 +1002,29 @@ Agent rules:
   Local photos are described with Gemini once (cached) unless `--no-describe`.
 - **Video clips:** `--clip <file>` or `--clip media:<id>`, up to 4, on `generate`
   and `revise` (where it REPLACES the film's clips). Needs the server's video flag
-  (`video clips in Motion films are not enabled on this server` otherwise). Clips
-  Chrome cannot decode get a cached ffmpeg proxy automatically.
+  (`video clips in Motion films are not enabled on this server` otherwise). Skia
+  reads clips through ffmpeg (ProRes and HEVC included); with `--engine chrome`,
+  clips Chrome cannot decode get a cached ffmpeg proxy automatically.
 - **Narration:** `narrate` writes `<film>.narration.wav` + `.narration.json` beside
   the film; lint, stills, sheet, preview and render use them (`--no-narration` to
   leave them out). Settle the film's length first: a take longer than the film is
   refused, never cut (about 45 to 65 words per 30 s). A new take means a new export
   hash. After `revise --in-place` the old take still plays: narrate again with
   `--overwrite` if the words changed.
-- **Formats** 16:9, 9:16, 1:1; **duration** 6 to 60 s; `--fps` 60 or 30;
-  `--resolution` 1080p or 1440p. A 15-second film renders in about 30 s at 60 fps
-  (about 28 frames a second at 1080x1920 on a recent Mac; slower on small machines).
+- **Formats** 16:9, 9:16, 1:1; **duration** 6 to 90 s (ads: 60); `--fps` 60 or 30;
+  `--resolution` 1080p or 1440p. With Skia, a 15-second 9:16 film (1080x1920) took
+  42 to 54 s at 60 fps and 33 s at 30 fps on an Apple M1 Max with other work running
+  (17 to 22 frames a second at 60 fps); allow longer on small machines.
 - **Tokens:** `render` needs write scope; an AI character's token is refused for
   exports even with write scope.
-- **Cloud workflow runs** have the runtime and every font preinstalled
+- **Engine:** Skia by default; `--engine chrome` (or `FIVEAM_MOTION_ENGINE=chrome`) is
+  the only alternative, a rollback. There is no `auto` (`unknown motion engine "auto":
+  use skia or chrome`). Nothing falls back: on `Skia isn't installed: <reason>. Run
+  \`5am update --runtime-only\` again, or render with --engine chrome.` run
+  `5am update --runtime-only` (it prints the `skia` object: `installed`, `package`,
+  or the `error` that stopped it, and exits non-zero when Skia could not be installed
+  although the runtime was), then render again; nothing was charged.
+- **Cloud workflow runs** have the runtime, Skia and every font preinstalled
   (`FIVEAM_MOTION_FONTS`); render there like anywhere else.
 - **Not supported:** Ad Maker's unmarked export (every CLI render carries the
   "Made with 5AM.app" mark), sending a film to the web studio.
@@ -868,7 +1038,7 @@ Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/mo
 5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`
 ```
 
-One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). This is the Gemini door for programs that drive the CLI: `outreach-monitor fix-feeds` uses it to find podcast feeds the directory does not know, and verifies every address it names before trusting it.
+One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
 
 ## Pipeline: `5am pipeline`
 
@@ -882,16 +1052,39 @@ to items, contacts and activities stay with the character's skills
 `5am outreach prepare` does for you.
 
 ```sh
-5am pipeline items list                              # {items, stages}; complete (cap 200)
+5am pipeline items list                              # {items, stages}; complete (cap 2,000); --pretty: a table
 5am pipeline items list --stage researched --search acme
 5am pipeline items list --csv prospects.csv          # one row per item with its primary contact
 5am pipeline items get <itemId>                      # + contacts, activities, outreach_drafts
-5am pipeline outreach list --status staged           # staged | approved | sending | rejected | sent
-5am pipeline outreach edit <draftId> --subject "..." --body-file message.txt   # while staged only
+5am pipeline outreach list --status staged           # staged | approved | sending | rejected | sent; one page (--limit, next_cursor)
+5am pipeline outreach list --status sent --all       # every page; --csv drafts.csv writes them; --pretty: a table
+5am pipeline outreach list --batch oct_week_1        # exactly the batch's drafts, every status (or --ids a,b,...)
+5am pipeline outreach edit <draftId> --subject "..." --body-file message.txt   # staged, or approved (stays approved); never sending/sent
 5am pipeline outreach approve <draftId>
+5am pipeline outreach unapprove <draftId>            # approved -> staged, so the owner can edit and approve again
 5am pipeline outreach reject <draftId> --note "too long"                        # the character reads the note
 5am pipeline outreach mark-sent <draftId>            # after YOU sent it from your mailbox (or found a sending one in Gmail's Sent folder)
+5am pipeline outreach mark-sent <draftId> --sent-at 2026-10-10T14:05:00Z   # a send made EARLIER, recorded now (time from Gmail's Sent folder)
 5am pipeline outreach release <draftId>              # a sending draft that is NOT in Gmail's Sent folder: back to approved
+```
+
+**Bulk review.** `approve`, `unapprove`, `reject` and `mark-sent` accept multiple
+IDs, `--batch <slug>`, or `--ids-file <file>` (one source); `--ids-file -` reads
+stdin. The drafts' statuses are read first, and only drafts in the move's
+source status move (approve: staged; unapprove: approved; reject: staged or
+approved; mark-sent: approved or sending). The rest land in `skipped`
+(`{id, status, reason}`), never as failures, and so does a 409
+`recipient_suppressed` (the person opted out or bounced; `code`, `reason`) or
+`item_closed`. Prints `{dry_run, results, skipped, failed}`; exits non-zero
+only when `failed > 0`, so re-running a half-done batch is safe. `--dry-run`
+shows what would move and what would be skipped, changing nothing. `mark-sent`
+only records a send that already happened.
+
+```sh
+5am pipeline outreach approve --batch oct_week_1 --dry-run
+5am pipeline outreach approve <id1> <id2>
+5am pipeline outreach reject --ids-file drafts.txt --note "Revise the opening"
+5am pipeline outreach mark-sent --ids-file - < sent-drafts.txt
 ```
 
 - Rows are keyed `id`; the skills call the same thing `item_id` / `contact_id` /
@@ -906,9 +1099,44 @@ to items, contacts and activities stay with the character's skills
   and cannot reserve, release, refuse or mark-sent at all (403
   `cli_token_not_allowed_here`): sending is the owner's. A wrong-state approve,
   reject or mark-sent answers **404** (exit 3), not 409: read the message;
-  `release` answers 409 naming the status. `edit` works only while staged, so
-  the stored draft is exactly what was sent. Settle a `sending` draft only after
+  `release` answers 409 naming the status. `edit` works while staged or (the
+  owner's token) approved, never once sending or sent, so the stored draft is
+  exactly what was sent. Settle a `sending` draft only after
   the person looked in their Gmail Sent folder: never guess.
+- **Recording an email that already went out** (sent by hand, or by you from
+  the person's Gmail, before the pipeline knew), so duplicate protection and
+  `--follow-up` know the prospect was emailed. No film, clip or contact sheet is
+  involved: never use `5am outreach prepare` or `draft` for this (they render
+  films). With the batch's character:
+
+  ```sh
+  5am characters skills execute <characterId> pipeline_query --input '{"mode":"get_item","name":"Acme Podcast"}'   # item_id, contacts[].contact_id, if it exists
+  5am characters skills execute <characterId> pipeline_upsert --input '{"entity":"item","name":"Acme Podcast","website":"https://acme.example","contacts":[{"name":"Sam Lee","email":"sam@acme.example","is_primary":true}]}'   # only if it does not
+  5am characters skills execute <characterId> stage_outreach --quiet-push \
+    --input '{"item_id":"…","recipient_name":"Sam Lee","recipient_email":"sam@acme.example","subject":"<as sent>","body":"<as sent>"}'
+  5am pipeline outreach approve <draftId>
+  5am pipeline outreach mark-sent <draftId> --sent-at 2026-10-10T14:05:00Z   # the time in the Gmail Sent folder
+  ```
+
+  - The subject and body exactly as sent; the address the email actually went
+    to (`recipient_email`, or `contact_id` when it was the contact on file):
+    duplicate protection is per address.
+  - `--quiet-push` skips the review notification a new draft sends the person;
+    this one is already out. It is a flag, never a key in `--input`.
+  - `--sent-at`: RFC 3339 with a zone (`Z` or `+02:00`); a bare date means noon
+    that day. Not in the future, at most 365 days back (`invalid_sent_at`).
+  - The draft keeps that time as `sent_at`, so a `--follow-up` counts its gap
+    from the real send, and the item's activity shows the email on that day,
+    "(recorded on <today>)". Duplicate protection goes by when it was
+    RECORDED: an approved draft to that address written before the record
+    never sends (`outreach send` closes it as rejected, "Not sent, to avoid a
+    duplicate"). Tell the person if one was waiting.
+  - `duplicate_draft` from `stage_outreach`: a staged draft to that address
+    already waits on the item. Make it the record instead: `5am pipeline
+    outreach edit <draftId> --subject "<as sent>" --body-file sent.txt`, then
+    approve and `mark-sent --sent-at` it.
+  - Approving here is a bookkeeping step, not a review: the words already left.
+    Do it only for an email the person confirms went out.
 - `--csv` writes `name,title,stage,website,notes,contact_name,contact_email,contact_role`,
   the file `5am outreach prepare --csv` reads; `--overwrite` to replace it.
 
@@ -919,32 +1147,110 @@ album with a **no-login page** (`https://5am.app/c/<token>`, the link to send),
 an email draft per prospect staged in the Pipeline, a local review page, and
 sending from the user's **own Gmail** after they approved each message. Six
 steps on one batch folder (`~/.5am/outreach/<batch>/`); each resumes.
-Walkthrough for a person: `cli/docs/OUTREACH_GETTING_STARTED.md`; reference:
-`cli/docs/OUTREACH.md`. The page's button is "Claim and publish this page":
+Walkthrough and reference for a person:
+https://5am.app/cli/docs/outreach. The page's button is "Claim and publish this page":
 the prospect signs up, becomes the page's second editor (`claimed_by`) and
 publishes it under their name on their own Gemini access; the sender keeps
 editing rights, and the outreach flow itself never publishes a page.
 
-**Repeated outreach from a prospect sheet** (a clip for every new podcast
-episode or YouTube upload, with cooldowns, one email per episode and a ledger,
-on a schedule) is `outreach-monitor`, a separate binary that drives these
-commands. Install it and read its skill:
-<https://cli.5am.app/outreach-monitor/latest/SKILL.md>.
+**Sender and templates.** Configure `outreach config set --sender-name --mailbox`
+before new batches. The config is saved at `~/.5am/outreach/config.json` and binds
+to the signed-in account; `config show --check-account` verifies it. `--mailbox`
+is the expected Gmail address, separate from `outreach mail setup` credentials.
+`config set --subject --body-file` saves templates (the body file is copied when
+configured); `--follow-up-subject --follow-up-body-file` save a follow-up
+batch's (`prepare --follow-up`). Without them `draft` uses its built-in copy:
+the intro ("A short teaser for your show, {{name}}"), or for a follow-up batch
+the follow-up ("Another teaser, for {{line}}"), the texts in
+`growth/outreach-templates/emails/`. Email placeholders are `{{name}}`, `{{show}}`, `{{line}}`,
+`{{clip_url}}` and `{{sender}}`; the body must contain `{{clip_url}}`.
+`draft --subject`, `--body-file` and `--sender-name` override defaults for new
+messages. Saved batch/row templates, text and sender survive retries. A legacy
+batch without explicit or saved identity can fall back to the account profile;
+use `draft --require-sender` in scripts to require configured or explicit identity.
+
+**Preview and correct.** `draft --dry-run` shows sender, mailbox, subject, body,
+clip URL, planned action and validation errors without saving, staging, notifying
+or calling a model. It cannot run with `--personalize`. `--refresh-staged`
+deliberately replaces existing staged text with current templates (drafts that
+are not staged are left as they are and listed in `not_refreshed`); use `--only`
+to bound the change. The owner must first return an approved draft with
+`pipeline outreach unapprove <id>` (or **Return to review** in the local review
+page), then edit and approve again. Unapprove clears the review decision and
+can fail if the staged slot is occupied or the 100-draft queue is full. Approved
+drafts can also be rejected. Sending/sent drafts cannot be unapproved or edited.
+The send command validates and sends the freshly reserved server message.
+
+**Select rows.** `prepare`, `clips`, `draft` and `send` accept
+`--only slug,email@example.com`. Unknown selectors fail. Use the same selection
+for `clips --dry-run` and the paid run. Prepare matches rows by stable `work_id`
+or email across CSV reordering; the CSV validation and batch limits still apply.
+
+**Per-row templates.** Add optional `template_file` paths to the CSV to mix
+Motion designs in one batch. Use absolute paths; relative paths resolve from
+the CLI's working directory. A blank cell uses the required `--template`
+fallback. `prepare --require-row-templates` rejects any row missing that cell,
+useful for scripts that assign every design explicitly. Each selected editable
+row's template is validated before pipeline item mutations. Batch JSON and
+prepare output retain `template_file`, `template_name` (filename stem) and
+`template_hash` (SHA-256 of the source JSON, with surrounding whitespace trimmed).
+The local review card shows the name and short hash. Completed rows keep their
+original template attribution on retries. The CLI uses the choices in your CSV;
+it does not randomize them or aggregate results by template. For analysis, join
+the saved attribution to `5am outreach stats --batch <slug>` by prospect slug.
+
+**Branding and manual edits.** The CSV's optional `brand_file` is a local JSON
+path, containing `colors` (`background`, `text`, `accent`, optional `accent2`,
+all `#RRGGBB`), `fonts` (`display`, `body`, Motion font IDs such as `inter`) and optional
+`artwork` (`src`, `width`, `height`). Use absolute paths for local files. A Motion
+image layer with `photo: "podcast-artwork"` displays that artwork. Colors/fonts
+can be supplied without artwork. Prepare auto-fits text down to a floor of 28
+for larger text; layers over 160 characters are held without truncation.
+Prepare preserves hand-edited films and rechecks lint/contact sheets. If the
+source also changed, reconcile the film or deliberately use `--regenerate
+--only ...`. Rows with export checkpoints remain intact.
+
+Reusable films should use palette tokens for graphics and omit text `color`
+so the renderer chooses a contrasting foreground. A light sample brand is
+`{"background":"#F5EEDC","text":"#172A28","accent":"#34806D","accent2":"#C56C45"}`
+inside `colors`; fixed hex paint inside layers will not follow it. Motion's
+`sound.style` (`minimal`, `pulse`, `house`, `ambient`) supplies synthesized
+music and animation cues; `none` silences them. It does not excerpt podcast audio.
+
+**Recover and inspect.** After interruption, rerun `clips` to resume saved
+exports/uploads and `draft` to stage rendered rows. Paid checkpoints cost no
+new export credits; missing paid files or ambiguous receipts stop for inspection.
+Never render the film separately to bypass recovery. Prepare/clips/draft share
+a batch operation lock. `clips --progress-file clips.log` appends timestamped
+progress; stdout stays JSON and warnings/progress stay on stderr. Use
+`tail -f clips.log`, keeping `2>&1` out of JSON pipelines. `motion doctor` checks
+that Skia (the render engine) loads, and reports whether Chrome launches, without an
+export; Chrome is needed only with `--engine chrome` / `FIVEAM_MOTION_ENGINE=chrome`,
+and then prepare/clips take `--browser` (else `CHROME_PATH` or discovery).
+See the public [Clip Outreach reference](https://5am.app/cli/docs/outreach).
 
 ```sh
+5am outreach config set --sender-name "Your name" --mailbox you@gmail.com --subject "A teaser for your podcast: {{show}}"
+5am outreach config show --check-account
+5am motion doctor                                    # checks Skia (and reports Chrome); no paid export
 5am outreach mail setup --address you@gmail.com        # once: Gmail app password (2-step verification on)
-FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outreach mail setup --address you@gmail.com   # no terminal (an agent): from the environment, or a piped line
+FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' FIVEAM_DISABLE_KEYRING=1 5am outreach mail setup --address you@gmail.com   # no terminal (an agent): from the environment, or a piped line
 5am outreach mail report --subject "Weekly digest" --body-file digest.md   # mails the file to YOURSELF (the stored address, nobody else): the self-report door for unattended programs
-5am pipeline items list --csv prospects.csv            # or write the CSV by hand: name[,email,instagram,website,source_url,source_title,observation,inference,line,context,show,site]
+5am pipeline items list --csv prospects.csv            # or write the CSV by hand: name[,email,instagram,website,source_url,source_title,observation,inference,line,context,show,site,work_id,brand_file,template_file]
 5am motion generate --brief "A 10 second hello for a photographer" --format 9:16 --duration 10 -o template.motion.json
 # edit template.motion.json: put {{name}} (and optionally {{line}}) in the title or a text layer
+5am outreach fill --template template.motion.json --name "Maya Chen" --line "Episode 41" -o maya.motion.json   # FREE, offline: one prospect's film exactly as prepare writes it (then motion lint / motion sheet)
 5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 --character "Sales Director"
 #   -> items created or matched, one film + contact sheet per prospect (FREE). Look at the sheets.
 5am outreach clips --batch oct_week_1 --dry-run        # price + toolchain check
 5am outreach clips --batch oct_week_1 --yes            # 20 AI credits each; album "Clip for <name>"; public link (headline = line, episode link = source_url); pipeline note
 5am outreach clips --batch oct_week_1 --yes --page-text   # + Gemini writes each page's text ABOUT the episode from the context column (spends Gemini access; never publishes)
+5am outreach draft --batch oct_week_1 --dry-run        # inspect sender, subject, body and clip before staging
 5am outreach draft --batch oct_week_1                  # one staged draft per prospect, the link inside
+5am outreach draft --batch oct_week_1 --only p01-maya --notice-only   # draft nothing: post the review card for those staged drafts
+5am pipeline suppress add host@example.com --reason bounced   # never write to them again (rejects their staged/approved drafts)
 5am outreach review --batch oct_week_1                 # a page on 127.0.0.1: watch, edit, Approve / Skip, Done
+5am outreach review --batch oct_week_1 --no-wait       # no page: the drafts as JSON + the approve/reject commands; exits 0
 5am outreach send --batch oct_week_1 --dry-run         # the exact messages
 5am outreach send --batch oct_week_1 --yes             # from your Gmail; mark-sent on each
 5am outreach stats --batch oct_week_1 --record         # views, opens, plays, shares, downloads, clicks, sign-ups per prospect (a sign-up = the prospect claimed the page)
@@ -952,18 +1258,28 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' 5AM_DISABLE_KEYRING=1 5am outrea
 
 | Command | Costs | Needs | Prints |
 |---|---|---|---|
-| `prepare` | free (Gemini is not called) | the motion runtime, Node 20+, Chrome, ffmpeg; a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed, `sheet`, `credits_needed` |
-| `clips` | **20 AI credits per prospect** | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
-| `draft` | free (`--personalize`: one Gemini chat per prospect) | the character | `drafted`, `held_no_email`, `failed` (a message check), per prospect `draft_id`; `notice` (the review card posted into the character's chat: `interaction_id`, `drafts`, or `error`, retried by the next `draft`; `--no-review-notice` skips it) |
+| `fill` | free, offline, no login | the motion runtime, Node 20+ | `film` (written), `notes` (text made smaller to fit), `requires`; a template whose `outreach.requires` lists `line` refuses an empty `--line` (an intro), as prepare does |
+| `prepare` | free (Gemini is not called) | the motion runtime with Skia, Node 20+, ffmpeg (Chrome only with `--engine chrome`); a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed / skipped_suppressed / skipped_closed, `sheet`, `display_line` (the shorter title the film shows when the full one did not fit), `set_aside`, `credits_needed` |
+| `clips` | **20 AI credits per prospect** | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `set_aside` (suppressed or closed: never priced or rendered), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
+| `draft` | free (`--personalize`: one Gemini chat per prospect) | the character | `drafted`, `held_no_email`, `failed` (a message check), `set_aside`, `deferred` + `deferred_reason: "draft_limit"` (left `rendered`: 100 drafts already await review), `draft_slots_free`, per prospect `draft_id`; `notice` (the review card posted into the character's chat for the selected rows' drafts still staged: `interaction_id`, `drafts`, or `error`, retried by the next `draft`; `--no-review-notice` skips it, `--notice-only` posts it and drafts nothing) |
 | `review` | free | a person and a browser | blocks until Done; `approved`, `skipped` |
 | `send` | free | the Gmail credential; **never in a workflow run** | `sent`, `failed` (not taken by Gmail; still approved, the next run retries), `skipped`, `uncertain`, `refused` (Gmail refused it for good; the draft is rejected, never retried), `stopped` (why the run ended early: Ctrl-C, a failed reservation), `messages[]` (each with `html` when the GIF part was added, `error` naming a failed check, Gmail's reply, or how to settle an uncertain one) |
 | `stats` | free | | `views`, `opens`, `plays`, `shares`, `downloads`, `clicks`, `signups` per prospect |
 
 Agent rules:
+
 - **Look before paying.** `prepare` draws a free contact sheet per prospect;
-  show them (or their paths) to the user before `clips`. `needs_fix` means the
-  name does not fit the template: shorten the name or widen the layer, then
-  `prepare` again. Never render a `needs_fix` film by hand.
+  show them (or their paths) to the user before `clips`. `needs_fix` means a
+  layout or input check still needs attention after fitting. Follow the row's
+  remedy, edit the film and run `prepare` again. Text over 160 characters must
+  be shortened (an episode title is shortened for the film by `prepare` itself:
+  `display_line`; the email keeps the full one). Never render a `needs_fix` film by hand.
+- **Set-aside rows are not failures.** `skipped_suppressed` (the address is on
+  the suppression list) and `skipped_closed` (the pipeline item is closed or
+  gone) cost nothing and get no draft; do not work around them. When a prospect
+  bounces or says no, `5am pipeline suppress add <email> --reason bounced` (or
+  `do_not_contact`). `deferred` rows in a `draft` result wait for draft slots:
+  the person approves or rejects drafts, then `draft` runs again.
 - **Never render twice.** `clips` resumes: a refused charge leaves the row
   `pending_finalize` and the next `clips` run PAYS for the kept render instead
   of rendering again. A second `motion render` is a second export.
@@ -995,6 +1311,11 @@ Agent rules:
   already emailed; with `--follow-up` it accepts them only once the last send is
   at least `--min-days-since-sent` days old (3 by default), for a new episode
   or a check-in. Never work around it with another name.
+- **An email sent outside a batch is recorded, never drafted again.** When the
+  person (or you) emailed a prospect before the pipeline knew, record it with
+  `mark-sent --sent-at` (Pipeline, "Recording an email that already went
+  out"); then `prepare` treats them as emailed. Running `prepare` and `draft`
+  for it renders a film nobody needs and stages a second message.
 - **Every step verifies its output; read the `failed` rows.** `clips` checks the
   MP4 and that the page is on, `draft` refuses an unknown `{{placeholder}}` and a
   message without exactly one clip link, and `send` verifies the server draft's
@@ -1026,7 +1347,8 @@ Stored encrypted server-side; used by `media generate` and the local generation 
 ```sh
 5am keys list                          # redacted, plus gemini_access / ai_credits (below)
 5am credits                            # the AI credit balance and the packs on sale
-5am credits buy --pack <id> --no-wait # a payment link for the user (no sign-in needed to pay)
+5am credits buy --pack <id> --no-wait --reason "…" # a payment link for the user (no sign-in needed to pay)
+5am credits history --limit 50         # the ledger, newest first, each request grouped with its state
 5am keys set gemini <KEY>              # → {"provider":"gemini","status":"updated","stored_locally":true}
 5am keys set openai <KEY>
 5am keys delete gemini --yes           # → {"provider":"gemini","status":"deleted"}
@@ -1075,26 +1397,104 @@ shape as above), the access verdict and the `packs` on sale (`id`, `credits`,
 `price_usd`: the only dollars anywhere). `5am credits buy` makes a **payment
 link** (`https://5am.app/pay#…`) for one pack (`--pack ai_pack_20` or
 `--pack 20000`; default the smallest). The user opens it on any device and
-pays **without signing in** (a card, or a wallet where offered); it lasts 30 minutes
-and the credits always go to this account. Nobody is charged until someone
-pays on that page.
+pays **without signing in** (a card, or a wallet where offered); it lasts 30
+minutes (`--valid-for` up to `24h`) and the credits always go to this account.
+Nobody is charged until someone pays on that page.
 
 **Agents (including ones on their own computer, like Muse):**
 1. Only when the user asks to buy credits, or agrees after a credits stop: say
    which pack and price (from `5am credits`) and get a yes.
-2. `5am credits buy --pack <id> --no-wait` prints
-   `{"status":"awaiting_payment","url":…,"expires_at":…,"pack":{…},"purchased_total_micros":…}`.
-   **Send `url` to the user**; never open or pay it yourself.
-3. `5am credits wait --since <purchased_total_micros>` waits (35 min by
-   default) and prints `"status":"added"` with `added_credits` and the new
-   balance, or `not_received`. Never run `credits buy` again to wait: that
-   makes a second link. Then continue the work that stopped.
+2. `5am credits buy --pack <id> --no-wait --reason "<why>"` prints
+   `{"status":"awaiting_payment","id":…,"url":…,"expires_at":…,"pack":{…},"purchased_total_micros":…}`.
+   `--reason` (up to 140 characters) shows on the pay page: say what the
+   credits are for and how many are needed ("To export your edit: 50 credits,
+   you have 12"). Put it in single quotes: in double quotes a shell turns
+   "$6.99" into ".99". If the user reads your messages later rather than now, add
+   `--valid-for 24h`. **Send `url` to the user**; never open or pay it yourself.
+3. `5am credits wait --link <id>` follows that link (35 min by default) and
+   prints `"opened":true` once the user loaded the page and a `status`:
+   - `added`: with `added_credits` and the new balance;
+   - `review`: paid, and the bank or Stripe is checking it; the credits come
+     once it is approved;
+   - `rejected`, `refunded` or `disputed`: no credits;
+   - `expired`: nothing was charged;
+   - `not_received`: the wait ended first; the link may still be paid.
+
+   Tell the user what happened. Never run `credits buy` again to wait: that
+   makes a second link. Then continue the work that stopped. (`--since
+   <purchased_total_micros>` waits on the balance instead, for a server too
+   old to report a link.)
 
 At a terminal with a person present, plain `5am credits buy --pack <id>` does
 both: it opens the link in their browser and waits.
 
-Refused for an AI character's token and inside a workflow run. Purchased credits
-never expire.
+**Agents connected to the user's Link wallet** (Stripe's "Link's wallet for
+agents") can pay without sending a link, when `5am credits` prints an
+`agent_payments` block.
+
+Its `how` field has these steps with the values filled in:
+
+1. The user signs in to Link once: `npx @stripe/link-cli auth login`.
+2. Create a spend request for the pack's exact `amount` (cents) and
+   `currency`, to the `stripe_profile` it names: `npx @stripe/link-cli
+   spend-request create --credential-type shared_payment_token --network-id
+   <stripe_profile> --amount <amount> --currency usd --context "<at least 100
+   characters: what the credits are for and why>" --request-approval`. Leave
+   out `--merchant-name` and `--merchant-url` (Link refuses them for this
+   token). Against a test-mode server (`profile_test_…`), add `--test`.
+3. The user approves it in the Link app, within 30 minutes.
+4. `npx @stripe/link-cli spend-request retrieve <lsrq_ id> --include
+   shared_payment_token --format json` returns the token at
+   `shared_payment_token.id` (retry while it is `null`). Keep it out of your
+   messages to the user.
+5. `5am credits buy --pack <id> --spt <spt_…>` charges it and waits for the
+   credits (`--no-wait` returns a `payment_id` for `5am credits wait --payment
+   <id>`). A token pays once, and `--spt` takes no `--reason` (the context
+   says why).
+
+A card that needs 3-D Secure answers `spt_needs_cardholder`: send a payment
+link instead. A card its bank refuses answers `card_declined` with the bank's
+decline code (`card_not_supported`: some cards refuse agent payments); nothing
+is charged, and the error's `hint` gives the way round: a new spend request
+with another card in Link (`--payment-method-id`), or a payment link. Ask the
+user before spending, as for a link.
+
+**Asking the owner** (`--ask-owner`, and always in a workflow run or with an AI
+character's token, which have no person to pay a link):
+
+- `5am credits buy --ask-owner --reason "<why>"` posts a card in the account
+  owner's **5AM Comms** chat, with a push to their phone. There they approve
+  (and buy the pack, on the web or in the app) or decline.
+- It prints `{"status":"awaiting_approval","request_id":…}` and waits (30
+  minutes by default; `--no-wait` returns at once), ending on `added`,
+  `declined` or `expired`. `5am credits wait --request <id>` waits later.
+- Asking again from the same token returns the same request.
+- A workflow run that stops for credits asks by itself, once: the error's hint
+  names the request. A program that wants to continue runs `5am credits wait
+  --request <id> --timeout 15m`, then retries the command; otherwise it exits
+  and the owner can run it again.
+
+Purchased credits never expire.
+
+**Where the credits went.** `5am credits` also prints `used_credits` (what
+this period's allowance has spent) and `held_credits` (what requests in flight
+have reserved from it right now). Each Gemini call first holds its worst case,
+and an open hold counts against the balance until the call settles at what it
+really cost; a hold nobody settles is charged in full after 12 minutes (the
+proxy's `AI_HOLD_TTL`). So a balance that looks low while a job runs may be
+holds. `5am credits history [--limit 1..100] [--cursor C | --all]` lists the
+ledger newest first: `entries[]` (`reason`, `credits` exact and signed,
+`delta_micros`, `request_id`, `endpoint`, `model`, `price_version`,
+`created_at`), `next_cursor` (null at the end), `by_request` (keyed on
+`request_id`: `state` is `open` = held, not settled; `settled` = released and
+charged; `expired` = the reaper charged the full hold, `price_version`
+`reaper`; `refunded` = a refund row, such as a late settle after an expiry;
+with `held_credits`, `charged_credits`, `refunded_credits`, `net_credits`) and
+`totals` (`by_reason`, `by_endpoint`, `by_state`, `open_held_credits`) for the
+rows returned. A clip's export fee (`outreach clips`, `motion render`, an edit
+export) is ONE `use` row whose `request_id` is the export id, which an outreach
+batch's batch.json keeps per prospect as `request_id`: match them to account
+for a batch's spend. Never dollars, as everywhere.
 
 ## AI Characters
 
@@ -1349,7 +1749,7 @@ not the raw HTML.
 ### Custom skills (user-defined)
 
 Users can extend the local-skill catalog with JSON manifests in
-`~/.5am/skills/<name>.json` (or `$5AM_SKILLS_DIR`). Each manifest declares
+`~/.5am/skills/<name>.json` (or `$FIVEAM_SKILLS_DIR`). Each manifest declares
 `{name, description, input_schema, run|shell, timeout_seconds?,
 max_output_bytes?}`. The CLI merges them with built-ins on every chat — the
 model sees them as ordinary tools. Two execution modes:
@@ -1376,7 +1776,7 @@ Provided by the CLI to characters in `chat`:
 
 - `read_file` — read a local file. **Workspace-sandboxed** (see below).
 - `write_file` — create/update a local file. **Workspace-sandboxed** (see below).
-- `run_command` — execute shell command. Destructive ops prompt even under `--auto-approve`. Uses `$SHELL` → `sh` → `bash` on Unix, `cmd.exe` on Windows; override with `5AM_SHELL=/path/to/shell`.
+- `run_command` — execute shell command. Destructive ops prompt even under `--auto-approve`. Uses `$SHELL` → `sh` → `bash` on Unix, `cmd.exe` on Windows; override with `FIVEAM_SHELL=/path/to/shell`.
 - `local_ffmpeg` — invoke local FFmpeg. **Args take an array of strings**, e.g. `{"args": ["-i", "my photo.jpg", "out.mp4"]}` — no shell parsing, so filenames with spaces/special characters work. The legacy single-string form is rejected with a hint.
 - `local_generate_image` — render AI image, save locally. Accepts `provider` (`gemini`/`openai`) plus, on Gemini, `model` (the three Nano Banana models), `aspect_ratio`, `resolution`, `reference_images` (array of local paths), and `grounding`.
 - `local_generate_video`: render AI video (`gemini-omni-1.1-flash`), save locally. Accepts `aspect_ratio`, `duration` (4, 6, 8 default, or 10 seconds), `resolution`, `negative_prompt`; there is no model choice (a retired Veo `model` value is mapped to Omni). (Image inputs are CLI-only, not exposed to the skill.)
@@ -1389,7 +1789,7 @@ Provided by the CLI to characters in `chat`:
 
 - **Inside CWD**: silent under `--auto-approve`, prompted otherwise.
 - **Outside CWD**: forces an interactive `[y/N]` prompt **even with `--auto-approve`**, showing the resolved path. Non-TTY scripts that try to read/write outside CWD will block.
-- **Opt-out**: pass `--allow-outside-workspace` on `chat` (or set `5AM_ALLOW_OUTSIDE_WORKSPACE=1`) to fall back to the normal `--auto-approve` rules. Use sparingly — it grants the character full read/write to the user's home directory.
+- **Opt-out**: pass `--allow-outside-workspace` on `chat` (or set `FIVEAM_ALLOW_OUTSIDE_WORKSPACE=1`) to fall back to the normal `--auto-approve` rules. Use sparingly — it grants the character full read/write to the user's home directory.
 
 When scripting, either run the CLI from the directory the character should operate in, or pass `--allow-outside-workspace` if the user has explicitly opted in.
 
@@ -1493,9 +1893,9 @@ Listener behavior:
 Deploy the CLI on a server as an outbound agent so the user's AI characters can
 answer live questions about that machine ("how many unique IPs hit us in the
 last 24h?", "what was peak CPU overnight?"). Data stays in a local SQLite store
-(`~/.5am/agent/data.db`, override `$5AM_AGENT_DIR` or `--data-dir`); only query
+(`~/.5am/agent/data.db`, override `$FIVEAM_AGENT_DIR` or `--data-dir`); only query
 results leave the box. The daemon dials OUT (HTTPS long-poll) — no inbound
-port, works behind NAT. Full runbook: `cli/docs/SERVER_AGENT.md`.
+port, works behind NAT. Full runbook: https://github.com/digvan/5am-cli/blob/main/docs/server-agent.md.
 
 ### Datasets (`5am data`)
 
@@ -2047,7 +2447,7 @@ EOF
 # Sanity-check what the character will see
 5am data query --dataset requests --op count_distinct --field ip --since -24h
 
-# Run continuously (systemd units in production — see cli/docs/SERVER_AGENT.md):
+# Run continuously (systemd units in production — see docs/server-agent.md):
 5am data ingest --dataset requests --schema /etc/5am/requests.schema.json \
   --file /var/log/nginx/access.log --format combined --follow &
 5am serve agent --name web-1
@@ -2059,7 +2459,8 @@ EOF
 ### "Make a clip for each prospect in this CSV and email it to them"
 
 ```sh
-# 1. once: the Gmail app password send uses
+# 1. once: the sender identity and Gmail app password send uses
+5am outreach config set --sender-name "Your name" --mailbox you@gmail.com
 5am outreach mail setup --address you@gmail.com && 5am outreach mail test
 # 2. a template film with {{name}} in a text layer (edit the JSON after generating)
 5am motion generate --brief "A 10 second hello for a wedding photographer, their name large" --format 9:16 --duration 10 -o template.motion.json
@@ -2068,6 +2469,7 @@ EOF
 jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 # 4. after the user approves the sheets: render (20 credits each), draft, then the user reviews in a browser
 5am outreach clips --batch oct_week_1 --dry-run && 5am outreach clips --batch oct_week_1 --yes
+5am outreach draft --batch oct_week_1 --dry-run
 5am outreach draft --batch oct_week_1
 5am outreach review --batch oct_week_1          # a person clicks Approve per message, then Done
 # 5. send what was approved, from the user's Gmail; then watch the pages
@@ -2077,6 +2479,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 
 ## Gotchas (read these before scripting)
 
+- **Global flags (`--token`, `--base-url`) go before or after the subcommand, but need a value.** `5am --token "$T" albums list` and `5am albums list --token "$T"` are the same. An empty `$T` left unquoted vanishes and the flag takes the next word, so the CLI exits 3 with `--token needs a value, but the next word is the command "albums"`. Quoted, an empty `"$T"` is an empty token: the CLI ignores it and uses `FIVEAM_TOKEN` (or `5AM_TOKEN`) or your saved login instead. Check `[ -n "$T" ]` before passing it.
 - **`--yes` is required to skip confirmation on `delete` commands.** Without it the command prompts on stdin: it blocks if stdin is open, and if stdin is at EOF it declines and exits `0` having deleted nothing, so the exit code cannot tell you the delete was skipped.
 - **Use `media clips` for N shorts; never loop `media highlight`.** `clips` produces all N from one transcription and one model call. Looping `highlight` re-analyses the entire video every iteration — minutes of wasted compute and N× the Gemini spend on a long source — and yields composed reels rather than standalone moments. They are different commands for different jobs, not two speeds of the same one.
 - **`media clips` and `media highlight` share the transcript cache** (`~/.5am/transcripts`). Running both on one video, or re-running either with a different `--brief`, pays for transcription once. Do not add your own caching layer, and do not pass `--force-transcribe` in a loop.
@@ -2105,9 +2508,9 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **`5am media generate video` runs one model, `gemini-omni-1.1-flash`** (the Veo 3.1 previews retire on 2026-10-22). A retired `veo-*` `--model` is mapped to it with a stderr note; any other value exits `3`. `--duration` must be 4, 6, 8 (default) or 10 and is refused with `--extend`; `--last-frame` requires `--image`; `--reference-image` cannot combine with `--image`/`--last-frame`; all are rejected before any API call. A call is synchronous and takes about half a minute at 720p; for longer videos generate several clips and `5am media concat` them.
 - **`5am media concat` needs ≥2 clips and a local ffmpeg.** Same `--ffmpeg`→`$FFMPEG`→PATH resolution and install-hint behavior as `media visualize`. Default is stream-copy with an **automatic re-encode fallback** (it logs `stream-copy concat failed, retrying with re-encode...` to stderr and retries) — so a `copy`-vs-`reencode` result in the JSON `mode` field tells you which path ran. `--audio` muxes a track over the joined video with `-shortest`, so output length is the shorter of video/audio.
 - **`5am media visualize` depends on a local ffmpeg binary.** Looks up `--ffmpeg` → `$FFMPEG` → PATH. A missing binary surfaces as exit 1 with platform-specific install hints (`brew install ffmpeg` on macOS, `apt install ffmpeg` on Linux, `winget install ffmpeg` on Windows) — don't auto-install on the user's behalf; suggest the hint and let them confirm. HEIF covers are rejected client-side; convert with `5am media convert` first.
-- **`5am media visualize` watermarks unauthenticated runs.** A small "Powered by 5AM" overlay is added in the bottom-left corner if there's no token configured (no `5am login`, no `$5AM_TOKEN`). To remove: `5am login` (free). Rendering works fully offline either way. The JSON result includes `"watermark": true|false` and `"loggedIn": true|false`; branch on those if you need to know what shipped.
+- **`5am media visualize` watermarks unauthenticated runs.** A small "Powered by 5AM" overlay is added in the bottom-left corner if there's no token configured (no `5am login`, no `FIVEAM_TOKEN`). To remove: `5am login` (free). Rendering works fully offline either way. The JSON result includes `"watermark": true|false` and `"loggedIn": true|false`; branch on those if you need to know what shipped.
 - **`5am media visualize --aspect` precedence.** `--aspect 16:9|1:1|9:16` picks canonical dims (1280x720 / 1080x1080 / 1080x1920). Explicit `--width` AND `--height` together override `--aspect`; passing only one side derives the other from the aspect ratio (always rounded to even so libx264 yuv420p is happy). Unknown aspect strings reject before any ffmpeg call.
-- **`read_file`/`write_file` are sandboxed to CWD by default.** Out-of-workspace paths force an interactive `[y/N]` prompt **even with `--auto-approve`** — non-TTY scripts will block. Either run the CLI from the right directory, or pass `--allow-outside-workspace` (or set `5AM_ALLOW_OUTSIDE_WORKSPACE=1`) when the user has opted in.
+- **`read_file`/`write_file` are sandboxed to CWD by default.** Out-of-workspace paths force an interactive `[y/N]` prompt **even with `--auto-approve`** — non-TTY scripts will block. Either run the CLI from the right directory, or pass `--allow-outside-workspace` (or set `FIVEAM_ALLOW_OUTSIDE_WORKSPACE=1`) when the user has opted in.
 - **Destructive-command detection cannot be bypassed.** `--auto-approve` skips approval for benign skills only; `rm`, `dd`, `mkfs`, `sudo rm`, redirects to `/dev/sd*`, `chmod -R`, etc. always prompt. The same screen applies to `local_ffmpeg` and to custom skills (`run` mode after `{{placeholder}}` expansion; `shell` mode on the command string — its args pass as env vars, never `{{}}`-expanded). For unattended workflows that legitimately need destructive commands, there is no escape — restructure the workflow to avoid them or have the user run interactively.
 - **`5am characters create` returns `cli_token` (plaintext) exactly once.** Capture it from the response JSON before any subsequent command — the server stores only a hash and there is no recovery API. If you need a tokenless character (e.g., script-only, web-driven later), use `--no-token`.
 - **`--system-instruction-file` accepts only `.md` and `.txt`** (case-insensitive). Other extensions error out client-side; max size 256 KB. Mutually exclusive with `--system-instruction`.
@@ -2117,10 +2520,10 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **Promote/demote orchestrators with `5am characters update <id> --orchestrator true|false`.** Or set the flag at create time with `--orchestrator true`. If `5am playground orchestrators` returns `[]`, that's the fix.
 - **Playground writes (sessions create, task, feedback, proposals approve/modify/use-existing, resume) require a paid plan.** Reads, deletes, metadata writes (`sessions update`), and proposal `reject` work on free plans so lapsed users keep cleanup access. 402 with `error: "paid_plan_required"` and `upgrade_url` for gated calls.
 
-- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_payment` row is paid by the NEXT `clips` run; never `motion render` it yourself.
-- **`5am outreach review` blocks until a person clicks Done** (or Ctrl-C) and opens a browser page on 127.0.0.1. Never run it unattended; `5am pipeline outreach list --status staged` shows the drafts without it.
+- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_finalize` row is paid by the NEXT `clips` run; never `motion render` it yourself.
+- **`5am outreach review` blocks until a person clicks Done** (or Ctrl-C) and opens a browser page on 127.0.0.1. Never run it unattended: `5am outreach review --batch <slug> --no-wait` prints the batch's drafts (status, recipient, subject, body, clip link) and the commands that approve or reject them, then exits. Show the person the drafts and run only what they approve.
 - **`5am outreach send` is refused in a workflow run** and never sends a draft the person did not approve. It stops the batch on a refused Gmail sign-in (fix with `mail setup`, then send again: the rows stay approved). A closed pipeline item is skipped, not emailed. An `uncertain` row waits for the person's Gmail Sent folder check (mark-sent or release); send never retries it on its own. A `refused` row (Gmail's permanent refusal) is closed: its draft is rejected with Gmail's reply and never sent again.
-- **Pipeline wrong-state moves are 404, not 409.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending both answer 404 with a message naming the state; `edit` works while staged only. `release` (and the reserve and refuse `send` makes) answer 409 with the current `status`.
+- **Pipeline state errors depend on the action.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending answer 404; `edit` works while staged or approved (a sending or sent draft never changes). `unapprove` on a non-approved draft and `release` (plus the reserve/refuse actions used by send) answer 409 with the current `status`. Unapprove can also return 409 `review_queue_conflict`.
 
 ## When to suggest `--pretty`
 
@@ -2128,13 +2531,22 @@ Only when the user explicitly asks to _see_ the data ("show me my albums"). For 
 
 ## Useful env vars
 
-- `5AM_TOKEN` — auth token (overrides stored login)
-- `5AM_BASE_URL` — API base URL override
-- `5AM_PRETTY=1` — globally enable `--pretty` output
+Use the `FIVEAM_` spelling. Each variable below is also read as `5AM_<NAME>`
+(which wins when both are set), but bash and zsh cannot export a name that
+starts with a digit, or even set one inline (`5AM_TOKEN=… 5am whoami` is
+"command not found"), and an agent's shell drops such names from its
+environment. In a shell, `export FIVEAM_TOKEN=…` or `FIVEAM_TOKEN=… 5am whoami`.
+
+- `FIVEAM_TOKEN`: auth token (overrides stored login)
+- `FIVEAM_BASE_URL`: API base URL override
+- `FIVEAM_CONFIG_DIR`: a private folder that holds `config.toml` (isolated automation)
+- `FIVEAM_PRETTY=1`: globally enable `--pretty` output
+- `FIVEAM_NOTIFY=1`: desktop notification when a long command finishes (`--notify`)
+- `FIVEAM_NO_UPDATE_CHECK=1`: no "update available" nudge
 - `FIVEAM_GMAIL_ADDRESS`, `FIVEAM_GMAIL_APP_PASSWORD`: the outreach Gmail credential, read before the stored one by `outreach send` and `outreach mail test|report`, and by `outreach mail setup` instead of asking
-- `5AM_DISABLE_KEYRING=1`: store secrets (the login token, the Gmail credential) in `config.toml` without trying the OS keychain first, as on a server with none
-- `5AM_SHELL` — shell binary used by the local `run_command` skill. Defaults to `$SHELL` on Unix (falling back to `sh`, then `bash`) and `cmd.exe` on Windows. Override with an absolute path when running inside minimal containers (e.g. Alpine without bash).
-- `5AM_ALLOW_OUTSIDE_WORKSPACE=1` — equivalent to `--allow-outside-workspace` on `chat`. Lets `read_file`/`write_file` skip the interactive prompt for paths outside CWD. Only use with explicit user consent.
+- `FIVEAM_DISABLE_KEYRING=1`: store secrets (the login token, the Gmail credential) in `config.toml` without trying the OS keychain first, as on a server with none
+- `FIVEAM_SHELL`: shell binary used by the local `run_command` skill. Defaults to `$SHELL` on Unix (falling back to `sh`, then `bash`) and `cmd.exe` on Windows. Override with an absolute path when running inside minimal containers (e.g. Alpine without bash).
+- `FIVEAM_ALLOW_OUTSIDE_WORKSPACE=1`: equivalent to `--allow-outside-workspace` on `chat`. Lets `read_file`/`write_file` skip the interactive prompt for paths outside CWD. Only use with explicit user consent.
 
 See the CLI's `.env.example` for the full list and precedence rules.
 
@@ -2158,8 +2570,10 @@ the editing intent and constraints in the brief. Workflows must still invoke
 `media image-edit validate` on the saved file before publishing it as an artifact or rendering it, including
 recipe-only workflows. Stop on validation failure. `generate` and `validate` need
 Node and the runtime but no browser. `inspect portrait.iedl --input photo.jpg`
-needs a browser and reports bindings and unresolved operations; it does not
-generate masks or apply analysis.
+and `render` run on Native Skia (`@napi-rs/canvas` 1.0.11, `skia` by default) in
+Node worker threads without a browser (or on Headless Chrome with `--engine chrome` /
+`FIVEAM_IEDL_ENGINE=chrome`); `inspect` reports bindings and unresolved operations
+and does not generate masks or apply analysis.
 `render` writes local output; uploading or publishing artifacts is a separate CLI
 operation. Keep originals intact. Use subprocess argument lists, check each exit
 status, and stop if generation/validation fails. Do not call the model SDK,
@@ -2182,9 +2596,10 @@ replay.
 Use actual declared mask IDs for `--mask`. Bundles reuse resolved adjustments and
 stored generated assets; they require the matching source image, not another
 photo. Mask export produces original-space PNG. `batch` is nonrecursive and accepts
-PNG/JPEG/WebP; it cannot use `--media-id`. It shares one Chrome browser and runs up
-to four images in isolated contexts by default. Set `--concurrency 1` through `4`
-to control memory and CPU use. Use local-only recipes for directory batches. It
+PNG/JPEG/WebP; it cannot use `--media-id`. It runs up to four images in isolated
+Node worker threads on Native Skia (`skia`) by default (or shares one Chrome
+browser across isolated contexts with `--engine chrome`). Set `--concurrency 1`
+through `4` to control memory and CPU use. Use local-only recipes for directory batches. It
 continues after per-image failures, writes results in input order, and exits
 nonzero if any image failed. Inspect the report before publishing results.
 
@@ -2194,14 +2609,16 @@ replacing output files. A valid recipe still needs visual review: preserve facia
 detail and inspect mask edges before approving a look for batch reuse.
 
 Image editing is opt-in: `5am update --runtime-only` installs the version-matched
-runtime and locked JS dependencies. Alternatively pass `--with-image-edit` to
-the installer (`curl .../install.sh | sh -s -- --with-image-edit`). Setup itself
-does not invoke Node or Chrome; image-edit execution needs Node 20+, and rendering
-and input-bound inspection need Chrome/Chromium. Core CLI installation and use
+runtime, locked JS dependencies, and Skia (`@napi-rs/canvas` 1.0.11)
+with Node's npm. Alternatively pass `--with-image-edit` to
+the installer (`curl .../install.sh | sh -s -- --with-image-edit`). Image-edit
+execution, rendering, and input-bound inspection need Node 20+ and Skia (installed
+by `5am update --runtime-only`); Chrome/Chromium is only needed for the
+`--engine chrome` (`FIVEAM_IEDL_ENGINE=chrome`) rollback. Core CLI installation and use
 remain independent of these dependencies. Normal updates synchronize an opted-in
 managed runtime; core-only updates do not download one.
 
-The runner discovers compatible installed Chrome/Chromium automatically;
+When `--engine chrome` is used, the runner discovers compatible installed Chrome/Chromium automatically;
 `--browser` or `CHROME_PATH` overrides discovery. `--runtime` or `IEDL_RUNTIME`
 locates an explicitly managed bundle; `--node` overrides the Node executable.
 Missing dependencies produce setup guidance. A larger workflow machine alone does
@@ -2216,7 +2633,7 @@ Muse). Outside managed runs, install what the commands ask for:
   filters clips, collage, mix and highlight use.
 - **Node.js 20+:** `apt install nodejs` gives 18 on Ubuntu 24.04 and Debian 12; install
   20 or newer from nodejs.org or NodeSource instead.
-- **Chrome:** on Debian, `apt install chromium`. On Ubuntu, `chromium-browser` is only a
+- **Chrome (optional, only for `--engine chrome` rollback or `motion preview`):** on Debian, `apt install chromium`. On Ubuntu, `chromium-browser` is only a
   Snap stub that does not run in containers; on x86_64 install Google Chrome's .deb
   (`https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb`, then
   `apt install ./google-chrome-stable_current_amd64.deb`).

@@ -35,8 +35,9 @@ https://5am.app/blog/server-agents-ask-your-infrastructure
 Design properties worth knowing:
 
 - **No inbound port.** The agent only dials out to the API over HTTPS
-  (long-poll, ≤25 s per request). It works behind NAT, strict firewalls, and
-  corporate proxies; there is no TLS certificate or reverse proxy to manage.
+  (long-poll; the backend holds each request up to 50 s, see *Poll cadence*
+  below). It works behind NAT, strict firewalls, and corporate proxies; there
+  is no TLS certificate or reverse proxy to manage.
   (Long-poll was chosen over SSE deliberately — SSE through buffering proxies
   is a known failure mode.)
 - **Live answers.** A query lands on the agent's already-open poll, executes,
@@ -114,7 +115,7 @@ rendering?" fans out to `studio-nas` and `render-1` in one turn.
 ## Datasets
 
 - Store: `~/.5am/agent/data.db` (override the directory with `--data-dir` or
-  `$5AM_AGENT_DIR`). SQLite in WAL mode — a cron'd `5am data ingest` and the
+  `$FIVEAM_AGENT_DIR`). SQLite in WAL mode — a cron'd `5am data ingest` and the
   running daemon coexist fine. The directory is created `0700`: ingested
   logs are operator data, and "local-first" includes other local users.
 - Schema file: `{"fields": {name: type, …}, "time_field": "<field>"}`.
@@ -292,7 +293,7 @@ sudo useradd --system --create-home --home-dir /var/lib/fiveam \
 `--create-home` is not optional. The agent stores datasets in `~/.5am/agent`
 and reads custom-skill manifests from `~/.5am/skills`; a system user without a
 home resolves `~` to `/`, and both silently do nothing. (The alternative is to
-set `5AM_AGENT_DIR` and `5AM_SKILLS_DIR` explicitly in the env file below and
+set `FIVEAM_AGENT_DIR` and `FIVEAM_SKILLS_DIR` explicitly in the env file below and
 skip the home directory entirely.)
 
 ### Step 2 — install the CLI
@@ -317,17 +318,22 @@ cannot touch your media.
 ```bash
 sudo install -d -m 755 /etc/5am
 sudo tee /etc/5am/agent.env >/dev/null <<'EOF'
-5AM_TOKEN=5am_pat_replace_me
-5AM_DISABLE_KEYRING=1
+FIVEAM_TOKEN=5am_pat_replace_me
+FIVEAM_DISABLE_KEYRING=1
 # Only for a non-default backend:
-# 5AM_BASE_URL=https://5am.app
+# FIVEAM_BASE_URL=https://5am.app
 EOF
 sudo chown root:fiveam /etc/5am/agent.env
 sudo chmod 640 /etc/5am/agent.env
 ```
 
-`5AM_DISABLE_KEYRING=1` matters on a headless box: without it the CLI tries an
+`FIVEAM_DISABLE_KEYRING=1` matters on a headless box: without it the CLI tries an
 OS keychain that isn't there and falls back with a warning on every run.
+
+These are the `FIVEAM_` spellings, which a shell can also set. The CLI reads
+them all from v1.8.8 (`FIVEAM_TOKEN`, `FIVEAM_BASE_URL` and
+`FIVEAM_DISABLE_KEYRING` from v1.8.0); older releases read only the `5AM_`
+names, which still work in this env file.
 
 ### Step 4 — nginx access log → `requests` dataset
 
@@ -530,3 +536,20 @@ framing means the character says exactly that rather than inventing data.
 Possible future polish (not correctness fixes): a shorter backoff cap for
 connection-refused errors specifically, and a graceful SIGTERM drain that
 204s held long-polls so daemons cycle immediately.
+
+## Poll cadence
+
+A connected agent keeps **exactly one** request in flight at all times. The
+backend holds `GET /api/agents/commands` open until it has work for the agent
+or the window closes; the daemon reads the `204` and polls again at once.
+
+So the agent is never silent: with the default 50 s window, a firewall or
+egress log shows about 72 requests an hour to the API, plus one token refresh
+(`POST /api/cli-tokens/exchange`) about every 14 minutes. Both are healthy.
+**A gap much longer than the window is the symptom to look for**: then
+`journalctl -u 5am-agent` shows `poll failed` lines at widening intervals.
+
+| | |
+|---|---|
+| `--poll-wait` | How long a hold to ask for, in seconds. Default 50. The server caps it at its own maximum, so a higher value just gets you the server's. |
+| Command latency | **Not** affected by the window. A held poll is woken as soon as a command is queued for the agent, not at the end of its window, so a longer window means fewer requests and changes nothing a character waits for. |

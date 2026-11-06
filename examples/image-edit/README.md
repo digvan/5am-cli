@@ -1,3 +1,4 @@
+<!-- Purpose: User and developer guide for the 113-example IEDL visual gallery, covering local viewing, custom gallery builds, single-recipe execution, and gallery regeneration with the Native Skia or Headless Chrome engine. -->
 # IEDL visual field guide
 
 **[Browse the visual gallery directly on GitHub →](GALLERY.md)** — side-by-side original/edited images for every rendered example, grouped by category, with recipe and mask links.
@@ -15,15 +16,15 @@ The interactive HTML page has category/search filters, before/after sliders, cop
 
 ## Runtime compatibility
 
-These checked-in renders and resolved bundles use **`iedl-1.1.0`**, available in the optional runtime shipped with CLI **[v1.3.0](https://cli.5am.app/cli/v1.3.0/manifest.json)**. Run `5am update` followed by `5am update --runtime-only` to upgrade the CLI and install its matching runtime. The gallery itself needs no runtime to view; reproducing the renders and replaying the resolved bundles require the matching 1.1 runtime. Use `--runtime /path/to/runner.mjs` when managing that runtime explicitly.
+These checked-in renders and resolved bundles use **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas` 1.0.11, `skia/simd`)** engine. Run `5am update` followed by `5am update --runtime-only` to upgrade the CLI, install its matching runtime, and automatically provision `@napi-rs/canvas@1.0.11` next to the runtime. The gallery itself needs no runtime or browser to view; reproducing the renders and replaying the resolved bundles require the matching 1.1 runtime. Use `--runtime /path/to/runner.mjs` when managing that runtime explicitly, or `--engine chrome` (with optional `--browser /path/to/chrome`) if you explicitly want Headless Chrome execution.
 
-White balance now uses linear-light RGB gains that preserve black, with shared CPU/GPU behavior. Automatic WB uses stricter candidate selection, consistency checks, and at most half strength. For this concert photograph it intentionally applies **temperature 0 / tint 0**, reporting mixed-color evidence instead of introducing the previous green cast. Inspect the linked resolved report for measurements.
+White balance now uses linear-light RGB gains that preserve black, with shared CPU/SIMD/GPU behavior. Automatic WB uses stricter candidate selection, consistency checks, and at most half strength. For this concert photograph it intentionally applies **temperature 0 / tint 0**, reporting mixed-color evidence instead of introducing the previous green cast. Inspect the linked resolved report for measurements.
 
-All local examples were regenerated together, including temperature/tint sliders and affected presets. Their look can differ from runtime 1.0. Resolved bundles require their original runtime: 1.1 rejects 1.0 artifacts rather than silently changing approved pixels. Hand-authored recipes remain IEDL 1.
+All local examples were regenerated together with the Native Skia (`skia/simd`) engine, including temperature/tint sliders and affected presets. Resolved bundles record their runtime manifest hashes and engine provenance (`Node.js ... (@napi-rs/canvas 1.0.11; skia)`) and require a matching runtime when replayed so approved pixels never change silently. Hand-authored recipes remain IEDL 1. See [`engine_benchmark.md`](engine_benchmark.md) for the complete 106-case latency and pixel-parity comparison between Native Skia and Headless Chrome.
 
 ## Build a gallery with your own image
 
-The gallery builder is open source under Apache 2.0. It uses Python 3.9+ standard library and the installed `5am` CLI, Node.js, image-edit runtime, and Chrome/Chromium. No Python packages are needed.
+The gallery builder is open source under Apache 2.0. It uses Python 3.9+ standard library and the installed `5am` CLI, Node.js 20+, and the image-edit runtime (`@napi-rs/canvas` 1.0.11 by default; no Chrome/Chromium installation is required unless `--engine chrome` is passed). No Python packages are needed.
 
 From the repository root:
 
@@ -58,7 +59,7 @@ The three mask-requiring presets use explicit **hand-drawn demonstration regions
 
 ## Run an example
 
-Install a current `5am` CLI, Node.js 20+, and compatible Chrome/Chromium, then install the optional runtime:
+Install a current `5am` CLI and Node.js 20+, then install the optional runtime (`5am update --runtime-only` installs the runtime and `@napi-rs/canvas@1.0.11` for the default `skia` engine):
 
 ```sh
 5am update --runtime-only
@@ -84,7 +85,7 @@ Every build writes both `index.html` and `GALLERY.md`. Markdown uses the same sa
 
 ```sh
 python3 build_gallery.py --render --overwrite
-# Optional: two browsers for this small source; default is serial.
+# Optional: 2 or 4 parallel workers; default is serial.
 python3 build_gallery.py --render --overwrite --jobs 2
 # Rerun selected cases only.
 python3 build_gallery.py --render --overwrite --only stage-balance,auto-white-balance
@@ -98,9 +99,9 @@ python3 check_gallery.py --allow-partial
 python3 test_gallery_builder.py
 ```
 
-`--cli`, `--runtime`, and `--browser` accept explicit executable/runtime paths. The builder never executes remote recipes or calls a model. It validates recipes, records failures in `results.json`, writes real local renders, and exits nonzero if any local example fails. Existing output files require `--overwrite`. `capabilities.json` snapshots the source registry and preset catalog; the HTML builder checks that every registered command appears in the recipe collection.
+`--cli`, `--runtime`, `--engine` (`skia` or `chrome`), and `--browser` accept explicit executable/runtime/engine options. The builder never executes remote recipes or calls a model. It validates recipes, records failures in `results.json`, writes real local renders, and exits nonzero if any local example fails. Existing output files require `--overwrite`. `capabilities.json` snapshots the source registry and preset catalog; the HTML builder checks that every registered command appears in the recipe collection.
 
-Rendering uses the shared browser/CLI engine. GPU, browser, fonts, runtime versions, and image dimensions can affect pixels. Inspect mask boundaries, halos, clipped lights, and skin detail rather than treating every preset as a photographic recommendation.
+Rendering uses the shared CLI/Web image-edit worker (`skia/simd` in Node by default, or Headless Chrome with `--engine chrome`). Engine, fonts, runtime versions, and image dimensions can affect pixels. Inspect mask boundaries, halos, clipped lights, and skin detail rather than treating every preset as a photographic recommendation.
 
 ## Photo and license
 
