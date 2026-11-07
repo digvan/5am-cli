@@ -13,13 +13,14 @@ The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas
 
 ## Install and update
 
-**Current release: [v1.8.8](https://cli.5am.app/cli/v1.8.8/manifest.json)** (November 2026). Since v1.5.0:
+**Current release: [v1.8.9](https://cli.5am.app/cli/v1.8.9/manifest.json)** (November 2026). Since v1.5.0:
 
 - **v1.7.0**: image edits and Motion films render on Native Skia by default, with no browser (`--engine chrome` remains as the alternative); `5am motion doctor`.
 - **v1.8.0**: a video edit (`5am media edit render`) is a free draft with a small mark, and the unmarked export costs AI credits; agents can ask the account owner for credits or pay with a Link token.
 - **v1.8.4**: `5am motion podcast` clips, narration from a recording (`--audio`), and films fitted to a soundtrack.
 - **v1.8.6**: `5am doctor` (what is ready on this computer), album names in `media list`, `media upload --skip-existing`.
 - **v1.8.8**: a do-not-contact list for outreach (`5am pipeline suppress`), `5am credits history`, paged draft lists, and VEDL title `size` that means the same font size on every render path.
+- **v1.8.9**: `media collage` with Ken Burns and crossfades on ffmpeg 7, `media edit measure` that checks each title, caption and card on its own, absolute album cover URLs, a clearer message when the runtime's folder is not writable, and an outreach email about a new episode by default.
 
 macOS and Linux:
 

@@ -66,12 +66,16 @@ Every command prints one JSON document on stdout; progress goes to stderr. No co
 
 | Command | Cost |
 |---|---|
-| `generate`, `revise` | Gemini access: one model call, two when the layout needs a repair |
+| `generate`, `revise` | Gemini access (AI credits or your own key): one model call, plus at most one layout repair and one more try when a reply is cut off or is not valid JSON |
 | `narrate` | Gemini access: one speech call |
 | `lint`, `stills`, `sheet`, `preview`, `fonts` | free |
 | `render` | **20 AI credits** per export, on every account, including accounts with their own Gemini key; a podcast clip from `podcast` is **100 AI credits** (from CLI v1.8.4) |
 
 Local photos are described with Gemini once (one small call each, cached), unless you pass `--no-describe`.
+
+On AI credits, each model call first reserves the most it could cost and then settles at what it used; `5am credits` shows what calls still running have reserved, and `5am credits history` lists each call.
+
+**Looking is free; the MP4 is what you pay for.** `stills` and `sheet` draw frames exactly as the export does, with the same "Made with 5AM.app" mark, and `preview` plays the film with its sound. What the export adds is the MP4 file itself: every frame encoded, with the composed score and the narration mixed into its sound track. `render --dry-run` checks the film and prints the price without charging anything.
 
 ## Commands
 
@@ -231,7 +235,7 @@ It exits 0 even with issues; read `fixes`.
 5am motion sheet film.motion.json -o sheet.png --count 24
 ```
 
-Free PNGs drawn exactly as the export would draw them, watermark included: chosen frames (up to 48), or a contact sheet of evenly spaced ones. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
+Free PNGs drawn exactly as the export would draw them, watermark included: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48). Neither replaces an existing file without `--overwrite`. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
 
 ### `preview`
 

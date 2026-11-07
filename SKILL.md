@@ -35,6 +35,13 @@ Invoke-WebRequest https://cli.5am.app/cli/latest/5am-windows-amd64.exe -OutFile 
 
 Release manifest (sizes + sha256 hashes): `https://cli.5am.app/cli/latest/manifest.json`.
 
+The installer writes to `/usr/local/bin` (with sudo when that folder is not
+writable); `FIVEAM_INSTALL_DIR="$HOME/.local/bin"` before `sh` installs without
+sudo. `5am update --runtime-only` (image edits, Motion) puts the runtime beside
+the binary (`.5am-runtimes/<version>`), so it needs the same write access: after
+a sudo install, run it with sudo, or reinstall with `FIVEAM_INSTALL_DIR`. From
+CLI v1.8.9 it says so when it cannot write that folder.
+
 ## Setup & auth
 
 ```sh
@@ -105,6 +112,10 @@ endpoint is **slower** (server-side Stripe payment-status reconciliation
 per pending share) — don't poll it tightly. To get the user's complete
 album set, call both and merge client-side.
 
+From CLI v1.8.9, `albums list`, `list-shared`, `get`, `create` and `update`
+print `albumCoverUrl` as an absolute URL, as `media list` prints its URLs
+(earlier releases printed the server-relative `/api/...` path).
+
 ### Sharing an album (owner-only)
 
 Owners can grant other users access — free or paid, read-only or contributor —
@@ -148,7 +159,7 @@ Sharing nuances:
 - **Max 20 recipients per call** (backend enforces; exceeding returns 400 / exit 3).
 - **Paid shares and public link are mutually exclusive.** `public-link enable` is rejected (400 / exit 3) if the album has any paid direct shares. Going the other way: adding a paid share to an album with public sharing on is also rejected — disable the public link first.
 - **Cannot unshare a contributor.** If the recipient has uploaded media to the album, `unshare --user` returns 400 with `"You cannot unshare someone who contributed to the album."` Move/delete their contributions first.
-- **All write commands require `write` scope.** `5am albums shares` (read-only listing) requires `read` scope. A read-scoped PAT trying to share/unshare/toggle public link exits with code `3` and `insufficient_scope`.
+- **All write commands require `write` scope.** `5am albums shares` (read-only listing) requires `read` scope. A read-scoped PAT trying to share/unshare/toggle public link gets HTTP 403 `insufficient_scope` (exit code `2`, like every 403). Deleting an album or media item (`albums delete`, `media delete`) and `characters delete` need the `admin` scope: a read/write token gets the same 403.
 
 ## Media
 
@@ -175,7 +186,8 @@ Sharing nuances:
 
 # Order: --sort taken (the default: capture date, newest first, undated items
 # last) or uploaded. date_taken is the capture date only (absent when the file
-# has none; created_at is the upload time), both RFC 3339. URLs are whole but
+# has none; created_at is the upload time), both RFC 3339 (from CLI v1.8.9
+# created_at has no fractional seconds, like date_taken). URLs are whole but
 # signed-in: fetch with `media download`. --album takes an id or a name.
 5am media list --album "Trip 2026" --sort uploaded
 
@@ -758,7 +770,24 @@ Key facts for agents:
   bed between lines, and every title, caption and card against the title-safe
   margin. Each finding has a stable `code`; `--strict` exits 1 when any is a
   warning or an error, also when libass or the embedded fonts are missing or
-  a `frame=face` was never resolved.
+  a `frame=face` was never resolved. Through CLI v1.8.8 the
+  `outside_title_safe`/`in_ui_zone` box was the union of every layer on screen
+  at that moment, so with several on screen together it can flag the wrong
+  one (a centred title reported in the bottom app zone); from CLI v1.8.9 each
+  title, caption and card is measured alone.
+- **`size=` is pixels on a 1080-WIDE canvas and scales with the output
+  width** (`text` and `captions`). `text ... size=72` is a 72 px font on a
+  1080-wide render and 48 px on a 720-wide one; capital letters stand about
+  0.73 of that (about 53 px and 35 px). Measure on the canvas you rendered.
+  A `captions size=` is libass's full line height, so its letters are about
+  1/1.2 of a title's at the same number.
+- **Card text shrinks to fit the frame** (from CLI v1.8.8): a word or number
+  too wide, or a card too tall, is drawn smaller; text that fits keeps its
+  size. `check`/`inspect` warn only when it cannot fit even at its smallest.
+- **Overwriting:** `edit render` replaces its `--output` (re-render a draft to
+  the same path while iterating), and `edit generate` replaces its `-o`.
+  `edit sheet`, `edit stills`, `edit tighten` and `edit sample` refuse an
+  existing file unless `--overwrite`.
 - **An export costs AI credits.** `edit render` (and `media highlight`'s
   render) delivers the file without a mark for a flat fee: **50 AI credits**
   at the current price (prices may change), on every account, a personal
@@ -899,6 +928,11 @@ Source is **exactly one** of: positional paths, `--folder`, or `--album`
 (HEIC skipped with a "convert first" hint). Crossfades use `xfade` for all-stills
 sets; sets that mix in a video, or `--transition 0`, use hard cuts.
 
+From CLI v1.8.9, Ken Burns with crossfades also renders on ffmpeg 7.0 and 7.1
+(older releases failed there with "The inputs needs to be a constant frame
+rate", a rate of 1/0; ffmpeg 8 was fine), and a failed collage leaves no empty
+output file behind.
+
 ```sh
 5am media collage --folder ./photos --output memory.mp4 --music "warm nostalgic piano" --aspect 9:16
 5am media collage img1.jpg img2.jpg clip.mp4 --output memory.mp4 --music-file track.mp3
@@ -966,10 +1000,10 @@ error}`).
 
 | Command | Costs | Prints |
 |---|---|---|
-| `generate`, `revise` | Gemini access: 1 call, 2 with a layout repair | `output` (the film file), `title`, `format`, `duration`, `scenes`, `photos`, `calls`, `repaired`, `fixes`, `issues`, `warnings` |
+| `generate`, `revise` | Gemini access (AI credits or the user's key): 1 call, plus at most one layout repair and one retry of a reply cut off at its length limit or not valid JSON; on credits each call holds its worst case first and settles at what it used (`5am credits history`) | `output` (the film file), `title`, `format`, `duration`, `scenes`, `photos`, `calls`, `repaired`, `fixes`, `issues`, `warnings` |
 | `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
 | `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `frames`, `width`, `height`, `fonts`, `hash` |
-| `stills` / `sheet` | free (watermarked) | `files` / `output`, `frames` |
+| `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames` |
 | `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
 | `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of kept renders, each with `state` (`rendered`: pay it; `rendering`: another process is on it; `stopped`: killed partway, nothing to pay) and `next`; `--unfinished` releases the stopped ones' reservations: `released`, `kept`, `failed` |
 | `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
@@ -979,6 +1013,14 @@ Agent rules:
 - **Iterate on the film, not the MP4.** `lint` and `sheet` are free; use `revise`
   for changes and `render` once at the end. Look at a sheet before rendering: the
   lint cannot see contrast.
+- **The free previews are the export's pictures.** `stills` and `sheet` draw
+  frames exactly as the export does, with the same "Made with 5AM.app" mark
+  (`preview` plays them with sound, without motion blur). What the export's
+  credits buy is the MP4: the composed score and narration mixed in and every
+  frame encoded. `render --dry-run` checks the film and the price and charges nothing.
+- **Overwriting:** `generate`, `revise -o`, `stills`, `sheet` and `render`
+  refuse an existing file unless `--overwrite` (`revise --in-place` replaces
+  its film by design).
 - **`fixes > 0`** after `generate` is worth a `revise` that names the issues; the
   film still renders.
 - **Never render twice to recover a failure.** `render` loads every font and photo
@@ -1159,10 +1201,15 @@ to the signed-in account; `config show --check-account` verifies it. `--mailbox`
 is the expected Gmail address, separate from `outreach mail setup` credentials.
 `config set --subject --body-file` saves templates (the body file is copied when
 configured); `--follow-up-subject --follow-up-body-file` save a follow-up
-batch's (`prepare --follow-up`). Without them `draft` uses its built-in copy:
-the intro ("A short teaser for your show, {{name}}"), or for a follow-up batch
-the follow-up ("Another teaser, for {{line}}"), the texts in
-`growth/outreach-templates/emails/`. Email placeholders are `{{name}}`, `{{show}}`, `{{line}}`,
+batch's (`prepare --follow-up`); the first-message template is used for intro
+and episode rows alike. Without them `draft` uses its built-in copy, chosen
+per row: a row with a `line` (an episode title) gets the episode teaser ("A
+teaser for your podcast: {{show}}", from CLI v1.8.9; v1.8.8 gave it the
+intro), a row without one the intro ("A short teaser for your show,
+{{name}}"), and in a follow-up batch a row with a line gets the follow-up
+("Another teaser, for {{line}}"). `draft --dry-run` shows each row's choice
+and its full text.
+Email placeholders are `{{name}}`, `{{show}}`, `{{line}}`,
 `{{clip_url}}` and `{{sender}}`; the body must contain `{{clip_url}}`.
 `draft --subject`, `--body-file` and `--sender-name` override defaults for new
 messages. Saved batch/row templates, text and sender survive retries. A legacy
@@ -1206,6 +1253,10 @@ all `#RRGGBB`), `fonts` (`display`, `body`, Motion font IDs such as `inter`) and
 image layer with `photo: "podcast-artwork"` displays that artwork. Colors/fonts
 can be supplied without artwork. Prepare auto-fits text down to a floor of 28
 for larger text; layers over 160 characters are held without truncation.
+From CLI v1.8.8, film text that reads on neither brand color is set in black or
+white, whichever reads, so contrast alone no longer makes a row `needs_fix`; and
+an episode title too long for the film gets a shorter `display_line` on the film
+(saved on the row in `batch.json`) while the email and the clip page keep the full title.
 Prepare preserves hand-edited films and rechecks lint/contact sheets. If the
 source also changed, reconcile the film or deliberately use `--regenerate
 --only ...`. Rows with export checkpoints remain intact.
@@ -1401,6 +1452,17 @@ pays **without signing in** (a card, or a wallet where offered); it lasts 30
 minutes (`--valid-for` up to `24h`) and the credits always go to this account.
 Nobody is charged until someone pays on that page.
 
+Reading `5am credits`: every `*_micros` field is the raw ledger amount and its
+`*_credits` twin the number to show (`ai_credits.credit_micros` micros per
+credit, 1000 today); `held_*` is what calls in flight have reserved and
+`used_*` what this period has spent (see "Where the credits went").
+`purchased_total_micros` only grows with a purchase: it is the baseline
+`credits wait --since` compares against. `agent_payments` (with its `how`
+walkthrough, about 800 characters) appears only when the server takes Link
+payment tokens (`FEATURE_AGENT_PAYMENTS` on and its Stripe profile readable);
+it is written for agents that pay with a Link token (below), and any other
+agent can ignore it.
+
 **Agents (including ones on their own computer, like Muse):**
 1. Only when the user asks to buy credits, or agrees after a credits stop: say
    which pack and price (from `5am credits`) and get a yes.
@@ -1430,7 +1492,7 @@ both: it opens the link in their browser and waits.
 
 **Agents connected to the user's Link wallet** (Stripe's "Link's wallet for
 agents") can pay without sending a link, when `5am credits` prints an
-`agent_payments` block.
+`agent_payments` block (no block: send a payment link instead).
 
 Its `how` field has these steps with the values filled in:
 
@@ -1552,7 +1614,7 @@ Updates are **partial** — only flags you pass are sent.
 # Replace system_instruction from a .md or .txt file (same flag as create).
 5am characters update <characterId> --system-instruction-file ./prompts/pico-v2.md
 
-5am characters delete <characterId> --yes                 # cascades to token, webhooks, interactions, memory
+5am characters delete <characterId> --yes                 # admin scope (403 insufficient_scope otherwise); cascades to token, webhooks, interactions, memory
 ```
 
 Important nuances:
