@@ -23,6 +23,7 @@ Requires CLI **v1.5.0** or later. Skia, `motion doctor`, `--engine` and the `lot
 | `preview` | the runtime, Node.js 20+, and a browser to watch in; films with video clips also Chrome or Chromium |
 | `doctor` | the runtime and Node.js 20+; it checks Skia and Chrome, and needs Chrome only with `FIVEAM_MOTION_ENGINE=chrome` |
 | `render`, `finalize` | what `stills` needs, and a login with **write** scope |
+| `podcast clip`, `podcast episodes` | from CLI v1.8.92: a login (**write** scope for `clip`) and a show subscribed on [Episode Clips](https://5am.app/episode-clips); nothing else, since the clip is made on 5AM's servers |
 
 The CLI finds FFmpeg through `--ffmpeg`, `$FFMPEG` or `PATH`, and Chrome through `--browser`, `CHROME_PATH` or the usual install locations. It downloads neither. On Linux as root (cloud agent VMs and containers), it starts Chrome without Chrome's own sandbox, which Chrome requires there.
 
@@ -70,6 +71,7 @@ Every command prints one JSON document on stdout; progress goes to stderr. No co
 | `narrate` | Gemini access: one speech call |
 | `lint`, `stills`, `sheet`, `preview`, `fonts` | free |
 | `render` | **20 AI credits** per export, on every account, including accounts with their own Gemini key; a podcast clip from `podcast` is **100 AI credits** (from CLI v1.8.4) |
+| `podcast clip`, `podcast episodes` | from CLI v1.8.92: `episodes` is free; `clip` costs what an Episode Clips clip costs on 5am.app, and its result's `version.estimateCredits` is the estimate |
 
 Local photos are described with Gemini once (one small call each, cached), unless you pass `--no-describe`.
 
@@ -212,6 +214,25 @@ From CLI v1.8.6:
     {"kind": "number", "scene": 5, "layer": "dial", "text": "84%", "value": "84%"},
     {"kind": "name", "scene": 1, "layer": "text", "text": "DR. ALISON REYES", "value": "ALISON", "expected": "Allison"}]}
   ```
+
+### `podcast clip` and `podcast episodes`: clip a show you subscribe to, now
+
+From CLI v1.8.92. For a show you subscribe to on [Episode Clips](https://5am.app/episode-clips), `clip` asks 5AM to clip one of its episodes right away instead of waiting for the next new episode. Nothing renders on your computer: the clip is made on 5AM's servers, the same clip the show's Producer makes for a new episode, and it arrives in the show's Producer chat. `episodes` lists the show's episodes with their ids.
+
+```sh
+5am motion podcast episodes --feed https://feeds.example.com/show.xml   # episodes and their ids, 20 a page, newest first
+5am motion podcast clip --feed https://feeds.example.com/show.xml       # the newest episode, never an older one
+5am motion podcast clip --feed <show id> --episode <episode id>
+5am motion podcast clip --episode <episode id>                          # the show is found for you
+```
+
+- **Name the show** with `--feed`: its id, or the feed URL you subscribed with. The command never subscribes: a URL that matches none of your shows is refused and nothing is queued. Upper or lower case in the address, `http://` for `https://` and a default port make no difference. A trailing slash does, because the server keeps it: `/show.xml` and `/show.xml/` can be two different shows.
+- **Without `--episode`, only the newest episode.** A clip costs credits and one of the show's two episodes a day, so `clip` never moves on to an older episode you did not name. If the newest cannot be clipped, it stops and names that episode, its id and the reason. To clip an older one, find its id with `episodes` and pass `--episode`.
+- **`episodes` is free and only reads.** Each episode has its `id`, `title`, `canCreateClip`, `clipUnavailableReason` (set when it cannot be clipped; `canCreateClip` false without a reason means it already has a clip) and `estimateCredits`. `--page 2` lists older ones.
+- **An episode is clipped once.** If it already has a clip, nothing new is queued: the result says `alreadyClipped: true` and shows that clip with its real progress, such as running or "Show paused".
+- **The rules are the web's:** two episodes per show a day, a paused show, episodes that cannot be clipped, and your AI credits (a clip short of credits waits for them in the Producer chat). Each refusal says why and what to do next.
+- **For scripts:** `clip` prints `{feedId, showTitle, episodeId, episodeTitle, alreadyClipped, version, next}`, where `version` has `id`, `version`, `status`, `estimateCredits`, `requiredCredits`, `url` and `progress`. `--json` prints only the `version` object, with `created` (false: the episode already had this clip).
+- `clip` and `episodes` are subcommands, so an episode file literally named `clip` or `episodes` is given to `motion podcast` as `./clip` or `./episodes`.
 
 ### `lint`
 

@@ -263,6 +263,113 @@ expanded command trips the destructive heuristics (rm, dd, kill, …) is
 **refused** with `destructive_refused` unless you started the daemon with
 `--allow-destructive`.
 
+### Who asked: the command origin
+
+The backend stamps every command with the **origin** of the call that made
+it, from what the server knows about that call and never from the model's
+arguments:
+
+```json
+{ "kind": "character_turn", "character_id": "<uuid>", "interaction_id": "<uuid>", "turn_source": "chat", "started_by": "session" }
+```
+
+| `kind` | made by | `turn_source` | `started_by` |
+|---|---|---|---|
+| `character_turn` | a character's chat turn, or its scheduled task | `chat` or `scheduled` | chat: who sent the message; scheduled: who last set the task |
+| `playground_turn` | a character delegated to in a Playground session | none | none |
+| `skill_api` | `POST /api/ai-characters/:id/skills/execute` (a session or token ran the skill directly, outside any turn) | none | that caller |
+
+`started_by` comes from how the request authenticated, never its body:
+`session` (signed in on the web or an app), `user_pat` (the owner's own CLI
+token), `character` (a character-bound token, another agent) or
+`workflow_run`. A scheduled task records who last created or changed it
+(`set_by`; a character's token may set only its own character's tasks, on
+the task routes and through `schedule_followup` alike, including from a chat
+turn or Playground task that token started),
+and its runs carry that; a task from before this has none. `interaction_id`
+names the turn, recorded before its first command so it exists even when the
+turn later fails, and kept while any command still names it.
+
+Commands made before origins existed carry none. The agent hands the origin
+to every custom skill it runs as environment variables, after removing any
+`FIVEAM_COMMAND_*` it inherited (and a `shell`-mode argument can never set
+one):
+
+| variable | value |
+|---|---|
+| `FIVEAM_COMMAND_ID` | the command id |
+| `FIVEAM_COMMAND_AGENT` | this agent's `--name` |
+| `FIVEAM_COMMAND_CAPABILITY` | the skill's name |
+| `FIVEAM_COMMAND_ORIGIN` | the origin as JSON (`null` when it has none) |
+| `FIVEAM_COMMAND_ORIGIN_KIND`, `FIVEAM_COMMAND_CHARACTER_ID`, `FIVEAM_COMMAND_INTERACTION_ID`, `FIVEAM_COMMAND_TURN_SOURCE`, `FIVEAM_COMMAND_STARTED_BY` | its fields, when it has one |
+
+Under `5am characters chat` (the local chat loop) none of these is set.
+
+### Arguments on stdin (`stdin_json`)
+
+A manifest with `"stdin_json": true` gets its arguments as ONE JSON object on
+stdin instead of `{{key}}` substitution:
+
+```json
+{ "capability": "release_notes", "command_id": "<uuid>", "agent": "web-1",
+  "origin": { "kind": "character_turn", "character_id": "<uuid>", "interaction_id": "<uuid>", "turn_source": "chat", "started_by": "session" },
+  "args": { "since": "v1.8.8" } }
+```
+
+It is `run` mode only, and `run` must hold no `{{placeholder}}`
+(`5am skills validate` refuses both), so a model's text never becomes part of
+the command line: the program parses and validates its own input. A side
+effect worth knowing: the destructive screen checks the command line, which
+is now fixed, so free text that merely mentions `kill` or `>` is no longer a
+false positive. The program is then the only check on its input.
+
+### Capabilities for some characters only (`allowed_character_ids`)
+
+```json
+{
+  "name": "release_notes",
+  "description": "Draft release notes from the merged pull requests.",
+  "input_schema": { "type": "object", "properties": { "since": { "type": "string" } } },
+  "run": ["/usr/local/bin/release-notes", "--json"],
+  "stdin_json": true,
+  "allowed_character_ids": ["3f1c2b7e-8d4a-4c55-9e21-6b0f4a7d9c13"]
+}
+```
+
+A manifest that lists character ids (1 to 20 UUIDs of your own characters)
+is a capability for **turns the owner started** of those characters only:
+
+- the origin's `kind` is `character_turn`, its `character_id` and
+  `interaction_id` are UUIDs, its `turn_source` is `chat` or `scheduled`;
+- `started_by` is `session` or `user_pat`: a chat message the owner sent, or
+  a scheduled task the owner last set;
+- the character is in the list.
+
+Anything else is refused: a missing or malformed origin, another character,
+a direct skill call or a Playground delegation (whatever character it
+names), a chat turn another character's token or a workflow run started, a
+task one of them set. The same rule is checked independently, each check
+failing closed on its own:
+
+1. **The backend** (`query_server`): for any origin that may not run it, the
+   capability is missing from the server list, the capability list and the
+   registry summary (no schema leaks), and a call by name gets the same answer
+   as an unknown capability, with nothing enqueued. Registration refuses an
+   id that is not one of the account's characters (`unknown_character_ids`).
+2. **The agent**: before it runs anything, a command whose origin fails the
+   rule gets `capability_not_allowed`, whatever the backend let through (a
+   fault, or a command made before origins).
+3. **The program**, if it wants: the origin is in its stdin (`stdin_json`)
+   and its environment.
+
+`"allowed_character_ids": null` or `[]` is refused at load (`5am skills
+validate` says so): a list that names no one never silently means "no
+allowlist". Such a manifest, like any with the key, is never offered to `5am
+characters chat`, which has no server-set origin to check. The agent
+advertises the list at register (so the backend can hide the capability).
+Deleting a listed character makes the next registration fail until
+the manifest drops its id.
+
 ## Deployment walkthrough (Ubuntu/Debian)
 
 End to end on a fresh server: the agent daemon, an nginx access-log follower,
@@ -472,6 +579,13 @@ waiting.
 - **Execution surface**: `{dataset_query} ∪ your enabled manifests`. Nothing
   else dispatches. Capability advertisements never include `run`/`shell`/env
   (enforced agent-side AND re-validated by the backend).
+- **Who may call what**: every command carries a server-set origin (the turn
+  that asked, never the model's arguments), and a manifest with
+  `allowed_character_ids` runs only for turns the owner started of those
+  characters (a chat message the owner sent, a scheduled task the owner set),
+  checked by the backend and again by the agent (see *Capabilities for some
+  characters only*). Without it, any character with Query Server Agent
+  enabled may call any of your manifests.
 - **Caps**: results are truncated at 32 KB (agent AND backend), commands
   expire after 60 s, at most 8 commands may be in flight per agent, and the
   character-facing skill truncates further to 8 KB.
@@ -492,6 +606,9 @@ waiting.
 | `destructive_refused` on a harmless skill | the heuristic screens argument VALUES too — an arg that contains a deny token (a path with `rm` in it, a message mentioning `kill`) trips it. Rename the input or start with `--allow-destructive` |
 | character can't see a new dataset | capabilities refresh on registration (startup + every 10 min) — restart the daemon to advertise immediately |
 | `409 command_not_claimable` in the log | benign: the command expired while executing, or a duplicate daemon with the same name answered first |
+| `capability_not_allowed` | the command's origin is not an owner-started turn of a character the manifest's `allowed_character_ids` names (another character, another agent's token, a task the owner did not set, a missing or malformed origin): expected for anyone else |
+| `unknown_character_ids` at register | `allowed_character_ids` names a character this account does not have (deleted, or another account's): fix the manifest |
+| a character cannot see a manifest you installed | it lists `allowed_character_ids` without that character |
 
 ## Backend maintenance windows — what to expect
 

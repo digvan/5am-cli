@@ -989,6 +989,10 @@ error}`).
 5am motion podcast episode.mp3 --brief "A minute for people who build with agents" -o clip.motion.json
 5am motion podcast episode.mp3 --script-only -o clip.motion.json   # review clip.script.json, edit it, then:
 5am motion podcast episode.mp3 --script clip.script.json -o clip.motion.json   # changed lines alone are spoken again
+# a show you subscribe to in Episode Clips: have 5AM clip one episode now (made on 5AM's servers, not here)
+5am motion podcast clip --feed https://feeds.example.com/show.xml   # its newest episode, never an older one
+5am motion podcast episodes --feed https://feeds.example.com/show.xml   # episode ids, 20 a page (free)
+5am motion podcast clip --episode <episode id>                      # or --feed <show id> --episode <episode id>
 5am motion lint coffee-v2.motion.json
 5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
 5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills
@@ -1819,6 +1823,14 @@ model sees them as ordinary tools. Two execution modes:
 - `run: ["cmd", "arg", "{{key}}"]` — argv form, `{{key}}` substituted from args
 - `shell: "cmd \"$key\" | head"` — string passed to `$SHELL -c`, args via env
 
+Two optional keys, for server-agent capabilities (`5am serve agent`):
+`"stdin_json": true` hands the args to the program as one JSON object on
+stdin (`{capability, command_id, agent, origin, args}`) instead of `{{key}}`
+(run mode only, no placeholder allowed in `run`); `"allowed_character_ids":
+["<uuid>", …]` makes the skill callable only from turns the owner started of
+those characters (a chat message the owner sent, a scheduled task the owner
+set; `null` or `[]` is refused), and never offered to `characters chat`.
+
 Manage from the CLI:
 
 ```sh
@@ -2017,6 +2029,12 @@ capability, plus the user's enabled custom-skill manifests (`~/.5am/skills/`,
 see Local Skills above). Characters can never run arbitrary commands on the
 box. Custom-skill invocations that trip the destructive screen (rm, dd, …)
 are refused headlessly unless the daemon runs with `--allow-destructive`.
+Each command carries a server-set `origin` (which character's turn asked:
+`FIVEAM_COMMAND_ORIGIN_KIND`, `FIVEAM_COMMAND_CHARACTER_ID`,
+`FIVEAM_COMMAND_TURN_SOURCE`, `FIVEAM_COMMAND_STARTED_BY` in the program's
+environment), and a manifest with `allowed_character_ids` refuses every
+origin but an owner-started turn of a listed character
+(`capability_not_allowed`).
 
 A READ-ONLY PAT is sufficient (all agent endpoints are read-scope by design) —
 mint one for server deployments so a leaked token can't touch media.
