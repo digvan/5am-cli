@@ -24,6 +24,7 @@ Requires CLI **v1.5.0** or later. Skia, `motion doctor`, `--engine` and the `lot
 | `doctor` | the runtime and Node.js 20+; it checks Skia and Chrome, and needs Chrome only with `FIVEAM_MOTION_ENGINE=chrome` |
 | `render`, `finalize` | what `stills` needs, and a login with **write** scope |
 | `podcast clip`, `podcast episodes` | from CLI v1.8.92: a login (**write** scope for `clip`) and a show subscribed on [Episode Clips](https://5am.app/episode-clips); nothing else, since the clip is made on 5AM's servers |
+| `podcast subscribe`, `shows`, `pause`, `resume`, `unsubscribe` | from CLI v1.8.94: a login (**write** scope for all but `shows`); nothing else |
 
 The CLI finds FFmpeg through `--ffmpeg`, `$FFMPEG` or `PATH`, and Chrome through `--browser`, `CHROME_PATH` or the usual install locations. It downloads neither. On Linux as root (cloud agent VMs and containers), it starts Chrome without Chrome's own sandbox, which Chrome requires there.
 
@@ -69,15 +70,17 @@ Every command prints one JSON document on stdout; progress goes to stderr. No co
 |---|---|
 | `generate`, `revise` | Gemini access (AI credits or your own key): one model call, plus at most one layout repair and one more try when a reply is cut off or is not valid JSON |
 | `narrate` | Gemini access: one speech call |
-| `lint`, `stills`, `sheet`, `preview`, `fonts` | free |
+| `lint`, `inspect`, `stills`, `sheet`, `preview`, `fonts` | free |
+| `render --draft` | free: a 360p draft with the sound and a DRAFT mark, made on your computer (from CLI v1.8.94) |
 | `render` | **20 AI credits** per export, on every account, including accounts with their own Gemini key; a podcast clip from `podcast` is **100 AI credits** (from CLI v1.8.4) |
 | `podcast clip`, `podcast episodes` | from CLI v1.8.92: `episodes` is free; `clip` costs what an Episode Clips clip costs on 5am.app, and its result's `version.estimateCredits` is the estimate |
+| `podcast subscribe`, `shows`, `pause`, `resume`, `unsubscribe` | from CLI v1.8.94: free. Each clip a show makes costs what an Episode Clips clip costs; `subscribe --dry-run` prints the estimate, and `--clip-latest` makes one right away |
 
 Local photos are described with Gemini once (one small call each, cached), unless you pass `--no-describe`.
 
 On AI credits, each model call first reserves the most it could cost and then settles at what it used; `5am credits` shows what calls still running have reserved, and `5am credits history` lists each call.
 
-**Looking is free; the MP4 is what you pay for.** `stills` and `sheet` draw frames exactly as the export does, with the same "Made with 5AM.app" mark, and `preview` plays the film with its sound. What the export adds is the MP4 file itself: every frame encoded, with the composed score and the narration mixed into its sound track. `render --dry-run` checks the film and prints the price without charging anything.
+**Looking is free; the MP4 is what you pay for.** `stills` and `sheet` draw frames exactly as the export does, with the same "Made with 5AM.app" mark, and `preview` plays the film with its sound. From CLI v1.8.94, `render --draft` writes a free MP4 to check timing and sound: 360 pixels on the short side, no motion blur, and DRAFT across the frame. What the export adds is the full-size MP4 file itself: every frame encoded, with the composed score and the narration mixed into its sound track. `render --dry-run` checks the film and prints the price without charging anything.
 
 ## Commands
 
@@ -106,7 +109,7 @@ A film with `fixes` left still renders; a `revise` that names the issues usually
 5am motion revise film.motion.json "slower ending" --in-place
 ```
 
-Sends the film and your request to the model. `--format` and `--duration` re-lay out or retime the film (positions are relative, so a 16:9 film becomes a 9:16 one without edits). `--sound` swaps the music bed. From CLI v1.8.4, `--cues cues.json` keeps a film on its soundtrack ([On a soundtrack](#on-a-soundtrack-cues-and-fit)).
+Sends the film and your request to the model. `--format` and `--duration` re-lay out or retime the film (positions are relative, so a 16:9 film becomes a 9:16 one without edits). `--sound` swaps the music bed. From CLI v1.8.4, `--cues cues.json` keeps a film on its soundtrack ([On a soundtrack](#on-a-soundtrack-cues-and-fit)). From CLI v1.8.94, a film with tables, film tracks, overlays, lists or bars ([The film timeline](#the-film-timeline-tables-tracks-and-overlays)) is refused when the answer drops them, since the model was not taught them: edit such a film by hand, or pass `--force`.
 
 ### Photos
 
@@ -170,7 +173,7 @@ The cue sheet says when each scene starts and what it shows; `say` (optional) is
 ```
 
 - `generate --cues` writes one scene per cue and starts each exactly on its second (to the frame); `revise --cues` keeps a revision on them. `--audio` makes the recording the film's take and its length (up to 90 seconds).
-- `fit` moves an existing film's scenes onto a sheet for free, with no model call; it needs one scene per cue. Its result lists the scenes it stretched by more than half.
+- `fit` moves an existing film's scenes onto a sheet for free, with no model call; it needs one scene per cue. Its result lists the scenes it stretched by more than half. From CLI v1.8.94, a film it writes to another folder (`-o`) still finds its font files, photos and clips: their paths are rewritten from there.
 - The first cue is at 0; a scene runs at least 1 second and at most 64 beats (about 30 seconds at 128 BPM). Do not render a fitted film with `--duration`: that retimes every scene evenly, off the cues.
 - A film on a soundtrack shows only what the cues give: no number, statistic or name they do not state.
 
@@ -215,9 +218,31 @@ From CLI v1.8.6:
     {"kind": "name", "scene": 1, "layer": "text", "text": "DR. ALISON REYES", "value": "ALISON", "expected": "Allison"}]}
   ```
 
+### `podcast subscribe` and `podcast shows`: Episode Clips from the terminal
+
+From CLI v1.8.94. Subscribe to a podcast without opening the website: 5AM then checks its feed every hour and clips each new episode on its servers, and each clip arrives in the show's Producer chat and your library.
+
+```sh
+5am motion podcast subscribe --feed https://feeds.example.com/show.xml --dry-run       # the show, its newest episode and a clip's price; saves nothing
+5am motion podcast subscribe --feed https://feeds.example.com/show.xml --clip-latest   # subscribe, and clip the newest episode now
+5am motion podcast shows                                                               # your shows: ids, status, the URL each was subscribed with
+5am motion podcast pause --feed <show>                                                 # and: resume --feed <show>
+5am motion podcast unsubscribe --feed <show> --yes
+```
+
+- **Subscribing is free.** Episodes already out are not clipped, unless `--clip-latest` asks for the newest one now. It has to be one the show could clip by itself (an audio link, at most two weeks old, at most three hours long), and it starts within a couple of minutes. If no episode qualifies, the result says so and points to `episodes` and `clip`.
+- **`--dry-run` first** to see the show's name, its newest episode and what a clip costs (`estimateCredits`, and `requiredCredits`, what to keep available to start one). Nothing is saved.
+- **A show you already have** is reported, not added again (`alreadySubscribed: true`). `--clip-latest` then does nothing, so use `clip`.
+- **The show's settings** shape every clip it makes, and all of them are optional: `--brief`, `--voice` (a voice name, as `podcast --voice` takes), `--mood`, `--format` (9:16, 16:9 or 1:1), `--length` (15 to 90 seconds), `--brand-kit` (`default`, or a kit's name or ID) and `--cta` (the line each clip ends with; by default "Listen to" and the show's name).
+- **`shows`** lists your shows with their `id`, `title`, `status` (active or paused), the `feedUrl` each was subscribed with, and its `settings`. Pass an id or that URL as `--feed` to the other commands. A feed URL can hold a private subscriber's token: the table hides its query, the JSON keeps it, so don't post the JSON.
+- **`pause`** stops new clips until **`resume`**. A clip already waiting to start gives its slot back. Resuming checks the feed at once, but episodes that came out during the pause are not clipped by themselves; clip one with `clip --episode`.
+- **`unsubscribe --yes`** removes the show and its Producer chat, and every clip not yet delivered is cancelled and refunded. Clips already delivered, their pages and the show's album stay in your library. If it stops part way while refunds are checked, run it again later. To stop new clips without removing anything, use `pause`.
+- **The limits are the web's:** a few shows per account (the refusal says how many), a public `https` feed, and the clip rules below. Each refusal says why and what to do next.
+- `subscribe`, `shows`, `pause`, `resume` and `unsubscribe` are subcommands, so an episode file with one of those names is given to `motion podcast` as `./<name>`.
+
 ### `podcast clip` and `podcast episodes`: clip a show you subscribe to, now
 
-From CLI v1.8.92. For a show you subscribe to on [Episode Clips](https://5am.app/episode-clips), `clip` asks 5AM to clip one of its episodes right away instead of waiting for the next new episode. Nothing renders on your computer: the clip is made on 5AM's servers, the same clip the show's Producer makes for a new episode, and it arrives in the show's Producer chat. `episodes` lists the show's episodes with their ids.
+From CLI v1.8.92. For a show you subscribe to (on [Episode Clips](https://5am.app/episode-clips), or with `podcast subscribe` from CLI v1.8.94), `clip` asks 5AM to clip one of its episodes right away instead of waiting for the next new episode. Nothing renders on your computer: the clip is made on 5AM's servers, the same clip the show's Producer makes for a new episode, and it arrives in the show's Producer chat. `episodes` lists the show's episodes with their ids.
 
 ```sh
 5am motion podcast episodes --feed https://feeds.example.com/show.xml   # episodes and their ids, 20 a page, newest first
@@ -237,16 +262,44 @@ From CLI v1.8.92. For a show you subscribe to on [Episode Clips](https://5am.app
 ### `lint`
 
 ```sh
-5am motion lint film.motion.json [--format 9:16] [--duration 12] [--fps 30] [--resolution 1440p]
+5am motion lint film.motion.json [--format 9:16] [--duration 12] [--fps 30] [--resolution 1440p] [--strict]
 ```
 
 Free and offline. It prints:
 
 - what the normalizer would change (`warnings`);
-- layout issues: `issues`, each of level `fix` or `note`, and `fixes`, the count of `fix` ones;
-- the frame count, the render size and the fonts the film loads.
+- the fields the engine ignores (`unknown`, from CLI v1.8.94): a misspelt field, or one the engine does not have, with the field meant when it looks like a typo, for example `scenes[0].layers[2].sise: unknown field, ignored (did you mean "size"?)`;
+- layout issues: `issues`, each of level `fix` or `note`, and `fixes`, the count of `fix` ones. A layer is named by its place in your film (`scenes[0].layers[7]`), even when the normalizer dropped one before it (from CLI v1.8.94; before, the numbering skipped the dropped layer);
+- the frame count and the render size;
+- `fonts`, the catalog faces a render loads for the film's font roles (the `hand` role's face included, whether or not anything writes by hand), and `fontFiles` (from CLI v1.8.94), the font files the film names by path, each with its roles and the file it found;
+- `timeline` (from CLI v1.8.94): each scene's first beat, seconds and frames, as `inspect` prints it.
 
-It exits 0 even with issues; read `fixes`.
+It exits 0 even with issues; read `fixes`. With `--strict` (from CLI v1.8.94; also on `inspect` and `render`) it prints the same and exits 3 when there is any unknown field, any warning or any `fix` issue, so a script stops before an export of a film that is not what you wrote. A `note` passes.
+
+### `inspect`
+
+From CLI v1.8.94. Free; it draws nothing.
+
+```sh
+5am motion inspect film.motion.json                    # the timeline
+5am motion inspect film.motion.json --times 2,4.5      # every layer at 2 s and 4.5 s
+5am motion inspect film.motion.json --frames 120 --fps 30
+```
+
+Without `--times` or `--frames` it prints the film's `timeline`, offline: the tempo, the length of a beat (`beatSec`), and each scene's start and end in beats, in seconds and in frames (`startFrame` is the first frame drawn in the scene, `endFrame` the first frame of the next), with the transition that plays over the end of the scene before. Use it to lay a film on a reference video's timestamps.
+
+With moments (up to 48) it measures every layer there as the export draws it:
+
+| Field | What it says |
+|---|---|
+| `path` | where the layer is in the film: `scenes[2].layers[1]`, with a group's layers below it |
+| `visible`, `hidden` | whether it shows, and if not why: `before-start`, `after-end`, `transparent` (under 5% opacity), `off-frame`, or `empty` (text whose table row leaves its words empty) |
+| `box`, `corners` | its footprint in the export's pixels (`x`, `y`, `w`, `h`), and its four corners only when it is turned (from CLI v1.8.94; before, always) |
+| `frame` | `inside`, `partial` or `outside` the frame |
+| `opacity` | how opaque it is there, groups and fades included |
+| `text` | for text: the `font` drawn (`family`, `weight`, `sizePx`, `capPx`), `fitScale` (below 1: the text was shrunk to fit its width), `overflow`, and each line's words and box |
+
+While a transition plays, both scenes' layers are listed, each where the transition has it: a push or a whip moves its scene, a zoom scales it, and a fly sends its biggest words through the lens. A scene the transition is not showing (the new one before an iris opens, the old one once a zoom has passed it) reads `transparent`. A wipe, circle, blinds, tiles, split or glitch uncovers the new scene in place, so both keep their boxes. `stills --boxes` draws the same boxes on the frames.
 
 ### `stills` and `sheet`
 
@@ -256,7 +309,9 @@ It exits 0 even with issues; read `fixes`.
 5am motion sheet film.motion.json -o sheet.png --count 24
 ```
 
-Free PNGs drawn exactly as the export would draw them, watermark included: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48). Neither replaces an existing file without `--overwrite`. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
+Free PNGs drawn exactly as the export would draw them, watermark included and with the export's motion blur: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48; frame i of n sits in the middle of the i-th of n equal stretches of the film, at (i + 0.5) / n of it). Neither replaces an existing file without `--overwrite`. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
+
+`--boxes` (from CLI v1.8.94) draws each visible layer's box and a label naming it, and each line of text, and prints the layers as [`inspect`](#inspect) does under `inspect`.
 
 ### `preview`
 
@@ -271,7 +326,10 @@ Opens the film in your browser with its sound: play, pause, scrub and loop (spac
 ```sh
 5am motion render film.motion.json -o film.mp4 [--fps 60|30] [--resolution 1080p|1440p] [--album <name-or-id> | --new-album <name>]
 5am motion render film.motion.json -o film.mp4 --dry-run
+5am motion render film.motion.json -o draft.mp4 --draft
 ```
+
+**A free draft** (from CLI v1.8.94): `--draft` writes an MP4 to check timing and sound, and so does every render while the CLI is not signed in (`note` says so). It is 360 pixels on the short side at 30 fps, without motion blur or grain, with the film's whole sound and "DRAFT" across the frame; it reaches no server and costs nothing. `--resolution`, `--fps`, `--dry-run` and the album flags are for exports and are refused with it. The result has `draft: true` and, under `next`, the command for the export.
 
 An export, in this order:
 
@@ -327,7 +385,7 @@ From CLI v1.7.0. Free, and it renders nothing. It checks the engine your renders
 
 ## The film file
 
-A MotionDoc is plain JSON, saved as `*.motion.json`. `generate` and `revise` write one; this section is the whole format, so a person or an agent can write or edit a film by hand. Every field is optional unless its table says **required**, and a field left out means its default. After each edit, run `5am motion lint`: it prints what the engine repaired and the layout problems left (see [What the engine repairs](#what-the-engine-repairs)). The [sample films](#sample-films) are worked examples.
+A MotionDoc is plain JSON, saved as `*.motion.json`. `generate` and `revise` write one; this section is the whole format, so a person or an agent can write or edit a film by hand. Every field is optional unless its table says **required**, and a field left out means its default. After each edit, run `5am motion lint`: it prints what the engine repaired and the layout problems left (see [What the engine repairs](#what-the-engine-repairs)). The [sample films](../examples/motion/README.md) are worked examples.
 
 ```json
 {
@@ -385,7 +443,7 @@ A field whose value is marked *Num* in the tables takes one of three forms:
 | `inBack` | pulls back before it leaves |
 | `outElastic` | springs past the value and wobbles in |
 | `outBounce` | bounces on arrival |
-| `hold` | stays on the previous value, then jumps at the key (a step) |
+| `hold` | stays on the previous value, then jumps at the key (a step). From CLI v1.8.94 a step lands on a frame of the export: before, the frame it fell in showed both values faintly, through the motion blur |
 | `smooth` | from CLI v1.5.1: see below |
 
 Most eases stop at every key. From CLI v1.5.1, `smooth` on every key after the first joins those keys into one continuous move that never stops at the keys in between, never overshoots, and only starts and ends gently: use it for a camera move through three or more keys (`generate` adds it to such camera moves when the model names no ease). On a single key it is a gentle ease in and out.
@@ -481,6 +539,8 @@ A face is a font id, or the face's name as written (`"Bebas Neue"`); anything el
 | Japanese | `noto-sans-jp-black`, `zen-maru-gothic-bold`, `dela-gothic-one`, `mochiy-pop-one`, `reggae-one`, `kosugi-maru`, `yusei-magic`, `shippori-mincho-extrabold`, `hachi-maru-pop` |
 | Arabic and Persian | `vazirmatn-extrabold`, `cairo-extrabold`, `rakkas` |
 | Korean | `black-han-sans`, `jua` |
+
+**A font file** (from CLI v1.8.94, the CLI only): a role may name a `.ttf` or `.otf` file by its path relative to the film, `"display": "file:fonts/Brand-Bold.ttf"` (at most 10 MB; a WOFF or a `.ttc` collection is refused: convert it). The CLI loads it for every render, still and preview, and a text's `size` is then that face's real cap height. Its weight is the file's: one file is one face. `lint` reads its widths from the file, and never judges its scripts. Motion Studio on the web cannot load it and draws the role's default face. A revision written to another folder keeps pointing at the file.
 
 Match the face to the brief's voice (a poster face for hype, a serif for editorial, rounded or comic for playful, retro for games and tech); most films need only a display face, with `inter` as body. Text in Japanese, Korean, Arabic or Persian needs a face made for that script in the role that draws it (the display face for a headline in it, the body face for smaller lines): `lint` reports a face that cannot draw its text as a fix. Arabic and Persian run right to left and animate word by word.
 
@@ -585,13 +645,13 @@ Each `focus` key flies the camera to `to` and arrives at scene beat `at`, after 
 
 ### Layers
 
-Every layer is an object with a `kind`. These fields work on every kind:
+Every layer is an object with a `kind`. A scene keeps at most 24 layers, and so does a group; a `group` counts as one, so put related layers in one. The warning for a layer past the cap names it (from CLI v1.8.94). These fields work on every kind:
 
 | Field | Value | Default | What it does |
 |---|---|---|---|
 | `kind` | one of the kinds below (**required**) | | What it draws. |
 | `id` | text, up to 40 characters | none | Names it for `morph`, `flood` and `fly`, cursor moves, camera focus and a grid's `repel` wave. |
-| `start`, `end` | scene beats | the whole scene | When it shows; `end` must come after `start`. |
+| `start`, `end` | scene beats | the whole scene | When it shows; `end` must come after `start`. Nothing draws before its `start` (from CLI v1.8.94; before, a layer could show up to 0.75 beat early), except while a transition reveals its scene early: then the layers that start on the scene's first beats show ahead of the downbeat. |
 | `x`, `y` | *Num*, -3 to 3 | 0 | Its anchor, in half-frame fractions. |
 | `dx`, `dy` | *Num*, design units | 0 | Offsets after `x` and `y`. |
 | `scale` | *Num*, 0 to 40 | 1 | Its size. |
@@ -662,6 +722,16 @@ Big type that animates by letter, word or line: headlines, subheads, labels and 
 | `highlight` | `{ "word", "style", "color", "at" }` (`word` **required**) | none | Marks one word (`word` counts from 0) with `brackets` (the default), a `box`, an `underline` or its `color`, from beat `at`. The colour defaults to `accent`, except that `brackets` take the text's own colour. |
 | `dot` | `{ "color", "at", "hop" }`, or `true` | none | A round period that drops in after the text (default `accent`). With `"hop": true` (one line only) it hops across the letters, each letter entering as the dot reaches it, and lands as the period. |
 | `backColor` | colour | | The back face of letters that `spin-y`. |
+| `valign` | `top`, `middle`, `baseline`, `bottom` | `middle` | From CLI v1.8.94: which point of the block sits at the layer's `y`: its cap-height top, its middle, its first line's baseline, or its last line's. With `align`, one of nine anchors. |
+| `fit` | `shrink`, `none` | `shrink` | From CLI v1.8.94: `shrink` makes text that would not fit its `maxWidth` or the frame smaller; `none` keeps `size` exact, and `lint` reports an overflow as a fix. |
+| `box` | `true`, or `{ "color", "padding", "radius", "opacity" }` | none | From CLI v1.8.94: a plate behind the block (default `paper`), `padding` design units around its cap-height box (one number, or `[x, y]`; default 45% of the cap height); the words take the ink that reads on it. |
+| `data`, `row` | a table, its row | none | From CLI v1.8.94: `{field}` in `text` takes that row's field (see [The film timeline](#the-film-timeline-tables-tracks-and-overlays)). |
+
+`5am motion inspect --times` (from CLI v1.8.94) shows the size each text is drawn at (`fitScale` below 1 when it was shrunk) and every line's box in pixels.
+
+**Spaces.** A run of spaces is one break between words. To hold a gap, or to keep words on one line, use no-break spaces (U+00A0, `\u00a0` in JSON; from CLI v1.8.94): each is as wide as a space and never breaks the line, so `"01\u00a0/\u00a008\u00a0\u00a0\u00a0JUPITER"` keeps its gaps. Before CLI v1.8.94 they collapsed like spaces.
+
+**How words arrive.** Text enters unit by unit: letter by letter by default (`split`: `chars`), each rising (`unitEnter`: `rise`). `"unitEnter": "none"` shows the words at once.
 
 The unit moves, for `unitEnter` and `unitExit`:
 
@@ -690,7 +760,7 @@ A filled vector shape that morphs from one shape to the next on the beat. For on
 | `shapes` | up to 8 of `circle`, `square`, `rounded`, `triangle`, `play`, `diamond`, `star4`, `star5`, `hexagon`, `heart`, `blob`, `ring`, `cross`, `pill` | `["circle"]` | The shapes it morphs through. |
 | `morphAt` | beats | 1, 2, 3, ... | The beat each morph lands on. |
 | `fills` | colours, one per shape | `color`, else `accent` then `accent2` | Their fills. |
-| `size` | radius, 10 to 700 | 130 | 60 to 260 reads well. |
+| `size` | radius, 10 to 700 | 130 | 60 to 260 reads well as a shape; 10 to 20 is a dot. |
 | `stroke`, `strokeWidth` | colour; 0.5 to 80 units | none; 4% of the radius | An outline. |
 | `spin` | degrees per morph, -360 to 360 | 60 | The turn at each morph. |
 | `drift` | degrees per beat, -180 to 180 | 11 | A slow turn. |
@@ -785,9 +855,10 @@ A number that counts on the beat, on fixed digit slots so it never jitters.
 
 | Field | Value | Default | What it does |
 |---|---|---|---|
-| `to` | a number (**required**) | | Where it lands. |
+| `to` | a number (**required**, unless `data` and `field` give the number) | | Where it lands. |
 | `from` | a number | 0 | Where it starts. |
-| `format` | `0`, `0.0`, `0%`, `00:00`, `$0,000`, `0k` and the like | `0` | The zeros after the point are decimals, a comma groups thousands, `%` adds a percent sign, `k` counts thousands, `$`, `€` or `£` leads, and `00:00` shows seconds as minutes and seconds. |
+| `format` | `0`, `0.0`, `0%`, `00:00`, `$0,000`, `0k` and the like, then a unit if any (`0.00 AU`, `0 km`) | `0` | The zeros after the point are decimals, a comma groups thousands, `%` adds a percent sign, `k` counts thousands, `$`, `€` or `£` leads, and `00:00` shows seconds as minutes and seconds. A unit after the pattern (up to 12 characters, no digits; from CLI v1.8.94) is kept as written. |
+| `data`, `row`, `field` | a table, its row, a field of it | none | From CLI v1.8.94: the number is that field of the row, gliding between rows as the row's track glides; no count-up (see [The film timeline](#the-film-timeline-tables-tracks-and-overlays)). |
 | `prefix`, `suffix` | up to 6 and 8 characters | none | Text around the number. |
 | `font` | `display`, `body`, `mono`, `hand` | `display` | The role whose face draws it. |
 | `weight` | 100 to 900 | 900 | |
@@ -795,6 +866,9 @@ A number that counts on the beat, on fixed digit slots so it never jitters.
 | `count` | `[start, end]` beats | from 0 to 60% of the layer | When it counts. |
 | `ease` | an ease | `outExpo` | How it counts. |
 | `label` | up to 40 characters | none | A line under the number, in capitals in the mono face. |
+| `labelColor` | colour | the number's, at 70% | From CLI v1.8.94: the label's colour. |
+| `labelSize` | 8 to 200 design units | 16% of `size` | From CLI v1.8.94: the label's size, before the counter shrinks to fit; it hangs a clear gap under the number. |
+| `labelTracking` | ems, -0.1 to 1 | 0.25 | From CLI v1.8.94: the label's letter spacing. |
 
 #### `clock`
 
@@ -972,6 +1046,8 @@ Two modes: easing curves in a curve editor (`curves`, morphing one into the next
 | `morphAt` | beats | 1, 2, 3, ... | When each curve morphs into the next. |
 | `values` | up to 24 numbers | none | The data. |
 | `labels` | up to 24, of 14 characters | none | A label under each value. |
+| `data`, `field`, `labelField` | a table and two of its fields | none | From CLI v1.8.94: the values are `field` of every row, the labels `labelField`. |
+| `highlight` | a track's name, or a value's number | none | From CLI v1.8.94: that row's bar (or a dot on the line) and label take `accent`, gliding as the track glides. |
 | `style` | `line`, `area`, `bars` | `line` | How values are drawn. |
 | `width`, `height` | 120 to 1800, 80 to 1600 | 640, 400 | The chart's box. |
 | `draw` | `[start, end]` beats | `[0.3, 1.3]` | The line draws on, or the bars grow. |
@@ -1085,6 +1161,128 @@ And a product story told as one continuous take: a cursor clicks a button on the
         { "kind": "pill", "id": "button", "height": 130, "size": 40, "dy": 60, "states": [{ "at": 0, "icon": "check", "circle": true }] },
         { "kind": "text", "text": "DELIVERED", "size": 110, "dy": -230, "start": 1, "unitEnter": "type" }
       ] }
+  ]
+}
+```
+
+### The film timeline: tables, tracks and overlays
+
+From CLI v1.8.94, for films written by hand (`generate` and `revise` do not write these; `revise` refuses an answer that drops them, unless `--force`). Scenes keep their own beats; these run on the **film's** beats, where film beat = the scene's first beat + its beat (`5am motion inspect` prints each scene's first beat, seconds and frames).
+
+| Document field | Value | What it does |
+|---|---|---|
+| `data` | `{ "<table>": [ { "<field>": text or number, ... }, ... ] }` | Up to 8 tables of up to 64 rows and 16 fields. |
+| `tracks` | `{ "<track>": a Num, or { "at", "glide", "ease", "swap" } }` | Up to 16 numbers on the film's clock. A Num's keyframe beats are film beats (the `hold` ease steps). In the step form row `i` lands on film beat `at[i]` (0 before `at[0]`), gliding into it over the `glide` beats before (0 to 16, eased by `ease`, default `inOut`), so its value is fractional while it glides. `swap` (from CLI v1.8.94) says when words bound to the track change: `land` (the default) as the row lands, or `glide` as its glide starts, so the words, a list and a counter all move together. |
+| `overlays` | layers, up to 12 | Drawn over every scene and its transition, outside the camera, under the HUD and the mark. Their `start`, `end` and keyframes are film beats (default: the whole film). Any kind but `group`, `video` and `cursor`. |
+
+**A track in any value.** Anywhere a *Num* goes, `{ "track": "<track>", "scale": 1, "offset": 0 }` is the track's value times `scale` plus `offset`, read on the film's clock: `"x": { "track": "progress" }`, a camera's `zoom`.
+
+**Films written by hand, in short:** `data`, `tracks`, `overlays`, `list`, `bar` and `drawing` are not taught to `generate` yet.
+
+**A table on a layer.** `data` names a table and `row` the row to show: a track's name, or a row number. Then:
+
+- words in `text`, `note` and `pill` states take `{field}` placeholders, filled from the row (`{{...}}` is left for outreach templates). On a step track, text and notes enter again with each row (their `unitEnter`; `"none"` swaps the words in place);
+- a `counter` shows `field` of the row, gliding between rows;
+- words change when their row lands on a step track (`at[i]`), never during the glide, unless the track says `"swap": "glide"` (then they change as the glide starts); a counter and a list move with the track's fraction while it glides. To change a number in one frame, bind it to a step track with no `glide`. Either way the change lands on a frame of the export, never showing both sides faintly (from CLI v1.8.94);
+- a row that leaves a layer's words empty draws nothing while it is on (`inspect` says `hidden: "empty"`). Two layers bound to the same table and row that are never both filled (a label for some rows, another for the rest) may sit in the same place: `lint` does not call that a collision (from CLI v1.8.94);
+- a `graph` takes its values from `field` and its labels from `labelField`; `highlight` marks a row;
+- a `list` shows every row (below).
+
+`5am motion lint` checks every `{field}`, `field`, track and row a layer names, row by row: a row the layer shows while it is on (a list or a graph: every row) must have the field, a number for a counter. A row that leaves a layer's words empty is a note: nothing shows while it is on.
+
+#### `list`
+
+A scrolling list of a table: the row `row` names sits at the layer's point, the others above and below it (or beside it), fading with distance. A track's fraction moves every row, so a step track's `glide` reads as a roll.
+
+| Field | Value | Default | What it does |
+|---|---|---|---|
+| `data`, `field` | a table and one of its fields (**required**) | | What each row shows. |
+| `row` | a track's name, or a row number | 0 | The active row. |
+| `show` | 1 to 15 | 5 | Rows visible at once. |
+| `layout` | `column`, `row` | `column` | One under the other, or side by side. |
+| `focus` | `center`, `start` | `center` | Where the active row sits: the middle of the list, or its first place (only upcoming rows after it). |
+| `font`, `weight` | a role, 100 to 900 | `display`, 800 | |
+| `size` | 10 to 400 | 56 | The cap height. |
+| `gap` | 0 to 800 | the size | The clear space between rows: rows are `size` + `gap` apart, each row's point the middle of its capitals. |
+| `align` | `left`, `center`, `right` | `center` | The edge of each row at the layer's point. |
+| `case` | `upper`, `lower`, `none` | `none` | As written by default. |
+| `activeColor` | colour | `accent` | The active row's colour. |
+| `activeScale` | 0.5 to 3 | 1.25 | The active row's size. |
+| `activeWeight` | 100 to 900 | the `weight` | From CLI v1.8.94: the active row's weight, so it can be bold over regular rows. |
+| `marker` | up to 4 characters | none | From CLI v1.8.94: drawn before the active row in its colour, like `>`. |
+| `fade` | 0 to 1 | 0.35 | How much each row away from the active one fades. |
+| `box` | `true`, or `{ "color", "padding", "radius", "opacity" }` | none | A plate behind the active row; its words take the ink that reads on it. |
+| `detail` | `{ "field", "x", "y", "align", "size", "font", "weight", "color", "activeColor", "format" }` | none | From CLI v1.8.94: a second column, another field of each row (`field`, **required**), `x`/`y` design units from the row's point (default one size past the widest row), on the row's baseline; `align` (`left`), `size` (the list's), `color` and `activeColor` (the list's), and `format`, a counter's number pattern (`"0,000.0 h"`). |
+
+Its `color` is the other rows (default: the ink that reads on the scene). `lint` measures a list by its words, so two lists a row apart are as close as their letters (from CLI v1.8.94; before, by their row slots, so they always touched).
+
+#### `bar`
+
+A progress bar that fills frame by frame. As an overlay with no `start` or `end` it fills across the whole film: frame f of n is f/n full.
+
+| Field | Value | Default | What it does |
+|---|---|---|---|
+| `value` | *Num*, 0 to 1 | a linear fill over the layer's life | How full it is: keyframes, or a track. |
+| `width`, `height` | 4 to 4000, 1 to 600 | 800, 14 | Its size. |
+| `radius` | 0 to 300 | half the height | Its corners. |
+| `from` | `left`, `right`, `center` | `left` | Where the fill starts. |
+| `trackColor` | colour | the ink at 18% | The unfilled track behind it. |
+
+Its `color` is the fill (default `accent`).
+
+#### `drawing`
+
+From CLI v1.8.94: your own vector art from SVG path data, flat or on a globe. (`path` is something else: a striped ribbon.)
+
+| Field | Value | Default | What it does |
+|---|---|---|---|
+| `paths` | up to 64 paths, 40,000 characters of path data in all (**required**, except with a `sphere`, whose graticule and fill are a drawing on their own) | | Drawn in order. |
+| `view` | `[width, height]` of the path data | `[1000, 1000]` | Flat: the box the path data is drawn in. On a sphere: an equirectangular map that size. |
+| `width`, `height` | 4 to 4000 design units | 600, the view's aspect | The drawing's size (a sphere's diameter is `width`). |
+| `sphere` | `true`, or `{ "spin", "lon", "tilt", "graticule", "back", "color", "fill", "lineWidth" }` | none | A globe: `spin` degrees a beat (20), from `lon` (a *Num*: the longitude facing you, 0), leaning its north pole toward you by `tilt` (15), a graticule every `graticule` degrees (15; 0 for none) in `color`, the globe filled with `fill` (none), the far side's strokes at `back` opacity (0.25; 0 hides them). |
+
+Each path:
+
+| Field | Value | Default | What it does |
+|---|---|---|---|
+| `d` | SVG path data: `M L H V C S Q T A Z`, absolute or relative (**required**) | | The shape, in the `view`'s units; on a sphere, `[longitude, latitude]` in degrees (east and north positive) unless there is a `view`. A path that does not parse is dropped, and the warning says where it stops. |
+| `fill`, `stroke` | colours | the layer's `color` outline when neither is given | |
+| `width` | 0 to 200 design units | 3 | The outline's width, whatever the view. |
+| `opacity` | *Num*, 0 to 1 | 1 | |
+| `draw` | `[start, end]` beats from the layer's start | drawn | Draws the outline on along its length; the fill fades in with it. |
+| `cap`, `join` | `butt`, `round`, `square`; `miter`, `round`, `bevel` | `round` | The outline's ends and corners. |
+| `fillRule` | `nonzero`, `evenodd` | `nonzero` | How overlapping parts fill (`evenodd` cuts holes). |
+
+On a sphere, a shape that crosses the horizon is cut there and closed along the globe's edge; only the near side is filled.
+
+A drawing with a fill is a panel: words anywhere fully inside it are its label, and `lint` passes them. Words partly over it are a fix, and the message says which edge they cross and by how much.
+
+#### A film on its own timeline
+
+Four planets, one every 8 beats (3.75 s at 128 BPM): a list that rolls to each, its name, its distance and a chart that follow it, and the film's progress along the bottom. The scenes only change the background; everything else is an overlay.
+
+```json
+{
+  "version": 1, "title": "The inner planets", "format": "16:9", "duration": 15, "tempo": 128, "seed": 7,
+  "palette": "ocean", "fonts": { "display": "inter", "body": "inter", "mono": "jetbrains-mono" },
+  "sound": { "style": "minimal" }, "hud": false,
+  "data": { "planets": [
+    { "name": "Mercury", "au": 0.39 },
+    { "name": "Venus", "au": 0.72 },
+    { "name": "Earth", "au": 1.0 },
+    { "name": "Mars", "au": 1.52 }
+  ] },
+  "tracks": { "planet": { "at": [0, 8, 16, 24], "glide": 1 } },
+  "overlays": [
+    { "kind": "list", "data": "planets", "row": "planet", "field": "name", "show": 5, "x": -0.62, "size": 52, "align": "left" },
+    { "kind": "text", "data": "planets", "row": "planet", "text": "{name}", "x": 0.25, "y": -0.55, "size": 110 },
+    { "kind": "counter", "data": "planets", "row": "planet", "field": "au", "format": "0.00 AU", "x": 0.25, "y": -0.15, "size": 90, "label": "from the sun" },
+    { "kind": "graph", "data": "planets", "field": "au", "labelField": "name", "highlight": "planet", "style": "bars", "x": 0.3, "y": 0.42, "width": 760, "height": 300 },
+    { "kind": "bar", "y": 0.86, "width": 1700, "height": 10 }
+  ],
+  "scenes": [
+    { "id": "first", "beats": 16, "bg": "bg", "layers": [] },
+    { "id": "second", "beats": 16, "bg": "bg", "enter": { "type": "push", "beats": 1 }, "layers": [] }
   ]
 }
 ```
@@ -1214,7 +1412,7 @@ The rules `generate` follows, for a film that reads well:
 
 The engine turns any JSON into a film it can render and never fails on a document. Before it draws:
 
-- **Unknown fields are dropped, without a warning.** A misspelt field (`"szie": 90`) simply does nothing, so check names against the tables above.
+- **Unknown fields are dropped.** A misspelt field (`"szie": 90`) does nothing. From CLI v1.8.94 `lint` lists it under `unknown`, with the field meant, and `--strict` fails on it; before, check names against the tables above.
 - **Unknown values are dropped or replaced by the default:** a kind, a transition, a colour or a font with a warning; an ease (except in a graph's `curves`), a palette name or a mesh shape without one. A layer that cannot draw without one is dropped: text without `text`, a counter without `to`, a graph with neither `curves` nor `values`, a pill without states, a cursor without moves, rings without rows, lines without a `pattern`, a figure without a `figure`, a picture whose photo or clip is not in the film's tables.
 - **Numbers are clamped** to their field's range. A plain number field says so in a warning, but a number in keys or an oscillator's `amp`, a `[start, end]` pair and an `[x, y]` target are clamped without one: check those against the tables. A pair whose end is not after its start becomes `[start, start + 0.5]`.
 - **Beats are rescaled** when the scenes do not add up to the film's beats, with a warning.
@@ -1225,8 +1423,9 @@ The engine turns any JSON into a film it can render and never fails on a documen
 
 ## Agents and scripts
 
-- **Iterate on the film, not the MP4.** `lint` and `sheet` are free; `revise` makes changes; `render` once at the end.
-- **Edit the film directly when you know the change.** [The film file](#the-film-file) lists every field with its range and default. Lint after each edit: `.warnings` lists the repairs that warn (clamps in keys, pairs and targets do not: see [What the engine repairs](#what-the-engine-repairs)), `.fixes` the layout problems left. A misspelt field is dropped without a warning.
+- **Iterate on the film, not the MP4.** `lint` and `sheet` are free; `revise` makes changes; `render` once at the end. To hear it first, `render --draft` is free.
+- **Edit the film directly when you know the change.** [The film file](#the-film-file) lists every field with its range and default. Lint after each edit: `.warnings` lists the repairs that warn (clamps in keys, pairs and targets do not: see [What the engine repairs](#what-the-engine-repairs)), `.unknown` the misspelt fields, `.fixes` the layout problems left. `lint --strict` exits 3 while any of those is left.
+- **Place things exactly with `inspect`.** Its timeline maps seconds to beats and frames; `--times` gives every layer's box in pixels, whether it shows, and the size its text was drawn at. Over MCP (from CLI v1.8.94), `motion_lint` returns the same timeline, and `motion_stills` with `options.boxes` returns each layer at those moments. The server's `motion://reference` is this page.
 - **Read the JSON.** For `generate`, the film path is `.output`. For `render`, the MP4 path is `.output` and the charge is `.credits`. A dry run has `.dryRun: true` and no `.output`.
 - **Never repeat a paid render after an error.** A refused final charge is recovered with `5am motion finalize <requestId>`.
 - **Let a render finish.** A minute or two is normal. Give it a timeout that does not kill it, or run it in the background and check on it: a render killed partway keeps its reservation for a day, and ten of them stop every export (see [`finalize`](#finalize)).

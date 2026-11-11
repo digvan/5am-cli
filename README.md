@@ -13,7 +13,7 @@ The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas
 
 ## Install and update
 
-**Current release: [v1.8.92](https://cli.5am.app/cli/v1.8.92/manifest.json)** (November 2026). Since v1.5.0:
+**Current release: [v1.8.94](https://cli.5am.app/cli/v1.8.94/manifest.json)** (November 2026). Since v1.5.0:
 
 - **v1.7.0**: image edits and Motion films render on Native Skia by default, with no browser (`--engine chrome` remains as the alternative); `5am motion doctor`.
 - **v1.8.0**: a video edit (`5am media edit render`) is a free draft with a small mark, and the unmarked export costs AI credits; agents can ask the account owner for credits or pay with a Link token.
@@ -23,6 +23,7 @@ The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas
 - **v1.8.9**: `media collage` with Ken Burns and crossfades on ffmpeg 7, `media edit measure` that checks each title, caption and card on its own, absolute album cover URLs, a clearer message when the runtime's folder is not writable, and an outreach email about a new episode by default.
 - **v1.8.91**: server-agent capabilities for chosen characters only (`allowed_character_ids`), a skill's arguments as one JSON object on stdin (`stdin_json`), and who asked for each command (its origin) in the skill's environment. See [docs/server-agent.md](docs/server-agent.md).
 - **v1.8.92**: `5am motion podcast clip` asks 5AM to clip an episode of a show you subscribe to in [Episode Clips](https://5am.app/episode-clips) now, and `5am motion podcast episodes` lists the show's episodes and their ids. See [docs/motion.md](docs/motion.md).
+- **v1.8.94**: Motion films written by hand: `5am motion inspect` (each scene's beats, seconds and frames, and every layer's box, visibility and text lines at chosen moments), `lint --strict` and the fields the engine ignores, `stills` and `sheet --boxes`, and a free 360p draft with the sound (`render --draft`, as every render is while signed out); tables, tracks and overlays on the film's own beats, `list`, `bar` and `drawing` (SVG paths, flat or on a globe) layers, exact text layout (`valign`, `fit`, `box`) and font files beside the film. `5am motion podcast subscribe`, `shows`, `pause`, `resume` and `unsubscribe` run [Episode Clips](https://5am.app/episode-clips) from the terminal. Over MCP, `motion_render` makes free drafts too (`options.draft`, in the `local` preset). `playground task --auto-approve-proposals` stops with exit code 2 when a proposal needs your own login. See [docs/motion.md](docs/motion.md).
 
 macOS and Linux:
 
@@ -117,13 +118,14 @@ Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-e
 5am motion revise coffee.motion.json "warmer colours, slower ending" --in-place
 5am motion narrate coffee.motion.json --script "Mornings, sorted."   # a voice track beside the film
 5am motion preview coffee.motion.json                  # free: plays in your browser, updates on save
+5am motion render coffee.motion.json -o draft.mp4 --draft      # free: 360p, the sound, a DRAFT mark
 5am motion render coffee.motion.json -o coffee.mp4 --dry-run    # price and checks, no charge
 5am motion render coffee.motion.json -o coffee.mp4 --fps 30     # 20 AI credits
 ```
 
 - **Costs.** `generate` and `revise` use model quota: one call, or two when the
-  layout needs a repair; `narrate` makes one speech call. `lint`, `stills`, `sheet`
-  and `preview` are free. Each MP4 export
+  layout needs a repair; `narrate` makes one speech call. `lint`, `inspect`, `stills`, `sheet`
+  and `preview` are free, and so is a 360p draft with a DRAFT mark (`render --draft`). Each MP4 export
   costs 20 AI credits on every account, including accounts with their own Gemini key.
 - **No charge for a film that cannot render.** Every font, photo and clip loads
   before anything is charged; the charge comes after the last frame.
@@ -173,7 +175,7 @@ For direct IEDL authoring, provide the entire [`skills/iedl/`](skills/iedl/SKILL
 
 Managed runs need an explicitly provisioned image-edit runner. Machine size alone does not install Node, Native Skia, or the runtime. Missing capabilities should produce diagnostics, not dependency installation or a substitute rendering engine during the run.
 
-For motion films, an agent should iterate on the film with `lint`, `sheet` and `revise` (free or cheap) and `render` once at the end; a failed export is recovered with `5am motion finalize`, never a second render. `5am motion preview` is for people: it never exits on its own, so scripts look at a film with `sheet`. See [agents and scripts](docs/motion.md#agents-and-scripts).
+For motion films, an agent should iterate on the film with `lint`, `sheet` and `revise` (free or cheap), hear it with a free `render --draft`, and `render` once at the end; a failed export is recovered with `5am motion finalize`, never a second render. `5am motion preview` is for people: it never exits on its own, so scripts look at a film with `sheet`. See [agents and scripts](docs/motion.md#agents-and-scripts).
 
 Most CLI commands return JSON on stdout; progress and errors use stderr. Some commands, such as `--version`, help, and default character chat, return text. Check the individual command contract in the skill rather than treating every stdout stream as JSON.
 

@@ -714,8 +714,8 @@ server also serves the media commands (`media_list`, `media_upload`,
 albums (`albums_*`) and clip outreach with the pipeline's review queue and clip
 pages (`outreach_*`, `pipeline_*`, `media_public_link_*`; `outreach://guide`),
 each running the matching `5am` command; `--tools edit,image` serves fewer, and
-the presets `--tools local` (what runs signed out: free drafts; signed in, edit_render exports unless draft: true) and `--tools podcast`
-(an episode to clips) serve 27 tools each instead of 89. A tool refuses an
+the presets `--tools local` (what runs signed out: free drafts; signed in, edit_render and motion_render export unless draft: true / options.draft) and `--tools podcast`
+(an episode to clips) serve 28 and 27 tools instead of 89. A tool refuses an
 argument it does not take.
 Those tools type their common flags; `options` takes any other flag of the
 command by name, and `cli_help` lists them all (and every in-server tool's
@@ -989,13 +989,21 @@ error}`).
 5am motion podcast episode.mp3 --brief "A minute for people who build with agents" -o clip.motion.json
 5am motion podcast episode.mp3 --script-only -o clip.motion.json   # review clip.script.json, edit it, then:
 5am motion podcast episode.mp3 --script clip.script.json -o clip.motion.json   # changed lines alone are spoken again
-# a show you subscribe to in Episode Clips: have 5AM clip one episode now (made on 5AM's servers, not here)
+# Episode Clips from the terminal: subscribe to a show, and 5AM clips its episodes on its servers (not here)
+5am motion podcast subscribe --feed https://feeds.example.com/show.xml --dry-run      # the show and a clip's price; saves nothing
+5am motion podcast subscribe --feed https://feeds.example.com/show.xml --clip-latest  # subscribe, and clip the newest episode now
+5am motion podcast shows                                            # your shows: ids, status, the URL each was subscribed with
 5am motion podcast clip --feed https://feeds.example.com/show.xml   # its newest episode, never an older one
 5am motion podcast episodes --feed https://feeds.example.com/show.xml   # episode ids, 20 a page (free)
 5am motion podcast clip --episode <episode id>                      # or --feed <show id> --episode <episode id>
+5am motion podcast pause --feed <show>                              # resume --feed <show>; unsubscribe --feed <show> --yes removes it
 5am motion lint coffee-v2.motion.json
+5am motion lint coffee-v2.motion.json --strict      # from CLI v1.8.94: exit 3 on any unknown field, warning or fix
+5am motion inspect coffee-v2.motion.json            # from CLI v1.8.94: each scene's beats, seconds and frames
+5am motion inspect coffee-v2.motion.json --times 2,4.5   # every layer's pixels, visibility and text lines there
 5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
-5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills
+5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills   # --boxes (v1.8.94): boxes drawn, layers as JSON
+5am motion render coffee-v2.motion.json -o draft.mp4 --draft   # from CLI v1.8.94: free 360p draft, sound, DRAFT mark, no server
 5am motion render coffee-v2.motion.json -o coffee.mp4 --dry-run
 5am motion render coffee-v2.motion.json -o coffee.mp4 --fps 30 --new-album "Films"
 5am motion finalize <requestId>
@@ -1006,9 +1014,10 @@ error}`).
 |---|---|---|
 | `generate`, `revise` | Gemini access (AI credits or the user's key): 1 call, plus at most one layout repair and one retry of a reply cut off at its length limit or not valid JSON; on credits each call holds its worst case first and settles at what it used (`5am credits history`) | `output` (the film file), `title`, `format`, `duration`, `scenes`, `photos`, `calls`, `repaired`, `fixes`, `issues`, `warnings` |
 | `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
-| `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `frames`, `width`, `height`, `fonts`, `hash` |
-| `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames` |
-| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`) | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output` |
+| `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `unknown` (fields the engine ignores, with the one meant), `frames`, `width`, `height`, `fonts`, `fontFiles`, `hash`, `timeline` (each scene's first beat, seconds and frames; from CLI v1.8.94); `--strict` exits 3 on any unknown, warning or fix |
+| `inspect` | free; without moments offline, with `--times`/`--frames` (up to 48) it needs the engine | `timeline` (`scenes[]`: `startBeat`, `endBeat`, `start`, `end`, `startFrame`, `endFrame`, `transition`; `beatSec`, `tempo`, `frames`); with moments `frames[]`, each with `scene`, `transition` and `layers[]`: `path`, `kind`, `label`, `visible` or `hidden` (`before-start`, `after-end`, `transparent`, `off-frame`, `empty`), `box`/`corners` in export pixels, and for text `font`, `fitScale` (below 1: shrunk), `overflow`, `lines` |
+| `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames`; with `--boxes` also `inspect` (the layers, one entry per frame) and the boxes drawn |
+| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`). `--draft` (and any render while signed out) is free: 360p, 30 fps, the sound, a DRAFT mark, no server | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output`; a draft: `draft: true`, `credits: 0`, `next` (the export), `note` when signed out |
 | `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of kept renders, each with `state` (`rendered`: pay it; `rendering`: another process is on it; `stopped`: killed partway, nothing to pay) and `next`; `--unfinished` releases the stopped ones' reservations: `released`, `kept`, `failed` |
 | `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
 | `fonts` | free | `dir`, `fonts`, `bytes` |
@@ -1016,7 +1025,26 @@ error}`).
 Agent rules:
 - **Iterate on the film, not the MP4.** `lint` and `sheet` are free; use `revise`
   for changes and `render` once at the end. Look at a sheet before rendering: the
-  lint cannot see contrast.
+  lint cannot see contrast. To hear the timing, `render --draft` is free (360p,
+  with a DRAFT mark); `lint --strict` before the export catches a misspelt field.
+- **Matching a reference:** `inspect` maps the reference's timestamps to the film's
+  beats and frames, and `inspect --times` (or `stills --boxes`) gives every layer's
+  box in pixels, whether it shows, and its text's real size and lines.
+- **Data that changes on the beat** (from CLI v1.8.94): write it once in `data`, step a
+  `tracks` entry through it (`{"at": [0, 8, 16], "glide": 1}`, film beats), and bind
+  layers to it (`"data": "<table>", "row": "<track>"`): a `list` scrolls, `{field}` words
+  re-enter, a counter glides, a graph marks the row. Layers in `overlays` stay on across
+  every scene on the film's beats; a `bar` there fills across the whole film. The format's
+  "Films written by hand" section has the fields. `revise` refuses an answer that drops
+  them (`--force` writes it anyway): edit such films by hand.
+- **Exact layout** (from CLI v1.8.94): a text's `valign` (top, middle, baseline, bottom) with
+  `align` pins one of nine points to x/y; `fit: "none"` keeps its size exact (lint flags an
+  overflow); `box` puts a padded plate behind it. A role may use a font file beside the film,
+  `"display": "file:fonts/Brand-Bold.ttf"` (TTF or OTF; never WOFF): `size` is then that face's
+  real cap height. `inspect --times` shows each text's drawn size and line boxes in pixels.
+- **Vector art** (from CLI v1.8.94): `drawing` takes SVG path data (`"paths": [{"d": "M0 0 C...",
+  "fill", "stroke", "draw": [0, 2]}]`, `view` for its box); with `"sphere"` the paths are longitude
+  and latitude on a turning globe with a graticule. `path` is a striped ribbon, not vector art.
 - **The free previews are the export's pictures.** `stills` and `sheet` draw
   frames exactly as the export does, with the same "Made with 5AM.app" mark
   (`preview` plays them with sound, without motion blur). What the export's
@@ -1625,6 +1653,8 @@ Important nuances:
 
 - `--skills` enables skills with **default config**. For per-skill config overrides, use `--from-file` with the full JSON body.
 - `--scopes` updates the per-character CLI token's scopes **in place** — no rotation, no new plaintext.
+- **Your own login or token only.** `create`, `update` and `webhooks create|update|delete|listen` refuse an AI character's token (even its own) and a workflow run's token with `403 cli_token_not_allowed_here`, a real denial rather than an expired session: a character cannot widen its own scopes, skills or albums, or rewrite its instructions or memory.
+- **`--scopes` never goes above your own token's.** With a personal token, `create --scopes` and `update --scopes` may give the character's token only scopes your token holds: asking for `admin` from a read-and-write token is `403 insufficient_scope (required scope: admin)` and nothing is created or changed. Signed in on the web there is no such limit.
 - `--active false` deactivates the character's CLI token at lookup time. Outstanding 15-min CLI JWTs continue working until expiry.
 - **`--no-token` is `create`-only.** By default `create` mints a CLI token and returns the plaintext **exactly once** under `cli_token` on the response. Capture it from the JSON before any further processing — it cannot be retrieved later, only rotated.
 - **`--system-instruction-file`** (create + update) accepts only `.md` and `.txt` (case-insensitive). Capped at 256 KB. Cannot be combined with `--system-instruction` — passing both errors out before any network call.
@@ -1898,7 +1928,7 @@ Insufficient scope returns a **structured denial in the response**, not an HTTP 
 
 ### Webhooks
 
-Each character can have one or more webhook endpoints receiving `chat.completed` and `skill.executed` events. Every delivery carries `X-5am-Signature: sha256=<hex>` = `HMAC-SHA256(<timestamp>.<body>, <signing_secret>)`. The signing secret is the connection's `access_token` — get it via `webhooks list` or rotate with `rotate-secret`.
+Each character can have one or more webhook endpoints receiving `chat.completed` and `skill.executed` events. Every delivery carries `X-5am-Signature: sha256=<hex>` = `HMAC-SHA256(<timestamp>.<body>, <signing_secret>)`. The signing secret is the connection's `access_token`: get it via `webhooks list` or rotate with `rotate-secret`. `webhooks list` shows it to your own login or token only: with an AI character's or a workflow run's token it is `null`, with `access_token_hidden: true`.
 
 ```sh
 # CRUD
@@ -2148,7 +2178,7 @@ While the task runs, stderr emits one line per `playground-*` SSE event:
 ### Important nuances
 
 - **Promote/demote orchestrators from the CLI**: `5am characters update <id> --orchestrator true|false`. Or create one as an orchestrator: `5am characters create --name "Lead" --orchestrator true`. The web UI Settings tab does the same thing.
-- **Tasks run on the orchestrator's user — not the CLI token's character.** A user PAT works; a _character-bound_ CLI token also works (the playground operates against the owner's account either way).
+- **Tasks run on the orchestrator's user, not the CLI token's character.** A user PAT works; a _character-bound_ CLI token also works (the playground operates against the owner's account either way). **Approving a proposal does not:** it creates a character and hands back its token, so `--auto-approve-proposals` (and approve or modify) needs your own login or token. With an AI character's or a workflow run's token, approval is `403 cli_token_not_allowed_here` and the proposal waits for you; rejecting still works. From CLI v1.8.94, `task --auto-approve-proposals` stops at such a refusal (any 401 or 403) instead of polling until `--wait-timeout`: it exits 2 (category `auth`, the server's code) with `could not approve proposal "<name>" (<id>): ... The proposal is waiting for you to approve it with your own login`. Transient errors are still retried.
 - **`task` is sync.** It blocks until orchestration completes (or pauses for proposals). Long workflows tie up the terminal — use `--no-stream` to run quietly, or run in the background and poll `sessions get`.
 - **SSE auth**: the live progress stream uses `/api/sse` with the same JWT as everything else. If the user has only a `read`-scoped token, the stream still works (it's read-only); but `task` itself needs `write` + paid plan.
 - **Proposals pause the task by default.** Two ways to handle them:
