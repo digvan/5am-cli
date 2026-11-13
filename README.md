@@ -13,7 +13,7 @@ The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas
 
 ## Install and update
 
-**Current release: [v1.8.94](https://cli.5am.app/cli/v1.8.94/manifest.json)** (November 2026). Since v1.5.0:
+**Current release: [v1.8.95](https://cli.5am.app/cli/v1.8.95/manifest.json)** (November 2026). Since v1.5.0:
 
 - **v1.7.0**: image edits and Motion films render on Native Skia by default, with no browser (`--engine chrome` remains as the alternative); `5am motion doctor`.
 - **v1.8.0**: a video edit (`5am media edit render`) is a free draft with a small mark, and the unmarked export costs AI credits; agents can ask the account owner for credits or pay with a Link token.
@@ -24,6 +24,7 @@ The gallery uses **`iedl-1.1.0`** on the default **Native Skia (`@napi-rs/canvas
 - **v1.8.91**: server-agent capabilities for chosen characters only (`allowed_character_ids`), a skill's arguments as one JSON object on stdin (`stdin_json`), and who asked for each command (its origin) in the skill's environment. See [docs/server-agent.md](docs/server-agent.md).
 - **v1.8.92**: `5am motion podcast clip` asks 5AM to clip an episode of a show you subscribe to in [Episode Clips](https://5am.app/episode-clips) now, and `5am motion podcast episodes` lists the show's episodes and their ids. See [docs/motion.md](docs/motion.md).
 - **v1.8.94**: Motion films written by hand: `5am motion inspect` (each scene's beats, seconds and frames, and every layer's box, visibility and text lines at chosen moments), `lint --strict` and the fields the engine ignores, `stills` and `sheet --boxes`, and a free 360p draft with the sound (`render --draft`, as every render is while signed out); tables, tracks and overlays on the film's own beats, `list`, `bar` and `drawing` (SVG paths, flat or on a globe) layers, exact text layout (`valign`, `fit`, `box`) and font files beside the film. `5am motion podcast subscribe`, `shows`, `pause`, `resume` and `unsubscribe` run [Episode Clips](https://5am.app/episode-clips) from the terminal. Over MCP, `motion_render` makes free drafts too (`options.draft`, in the `local` preset). `playground task --auto-approve-proposals` stops with exit code 2 when a proposal needs your own login. See [docs/motion.md](docs/motion.md).
+- **v1.8.95**: transparent Motion films (`5am motion render --alpha`, ProRes 4444 in a `.mov`, also kept and paid with `finalize`) to lay over a video, `sheet --times`, `stills --boxes --compact`, `revise` keeping a film's tables, font files from your account, and a `podcast` script cut off at Gemini's length limit asked for again. VEDL edits cut between 2 to 4 cameras (`angle`, synced by `5am media sync`), name people with a `lower_third` card, lay a transparent graphic over the picture (`insert ... mode=overlay`), and export to Final Cut Pro or DaVinci Resolve (`5am media edit export-fcpxml`, multi-cam as a multicam clip), one fee covering a clip version's MP4 and its XML; a clip in a Clip Maker project folder renders on the project's canvas. In `5am studio`, Clip Maker adds motion graphics made from what is said. `5am outreach engaged` lists the prospects who played their clip, for a nudge that `prepare --follow-up` checks against the email it follows. The Claude Desktop bundle (below) starts on the `local` tools, and so does an empty `5am mcp --tools`; `5am login` prints where to make a token. See [docs/motion.md](docs/motion.md) and the [VEDL guide](https://5am.app/cli/docs/vedl).
 
 macOS and Linux:
 
@@ -50,7 +51,13 @@ For library access, create a personal access token in [Settings → CLI Access T
 5am whoami
 ```
 
-Choose scopes for the work: server-agent queries can use `read`; library writes, AI-credit proxy access and Motion exports require `write`. Local image validation and local-only rendering do not require login. Gemini features use the normal access resolver: AI credits through the metered proxy, or the user's own Gemini key where configured. Proxy refusals are not a reason to bypass account limits.
+From v1.8.95, `5am login` without `--token` first prints where to make one (`https://5am.app/settings?utm_source=cli&utm_medium=login_handoff#keys`), and a command refused for a missing scope names the same page.
+
+Choose scopes for the work: server-agent queries can use `read`; library writes, AI credits and Motion exports require `write`. Local image validation and local-only rendering do not require login. Gemini features use the normal access resolver: the user's own Gemini key where configured, else the account's AI credits. A credits refusal is not a reason to bypass account limits.
+
+### Claude Desktop and the MCP Registry
+
+From v1.8.95, `5am mcp` is in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `app.5am/cli`, and every release on [this repository's Releases page](https://github.com/digvan/5am-cli/releases/latest) carries one MCP bundle per platform (`5am-<os>-<arch>.mcpb`). Double-click the one for your computer to add 5AM to Claude Desktop (or install it from Claude's Settings, Extensions). The bundle runs its own `5am mcp` and starts on the `local` tools, which need no account. To add your library, albums and the AI tools, set its "Toolsets or preset" setting to `all`, then sign in with `5am login` (or paste a personal access token into its optional token setting). Setup for every client: [5am.app/cli/docs/mcp](https://5am.app/cli/docs/mcp).
 
 ## Image editing: generate → validate → render
 
@@ -121,6 +128,7 @@ Open `/tmp/my-iedl-gallery/index.html`. See the [builder guide](examples/image-e
 5am motion render coffee.motion.json -o draft.mp4 --draft      # free: 360p, the sound, a DRAFT mark
 5am motion render coffee.motion.json -o coffee.mp4 --dry-run    # price and checks, no charge
 5am motion render coffee.motion.json -o coffee.mp4 --fps 30     # 20 AI credits
+5am motion render lower-third.motion.json -o lower-third.mov --alpha   # from v1.8.95: transparent ProRes 4444, to lay over a video
 ```
 
 - **Costs.** `generate` and `revise` use model quota: one call, or two when the
@@ -163,7 +171,7 @@ See the [motion guide](docs/motion.md) for every command, the film format and tr
 
 ## AI agents and managed workflows
 
-Use [`SKILL.md`](SKILL.md) to teach an agent how to invoke `5am`. Download the current release copy with:
+Use [`SKILL.md`](SKILL.md) to teach an agent how to invoke `5am`, or serve its tools over MCP with `5am mcp` (see [Claude Desktop and the MCP Registry](#claude-desktop-and-the-mcp-registry)). Download the current release copy of the skill with:
 
 ```sh
 curl -fsSL https://cli.5am.app/cli/latest/SKILL.md -o SKILL.md

@@ -72,6 +72,7 @@ Every command prints one JSON document on stdout; progress goes to stderr. No co
 | `narrate` | Gemini access: one speech call |
 | `lint`, `inspect`, `stills`, `sheet`, `preview`, `fonts` | free |
 | `render --draft` | free: a 360p draft with the sound and a DRAFT mark, made on your computer (from CLI v1.8.94) |
+| `render --alpha` | from CLI v1.8.95: a transparent film costs what `render` costs (an export is 6 seconds or longer); with `--draft`, free |
 | `render` | **20 AI credits** per export, on every account, including accounts with their own Gemini key; a podcast clip from `podcast` is **100 AI credits** (from CLI v1.8.4) |
 | `podcast clip`, `podcast episodes` | from CLI v1.8.92: `episodes` is free; `clip` costs what an Episode Clips clip costs on 5am.app, and its result's `version.estimateCredits` is the estimate |
 | `podcast subscribe`, `shows`, `pause`, `resume`, `unsubscribe` | from CLI v1.8.94: free. Each clip a show makes costs what an Episode Clips clip costs; `subscribe --dry-run` prints the estimate, and `--clip-latest` makes one right away |
@@ -193,6 +194,7 @@ Gemini reads the episode's transcript (made and cached if you do not pass `--tra
 - **The script is yours to edit.** `clip.script.json` lists the parts in seconds: change a narrator line, move a clip's `clip: [from, to]`, reorder, then run again with `--script`. Only the lines whose words changed are spoken again.
 - **Beside the film:** the script, the cue sheet (`clip.cues.json`), `clip.parts/` (spoken lines and `soundtrack.wav`) and the take.
 - **Cost:** the transcription when it is not cached, one call for the script, one speech call per new line, and the film, all on your Gemini access. The export is **100 AI credits**: `render` prices a film as a podcast clip while its `clip.script.json` is beside it. It carries the "Made with 5AM.app" mark, as every CLI film does.
+- **A script cut off is asked for again (from CLI v1.8.95).** The script call has room for a long answer, and one that still stops at Gemini's length limit is asked for again with less thinking, without using up the one retry for a script that runs too long: at most three calls for the script. On AI credits you are charged only for what is used.
 
 From CLI v1.8.5:
 
@@ -293,6 +295,7 @@ With moments (up to 48) it measures every layer there as the export draws it:
 | Field | What it says |
 |---|---|
 | `path` | where the layer is in the film: `scenes[2].layers[1]`, with a group's layers below it |
+| `label` | what it shows: a text's words as drawn there (a table's row filled in), a photo's description, a list's active row (from CLI v1.8.95; before, `list`), else its `id` or its kind |
 | `visible`, `hidden` | whether it shows, and if not why: `before-start`, `after-end`, `transparent` (under 5% opacity), `off-frame`, or `empty` (text whose table row leaves its words empty) |
 | `box`, `corners` | its footprint in the export's pixels (`x`, `y`, `w`, `h`), and its four corners only when it is turned (from CLI v1.8.94; before, always) |
 | `frame` | `inside`, `partial` or `outside` the frame |
@@ -307,11 +310,14 @@ While a transition plays, both scenes' layers are listed, each where the transit
 5am motion stills film.motion.json --times 0.5,4,9.5 --out-dir stills
 5am motion stills film.motion.json --frames 0,120,240 --out-dir stills --fps 30
 5am motion sheet film.motion.json -o sheet.png --count 24
+5am motion sheet film.motion.json -o moments.png --times 1.5,4,9.25
 ```
 
 Free PNGs drawn exactly as the export would draw them, watermark included and with the export's motion blur: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48; frame i of n sits in the middle of the i-th of n equal stretches of the film, at (i + 0.5) / n of it). Neither replaces an existing file without `--overwrite`. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
 
-`--boxes` (from CLI v1.8.94) draws each visible layer's box and a label naming it, and each line of text, and prints the layers as [`inspect`](#inspect) does under `inspect`.
+`--boxes` (from CLI v1.8.94) draws each visible layer's box and a label naming it, and each line of text, and prints the layers as [`inspect`](#inspect) does under `inspect`. With `--compact` (from CLI v1.8.95) it prints, for each frame, only the visible layers, each with its `path`, `label` and `box`: the part you read to place things, at a fraction of the size.
+
+`sheet --times` (from CLI v1.8.95) draws a sheet of chosen moments in seconds (up to 48) instead of evenly spaced frames, each on the frame it falls on: lay your film's sheet beside a reference video's stills taken at the same moments. Pass `--count` or `--times`, not both.
 
 ### `preview`
 
@@ -327,6 +333,7 @@ Opens the film in your browser with its sound: play, pause, scrub and loop (spac
 5am motion render film.motion.json -o film.mp4 [--fps 60|30] [--resolution 1080p|1440p] [--album <name-or-id> | --new-album <name>]
 5am motion render film.motion.json -o film.mp4 --dry-run
 5am motion render film.motion.json -o draft.mp4 --draft
+5am motion render overlay.motion.json -o overlay.mov --alpha
 ```
 
 **A free draft** (from CLI v1.8.94): `--draft` writes an MP4 to check timing and sound, and so does every render while the CLI is not signed in (`note` says so). It is 360 pixels on the short side at 30 fps, without motion blur or grain, with the film's whole sound and "DRAFT" across the frame; it reaches no server and costs nothing. `--resolution`, `--fps`, `--dry-run` and the album flags are for exports and are refused with it. The result has `draft: true` and, under `next`, the command for the export.
@@ -344,24 +351,33 @@ Ctrl-C, a stop signal (SIGTERM) or a failed render releases the reservation. A r
 
 The MP4 is H.264 and AAC, 1080 pixels on the short side by default (1440 with `--resolution 1440p`), at 60 fps by default. Every frame has motion blur, film grain and a small "Made with 5AM.app" mark. With Skia on an Apple M1 Max, a 15-second 9:16 film at 1080x1920 rendered in 42 to 54 seconds at 60 fps (17 to 22 frames a second) and in about 33 seconds at 30 fps, measured while other work was running on the computer; a smaller computer takes longer. `--workers` sets how many workers draw at once (Skia's threads, or Chrome's pages with `--engine chrome`); the default suits the machine's cores and memory.
 
+**A transparent film** (from CLI v1.8.95): `--alpha`, or `"transparent": true` in the film, renders it with an alpha channel, to lay over a video in an editor (Final Cut Pro, DaVinci Resolve, ffmpeg's `overlay`). Nothing is drawn behind the layers: the scenes' backgrounds, gradients and vignettes are left out, so the video shows through. The file is ProRes 4444 with its alpha in a `.mov` (name the output `.mov`), without sound. A transparent film is an *insert*: 1.5 to 15 seconds, no score, no narration, no film grain, and clips play muted. The "Made with 5AM.app" mark is a small badge in the top-right corner (top left when the film's own `mark` logo is top right). `stills` and `sheet` take `--alpha` too: stills are PNGs with transparency, and a sheet shows the frames on a checkerboard.
+
+- Put words on a plate: a text layer's `box`, or a shape behind them. The video under a transparent film can be any colour, so `lint` reads words against their own plate, and words with nothing of the film's own under them are a fix.
+- A scene's `bg` is not drawn, but it is still the colour the graphic is designed against: text without a `color` takes ink or paper against it, as in any film.
+- An export is 6 seconds or longer; render a shorter transparent film with `--draft` (free, 360p, with the DRAFT mark and the badge).
+- ProRes 4444 is large: about 3 MB a second for a lower third at 1080x1920 and 30 fps, and up to 28 MB a second for a film whose whole frame is busy (twice that at 60 fps).
+
 ### `finalize`
 
-If the charge in step 4 is refused (credits ran out while rendering), the MP4 is kept for 24 hours and the error names the command that pays for it:
+If the charge in step 4 is refused (credits ran out while rendering), the film (an MP4, or a `.mov` for a transparent film) is kept for 24 hours and the error names the command that pays for it:
 
 ```sh
 5am credits buy                          # a payment link (pay on any device), then waits
-5am motion finalize <requestId>          # pays and saves the MP4
+5am motion finalize <requestId>          # pays and saves the film (-o puts it elsewhere)
 5am motion finalize                      # lists the renders kept on this computer
 5am motion finalize --unfinished         # releases the reservations of renders that stopped partway
 ```
 
 Do not render again to recover: a second render is a second export. `finalize` never charges twice, so it is also safe after an uncertain outcome.
 
+From CLI v1.8.95, a transparent film is finalized to a `.mov` (any case, `.MOV` too): `finalize <requestId> -o overlay.mp4`, or an `-o` with no extension, is refused with the name to use instead (`overlay.mov`).
+
 From CLI v1.6.1, the list gives each kept render a `state` and what to do next:
 
 | `state` | Meaning | What to do |
 |---|---|---|
-| `rendered` | every frame is in the kept MP4, waiting for payment | `5am motion finalize <requestId>` |
+| `rendered` | every frame is in the kept file, waiting for payment | `5am motion finalize <requestId>` |
 | `rendering` | another process is still on it | wait for it to finish |
 | `stopped` | it ended before its last frame (killed or crashed): there is nothing to pay for | `5am motion finalize --unfinished` releases its reservation |
 
@@ -474,7 +490,9 @@ Most eases stop at every key. From CLI v1.5.1, `smooth` on every key after the f
 | `version` | `1` | `1` | The format's version. |
 | `title` | text, up to 80 characters | `Untitled motion` | The film's name. The HUD shows it, and it seeds the randomness when there is no `seed`. |
 | `format` | `16:9`, `9:16`, `1:1` | `16:9` | The frame. `revise --format` re-lays a film out. |
-| `duration` | seconds, 6 to 90 (6 to 60 before CLI v1.8.4) | 15 | The length; the tempo snaps to it. |
+| `duration` | seconds, 6 to 90 (6 to 60 before CLI v1.8.4); an insert 1.5 to 15 | 15 (an insert: 4) | The length; the tempo snaps to it. |
+| `transparent` | `true` | none | From CLI v1.8.95: the film has an alpha channel and no background, and `render` writes ProRes 4444 in a `.mov` (see [`render`](#render)). Makes the film an insert. |
+| `profile` | `insert` | none | From CLI v1.8.95: a graphic for someone else's video: 1.5 to 15 seconds, no sound, no grain. A transparent film is always one. |
 | `tempo` | BPM, 84 to 160 | 128 | The target tempo (see [Units and coordinates](#units-and-coordinates)). |
 | `seed` | a whole number | taken from the title | Seeds everything random (particles, jitter, the score): the same seed draws the same frames. |
 | `palette` | a preset's name, or six colours | `dawn` | See [Palettes](#palettes). |
@@ -541,6 +559,8 @@ A face is a font id, or the face's name as written (`"Bebas Neue"`); anything el
 | Korean | `black-han-sans`, `jua` |
 
 **A font file** (from CLI v1.8.94, the CLI only): a role may name a `.ttf` or `.otf` file by its path relative to the film, `"display": "file:fonts/Brand-Bold.ttf"` (at most 10 MB; a WOFF or a `.ttc` collection is refused: convert it). The CLI loads it for every render, still and preview, and a text's `size` is then that face's real cap height. Its weight is the file's: one file is one face. `lint` reads its widths from the file, and never judges its scripts. Motion Studio on the web cannot load it and draws the role's default face. A revision written to another folder keeps pointing at the file.
+
+**A font file in your account** (from CLI v1.8.95): a film from the web may name one of your own font files, `"display": "file:brand-fonts/<id>.ttf"` (the fonts you upload under Your fonts, or a brand kit's font file). The CLI downloads it from your account the first time a film needs it, and keeps it in `~/.5am/cache/motion/brand-fonts`; a file at that path beside the film is used instead. Signed out, put the file beside the film or sign in with `5am login`. A film written to another folder keeps naming it.
 
 Match the face to the brief's voice (a poster face for hype, a serif for editorial, rounded or comic for playful, retro for games and tech); most films need only a display face, with `inter` as body. Text in Japanese, Korean, Arabic or Persian needs a face made for that script in the role that draws it (the display face for a headline in it, the body face for smaller lines): `lint` reports a face that cannot draw its text as a fix. Arabic and Persian run right to left and animate word by word.
 
@@ -609,7 +629,7 @@ A scene's `enter` reveals it over the end of the scene before, landing on its fi
 
 | Type | What it does | Options |
 |---|---|---|
-| `cut` | a plain cut (the default) | |
+| `cut` | a plain cut (the default). From CLI v1.8.95 it lands on a frame of the export: before, the frame it fell in showed both scenes faintly, through the motion blur | |
 | `circle` | a circle opens from a point, with a fading ring | `x`, `y` (default the centre), `color` (the ring, default `paper`) |
 | `wipe` | a hard edge sweeps across, with a bar on it | `direction` (default `left`), `color` (the bar, default `accent`) |
 | `push` | the new scene pushes the old one out | `direction` (default `left`) |
@@ -651,7 +671,7 @@ Every layer is an object with a `kind`. A scene keeps at most 24 layers, and so 
 |---|---|---|---|
 | `kind` | one of the kinds below (**required**) | | What it draws. |
 | `id` | text, up to 40 characters | none | Names it for `morph`, `flood` and `fly`, cursor moves, camera focus and a grid's `repel` wave. |
-| `start`, `end` | scene beats | the whole scene | When it shows; `end` must come after `start`. Nothing draws before its `start` (from CLI v1.8.94; before, a layer could show up to 0.75 beat early), except while a transition reveals its scene early: then the layers that start on the scene's first beats show ahead of the downbeat. |
+| `start`, `end` | scene beats | the whole scene | When it shows; `end` must come after `start`. Nothing draws before its `start` (from CLI v1.8.94; before, a layer could show up to 0.75 beat early), except while a transition reveals its scene early: then the layers that start on the scene's first beats show ahead of the downbeat. From CLI v1.8.95 a `start` and an `end` land on a frame of the export, as a step does. |
 | `x`, `y` | *Num*, -3 to 3 | 0 | Its anchor, in half-frame fractions. |
 | `dx`, `dy` | *Num*, design units | 0 | Offsets after `x` and `y`. |
 | `scale` | *Num*, 0 to 40 | 1 | Its size. |
@@ -1167,7 +1187,7 @@ And a product story told as one continuous take: a cursor clicks a button on the
 
 ### The film timeline: tables, tracks and overlays
 
-From CLI v1.8.94, for films written by hand (`generate` and `revise` do not write these; `revise` refuses an answer that drops them, unless `--force`). Scenes keep their own beats; these run on the **film's** beats, where film beat = the scene's first beat + its beat (`5am motion inspect` prints each scene's first beat, seconds and frames).
+From CLI v1.8.94, for films written by hand (`5am motion generate` does not write these; `5am motion revise` keeps a film's tables exactly as they are (from CLI v1.8.95) and refuses an answer that drops its tracks or overlays, unless `--force`). Scenes keep their own beats; these run on the **film's** beats, where film beat = the scene's first beat + its beat (`5am motion inspect` prints each scene's first beat, seconds and frames).
 
 | Document field | Value | What it does |
 |---|---|---|
@@ -1177,7 +1197,7 @@ From CLI v1.8.94, for films written by hand (`generate` and `revise` do not writ
 
 **A track in any value.** Anywhere a *Num* goes, `{ "track": "<track>", "scale": 1, "offset": 0 }` is the track's value times `scale` plus `offset`, read on the film's clock: `"x": { "track": "progress" }`, a camera's `zoom`.
 
-**Films written by hand, in short:** `data`, `tracks`, `overlays`, `list`, `bar` and `drawing` are not taught to `generate` yet.
+**Films written by hand, in short:** `data`, `tracks`, `overlays`, `list`, `bar` and `drawing` are not taught to `5am motion generate` yet.
 
 **A table on a layer.** `data` names a table and `row` the row to show: a track's name, or a row number. Then:
 
@@ -1209,12 +1229,14 @@ A scrolling list of a table: the row `row` names sits at the layer's point, the 
 | `activeColor` | colour | `accent` | The active row's colour. |
 | `activeScale` | 0.5 to 3 | 1.25 | The active row's size. |
 | `activeWeight` | 100 to 900 | the `weight` | From CLI v1.8.94: the active row's weight, so it can be bold over regular rows. |
+| `activeFont` | a role | the `font` | From CLI v1.8.95: the active row's font role, so it can be set in another face than the other rows. |
 | `marker` | up to 4 characters | none | From CLI v1.8.94: drawn before the active row in its colour, like `>`. |
+| `markerColor` | colour | the active row's | From CLI v1.8.95: the marker's colour. |
 | `fade` | 0 to 1 | 0.35 | How much each row away from the active one fades. |
-| `box` | `true`, or `{ "color", "padding", "radius", "opacity" }` | none | A plate behind the active row; its words take the ink that reads on it. |
+| `box` | `true`, or `{ "color", "padding", "radius", "opacity", "width" }` | none | A plate behind the active row; its words take the ink that reads on it. From CLI v1.8.95, `width` sets how wide it is: design units (placed as the list aligns), or `"full"`, across the whole list (the marker, the widest row and the second column), for a leaderboard's highlight bar. By default it is as wide as the words passing through it. |
 | `detail` | `{ "field", "x", "y", "align", "size", "font", "weight", "color", "activeColor", "format" }` | none | From CLI v1.8.94: a second column, another field of each row (`field`, **required**), `x`/`y` design units from the row's point (default one size past the widest row), on the row's baseline; `align` (`left`), `size` (the list's), `color` and `activeColor` (the list's), and `format`, a counter's number pattern (`"0,000.0 h"`). |
 
-Its `color` is the other rows (default: the ink that reads on the scene). `lint` measures a list by its words, so two lists a row apart are as close as their letters (from CLI v1.8.94; before, by their row slots, so they always touched).
+Its `color` is the other rows (default: the ink that reads on the scene). `lint` measures a list by its words, so two lists a row apart are as close as their letters (from CLI v1.8.94; before, by their row slots, so they always touched), and from CLI v1.8.95 by its plate, which is drawn too.
 
 #### `bar`
 
@@ -1251,6 +1273,9 @@ Each path:
 | `opacity` | *Num*, 0 to 1 | 1 | |
 | `draw` | `[start, end]` beats from the layer's start | drawn | Draws the outline on along its length; the fill fades in with it. |
 | `cap`, `join` | `butt`, `round`, `square`; `miter`, `round`, `bevel` | `round` | The outline's ends and corners. |
+| `miter` | 1 to 100 | 10 | How far a `miter` corner may reach, in outline widths, before it is cut flat (SVG's own default is 4: an imported SVG says so). |
+| `dash` | up to 16 lengths (an odd list counts twice), 0 to 4000 design units | solid | The outline as dashes and gaps, `[dash, gap, ...]`, in design units like `width`. An odd list repeats; each subpath starts the pattern again, and a drawing on draws its dashes on. |
+| `dashOffset` | -4000 to 4000 design units | 0 | Where along `dash` the outline starts. |
 | `fillRule` | `nonzero`, `evenodd` | `nonzero` | How overlapping parts fill (`evenodd` cuts holes). |
 
 On a sphere, a shape that crosses the horizon is cut there and closed along the globe's edge; only the near side is filled.
