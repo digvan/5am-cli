@@ -52,6 +52,10 @@ CLI v1.8.9 it says so when it cannot write that folder.
 5am doctor                             # setup check: version, ffmpeg, login, Node, runtime; .ready says what can run
 ```
 
+From CLI v1.8.95, `5am login` without `--token` prints the token page first
+(`https://5am.app/settings?utm_source=cli&utm_medium=login_handoff#keys`, also
+named by a missing-scope error): send the person there to make one.
+
 `whoami` nests the account under `user` — the email is **`.user.email`**, not a
 top-level `.email`, and reading the wrong key yields a silently empty string
 rather than an error:
@@ -244,7 +248,7 @@ Sharing nuances:
   --item <imageId>:"The cold open" --item <videoId>       # only the flags passed change; --item replaces the list (max 12); --clear-items empties it
 5am media public-link set <mediaId> --source-url https://pod.example/ep/41 --source-title "Episode 41: ..."   # what the clip is about: the page links back to it, the writer writes about it
 5am media public-link draft <mediaId> [--notes "show notes..."|--notes-file notes.txt] [--apply]   # Gemini writes headline, description, body (300+ chars) ABOUT the episode/show (source link + notes; the clip is only the teaser); --apply saves (never publishes); spends Gemini access
-5am media public-link publish <mediaId> [--slug rust-for-python-devs]   # needs headline >= 10, description >= 40; indexable (sitemap, no noindex) only once body >= 300 chars (`indexable` in the answer); slug_taken -> pick another --slug
+5am media public-link publish <mediaId> [--slug rust-for-python-devs]   # needs headline >= 10, description >= 40; indexable (sitemap, no noindex) whatever the body, which is optional (`indexable` in the answer); slug_taken -> pick another --slug
 5am media public-link unpublish <mediaId>            # leaves search again; the slug is kept, so publishing again restores the URL
 
 # AI video editing. Two DIFFERENT jobs — see the sections further down.
@@ -680,6 +684,8 @@ https://5am.app/cli/docs/vedl.
 5am media edit render talk.vedl --output cut.mp4 --dry-run        # the export's price and whether it can be paid; renders nothing
 5am media edit finalize [id]                                      # pay for and deliver an export whose fee was refused
 5am media edit export talk.vedl --new-album "Edit sources"        # → web video-editor project (login required)
+5am media edit export-fcpxml clip-01.vedl -o clip-01.fcpxml [--include-media media] [--dry-run]
+                                                                  # → Final Cut Pro project (FCPXML 1.10, Resolve opens it) + .srt; the clip fee
 
 5am media edit sample [dir]                  # sample.vedl + an 8 s test video (ffmpeg only, no login)
 5am media edit check talk.vedl [--pretty]    # every parse error on its line, then the media; exit 3 if it would not render
@@ -691,6 +697,8 @@ https://5am.app/cli/docs/vedl.
 5am media edit measure cut.mp4 --doc talk.vedl [--strict]          # check the render against its document
 5am media edit tighten talk.vedl --transcript talk.transcript.json -o tight.vedl [--preset natural|tight] [--dry-run]
                                              # take the quiet pauses and fillers out (join=tight pieces)
+5am media sync program.wav cam-wide.mp4 cam-ali.mp4 [--wide cam-wide] [--names wide,ali] [--script talk.vedl [--dry-run]]
+                                             # multi-cam: each camera's offset, drift, confidence and `angle` line
 ```
 
 The same loop is an MCP server: `5am mcp` (stdio; add it with
@@ -715,8 +723,11 @@ albums (`albums_*`) and clip outreach with the pipeline's review queue and clip
 pages (`outreach_*`, `pipeline_*`, `media_public_link_*`; `outreach://guide`),
 each running the matching `5am` command; `--tools edit,image` serves fewer, and
 the presets `--tools local` (what runs signed out: free drafts; signed in, edit_render and motion_render export unless draft: true / options.draft) and `--tools podcast`
-(an episode to clips) serve 28 and 27 tools instead of 89. A tool refuses an
-argument it does not take.
+(an episode to clips) serve 28 and 27 tools instead of 89; from CLI v1.8.95 an
+empty `--tools` serves `local`. The Claude Desktop bundle (from CLI v1.8.95)
+starts on `local` too: its "Toolsets or preset" setting takes `all` for the
+library and AI tools, and its optional token setting is a personal access token
+(blank: the CLI's `5am login`). A tool refuses an argument it does not take.
 Those tools type their common flags; `options` takes any other flag of the
 command by name, and `cli_help` lists them all (and every in-server tool's
 parameters). `credits`, `credits_buy` (a payment link, returned at once),
@@ -784,6 +795,14 @@ Key facts for agents:
 - **Card text shrinks to fit the frame** (from CLI v1.8.8): a word or number
   too wide, or a card too tall, is drawn smaller; text that fits keeps its
   size. `check`/`inspect` warn only when it cannot fit even at its smallest.
+- **Lower thirds** (from CLI v1.8.95): `card lower_third "Maya Okafor"
+  at 2 for 4 sub="Head of Research, Lumen Labs"` names a person low on the
+  frame (name on a dark plate with an accent bar, the title or role on the
+  accent). `pos=bottom` (default) or `pos=top`, never centre; it sits clear of
+  the apps' zones on 9:16 and above captions on the same edge, so do not move
+  captions for it. Use names and titles the speaker actually says (or the
+  `speaker` line's `name=`), never invented ones. A right-to-left name mirrors
+  it to the right. Card options may also come before the time.
 - **Overwriting:** `edit render` replaces its `--output` (re-render a draft to
   the same path while iterating), and `edit generate` replaces its `-o`.
   `edit sheet`, `edit stills`, `edit tighten` and `edit sample` refuse an
@@ -799,10 +818,27 @@ Key facts for agents:
   refused fee (category `credits`) keeps the render for 24 hours: after the
   user buys credits, `5am media edit finalize <id>` pays and delivers it. Never
   render again instead.
+- **Final Cut Pro / DaVinci Resolve (from CLI v1.8.95).** `5am media edit export-fcpxml
+  clip.vedl -o clip.fcpxml` writes the clip as an editable FCPXML 1.10 project,
+  each cut on the render's frame, captions as an `.srt` beside it, and
+  `--include-media <folder>` copies the media in for handing it over. It pays
+  the clip fee (50 credits at the current price): one fee covers a clip
+  VERSION's MP4 and its XML, whether the MP4 came from Clip Maker or from
+  `media edit render` (which names its version too), so the second of the two
+  costs 0 (`--dry-run` prints the price). Run both on the clip's `.vedl` in
+  its Clip Maker project folder, with the same canvas flags: there both use
+  the project's canvas and transcript. Caption
+  styles and card designs become plain captions and Basic Titles (`notes`); a
+  lower third is a Basic Title at the render's place, aligned on its side.
 - To iterate on an edit, edit the `.vedl` (plain text, `#` comments) and
   re-run `edit render --draft` — no AI call needed. `cut` keeps, `delete` removes
   (one style per script); `atsrc`/`fromsrc` = source time, `at`/`from` =
   output time. No straight apostrophes in `text` (use `’`).
+- `insert "b.mp4" at T for D mode=cutaway|pip|swap|overlay` lays B-roll over
+  the picture (its sound unused). From CLI v1.8.95, `mode=overlay` takes a
+  transparent file (ProRes 4444 `.mov` from `motion render --alpha`, or a PNG
+  with alpha): fitted inside the frame, never cropped, the picture showing
+  through where it is clear; a file without alpha covers it (a warning).
 - `music`/`normalize` reuse the `media mix` staging/duck math and its style
   presets: the bed dips before each sentence (from the transcript, else the
   speech it hears; `duck_mode=sidechain` for the old compressor), and
@@ -821,6 +857,29 @@ Key facts for agents:
 - `edit export` uploads the referenced media into an album and creates the
   project via the video-editor API; ducking/fades/HSL are not representable
   web-side (carried as `vedl*` fields — the CLI render is authoritative).
+- **Multi-cam** (from CLI v1.8.95): `angle NAME "cam.mp4" offset=SEC
+  drift=PPM [role=wide]` declares a camera synced to the `source` (camera time
+  = offset + source time x (1 + drift/1e6); offset is positive when the camera
+  started first), and `cut A B angle=NAME` shows its picture. The SOUND of every
+  cut is the source's (the program audio), so captions, ducking, `tighten`
+  and `atsrc` keep working; touching cuts are one shot (a hard switch, the
+  sound continuous). The source may be sound alone (`source "program.wav"`):
+  a cut without `angle=` then shows the `role=wide` angle (else the first). 2
+  to 4 pictures, the source's own counting; framing options apply to the
+  angle's picture; each camera must have recorded the cuts that show it.
+  Measure offsets with `5am media sync <program> <camera>...`: per camera
+  `offset`, `drift`, `confidence` (share of agreeing windows; under 0.6 it is
+  NOT written: tell the user to line it up by hand, a clap helps) and the
+  `angle` line; `--script x.vedl` adds or replaces the angle lines (the
+  script's source must be the program), and the printed lines' paths are then
+  relative to the script, as the written ones are. Auto names that collide get
+  `-2`, `-3` (`cam`, `cam-2`). An explicit `--min-confidence 0` is honoured (3
+  agreeing windows still needed). A file with over 512 MiB of decoded sync sound
+  (about 4 h 40 min at 16 kHz mono) is refused. `edit ops angle` has the options.
+  Multi-cam scripts do not go to `edit export` yet; from CLI v1.8.95
+  `export-fcpxml` writes one as a Final Cut multicam clip (every camera and
+  the program audio as angles, each cut's sound pinned to the program;
+  `--include-media` copies every camera).
 
 ### AI short clips — `media clips`
 
@@ -909,6 +968,23 @@ survive a restart. Safari cannot reach loopback from an https page — tell the
 user to use Chrome, Edge or Firefox. Guide:
 https://5am.app/cli/docs/ai-video-clip.
 
+From CLI v1.8.95, a clip's Look tab can add a motion graphic at the playhead
+(a number, a list, a chart, a quote or a lower third, at most two per clip):
+one Gemini call writes it from what is said at that moment, the companion
+refuses it when it shows a word or number nobody said there, and it plays over
+the clip as a cutaway. It needs the Motion runtime (`5am update
+--runtime-only`, then restart `5am studio`; without it the companion logs
+"motion graphics are off" and the Look tab hides them), and every graphic is a
+free draft that carries the "Made with 5AM.app" mark.
+
+From CLI v1.8.95, exporting a clip with motion graphics (Download, Export to
+library, or a Final Cut Pro XML with Include media) buys each graphic once for
+20 AI credits, never charged again for the same graphic on the account; the
+companion then draws it on the user's computer without the mark and renders
+the clip with it. The clip pays its usual clip fee (50 AI credits), and both
+are checked together before anything is bought: a `402` means the account
+lacks credits for the clip and its new graphics together.
+
 ### Memory collage video — `media collage`
 
 `5am media collage [paths... | --folder <dir> | --album <id|name>] --output
@@ -988,6 +1064,7 @@ error}`).
 # a podcast clip in one go: Gemini picks the clips and writes narrator lines, then voice, soundtrack and film
 5am motion podcast episode.mp3 --brief "A minute for people who build with agents" -o clip.motion.json
 5am motion podcast episode.mp3 --script-only -o clip.motion.json   # review clip.script.json, edit it, then:
+#   (from CLI v1.8.95 a script reply cut off at its length limit is asked again with less thinking: 3 calls at most)
 5am motion podcast episode.mp3 --script clip.script.json -o clip.motion.json   # changed lines alone are spoken again
 # Episode Clips from the terminal: subscribe to a show, and 5AM clips its episodes on its servers (not here)
 5am motion podcast subscribe --feed https://feeds.example.com/show.xml --dry-run      # the show and a clip's price; saves nothing
@@ -1002,11 +1079,13 @@ error}`).
 5am motion inspect coffee-v2.motion.json            # from CLI v1.8.94: each scene's beats, seconds and frames
 5am motion inspect coffee-v2.motion.json --times 2,4.5   # every layer's pixels, visibility and text lines there
 5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
-5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills   # --boxes (v1.8.94): boxes drawn, layers as JSON
+5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills   # --boxes (v1.8.94): boxes drawn, layers as JSON; --compact (v1.8.95): visible layers only
+5am motion sheet coffee-v2.motion.json -o moments.png --times 1.5,4,9.25 # v1.8.95: a sheet of chosen moments (beside a reference's stills)
 5am motion render coffee-v2.motion.json -o draft.mp4 --draft   # from CLI v1.8.94: free 360p draft, sound, DRAFT mark, no server
 5am motion render coffee-v2.motion.json -o coffee.mp4 --dry-run
 5am motion render coffee-v2.motion.json -o coffee.mp4 --fps 30 --new-album "Films"
-5am motion finalize <requestId>
+5am motion render lower-third.motion.json -o lower-third.mov --alpha   # from CLI v1.8.95: transparent, ProRes 4444 with alpha
+5am motion finalize <requestId>     # [-o file]; a transparent film's must be .mov (v1.8.95)
 5am motion finalize --unfinished    # release the reservations of renders that stopped partway
 ```
 
@@ -1016,8 +1095,8 @@ error}`).
 | `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
 | `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `unknown` (fields the engine ignores, with the one meant), `frames`, `width`, `height`, `fonts`, `fontFiles`, `hash`, `timeline` (each scene's first beat, seconds and frames; from CLI v1.8.94); `--strict` exits 3 on any unknown, warning or fix |
 | `inspect` | free; without moments offline, with `--times`/`--frames` (up to 48) it needs the engine | `timeline` (`scenes[]`: `startBeat`, `endBeat`, `start`, `end`, `startFrame`, `endFrame`, `transition`; `beatSec`, `tempo`, `frames`); with moments `frames[]`, each with `scene`, `transition` and `layers[]`: `path`, `kind`, `label`, `visible` or `hidden` (`before-start`, `after-end`, `transparent`, `off-frame`, `empty`), `box`/`corners` in export pixels, and for text `font`, `fitScale` (below 1: shrunk), `overflow`, `lines` |
-| `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames`; with `--boxes` also `inspect` (the layers, one entry per frame) and the boxes drawn |
-| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`). `--draft` (and any render while signed out) is free: 360p, 30 fps, the sound, a DRAFT mark, no server | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output`; a draft: `draft: true`, `credits: 0`, `next` (the export), `note` when signed out |
+| `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames`; with `--boxes` also `inspect` (the layers, one entry per frame; `--compact`: the visible ones' path, label and box) and the boxes drawn |
+| `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`). `--draft` (and any render while signed out) is free: 360p, 30 fps, the sound, a DRAFT mark, no server | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output`; a draft: `draft: true`, `credits: 0`, `next` (the export), `note` when signed out; a transparent film: `transparent: true`, `codec: prores4444` |
 | `finalize` | pays a kept render (no second charge if already paid) | as `render`; without an id, a JSON ARRAY of kept renders, each with `state` (`rendered`: pay it; `rendering`: another process is on it; `stopped`: killed partway, nothing to pay) and `next`; `--unfinished` releases the stopped ones' reservations: `released`, `kept`, `failed` |
 | `preview` | free | `url`, then runs until Ctrl-C: **never run it unattended** (use `sheet`) |
 | `fonts` | free | `dir`, `fonts`, `bytes` |
@@ -1027,6 +1106,15 @@ Agent rules:
   for changes and `render` once at the end. Look at a sheet before rendering: the
   lint cannot see contrast. To hear the timing, `render --draft` is free (360p,
   with a DRAFT mark); `lint --strict` before the export catches a misspelt field.
+- **A transparent film** (from CLI v1.8.95; `--alpha`, or `"transparent": true` in the film):
+  an overlay for a video, with no background, no grain and no sound, 1.5 to 15 seconds,
+  the mark as a small badge in the top-right corner. `render` writes ProRes 4444 with its
+  alpha: name the output `.mov` (`finalize -o` too; `.mp4` is refused). Put every word
+  on a plate (a text `box`, or a shape behind it): `lint` makes bare words a fix, since the video under them can be any colour. A scene's
+  `bg` is not drawn but still picks the automatic ink. An export is 6 s or longer; a shorter
+  one renders only with `--draft`. ProRes is large: about 3 MB a second for a lower third at
+  1080x1920 and 30 fps, up to about 28 MB a second for a busy full frame. Lay it over a video
+  with `insert "film.mov" at T for D mode=overlay` in a VEDL edit.
 - **Matching a reference:** `inspect` maps the reference's timestamps to the film's
   beats and frames, and `inspect --times` (or `stills --boxes`) gives every layer's
   box in pixels, whether it shows, and its text's real size and lines.
@@ -1035,13 +1123,15 @@ Agent rules:
   layers to it (`"data": "<table>", "row": "<track>"`): a `list` scrolls, `{field}` words
   re-enter, a counter glides, a graph marks the row. Layers in `overlays` stay on across
   every scene on the film's beats; a `bar` there fills across the whole film. The format's
-  "Films written by hand" section has the fields. `revise` refuses an answer that drops
-  them (`--force` writes it anyway): edit such films by hand.
+  "Films written by hand" section has the fields. `revise` keeps a film's tables as given
+  (from CLI v1.8.95) and refuses an answer that drops its tracks or overlays (`--force`
+  writes it anyway): edit the rows, and such films, by hand.
 - **Exact layout** (from CLI v1.8.94): a text's `valign` (top, middle, baseline, bottom) with
   `align` pins one of nine points to x/y; `fit: "none"` keeps its size exact (lint flags an
   overflow); `box` puts a padded plate behind it. A role may use a font file beside the film,
   `"display": "file:fonts/Brand-Bold.ttf"` (TTF or OTF; never WOFF): `size` is then that face's
-  real cap height. `inspect --times` shows each text's drawn size and line boxes in pixels.
+  real cap height. A web film's `"file:brand-fonts/<id>.ttf"` is a font in the account: the CLI
+  downloads it once (signed in), unless that file is beside the film. `inspect --times` shows each text's drawn size and line boxes in pixels.
 - **Vector art** (from CLI v1.8.94): `drawing` takes SVG path data (`"paths": [{"d": "M0 0 C...",
   "fill", "stroke", "draw": [0, 2]}]`, `view` for its box); with `"sphere"` the paths are longitude
   and latitude on a turning globe with a graticule. `path` is a striped ribbon, not vector art.
@@ -1057,7 +1147,7 @@ Agent rules:
   film still renders.
 - **Never render twice to recover a failure.** `render` loads every font and photo
   before charging (a refusal at that point renders nothing). If the final charge
-  is refused, the MP4 is kept for 24 hours and the error names
+  is refused, the file is kept for 24 hours and the error names
   `5am motion finalize <requestId>`: run that after the user buys credits. A
   second `render` is a second export.
 - **Never kill a render.** Every render reserves its export before the first
@@ -1112,7 +1202,7 @@ Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/mo
 5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`
 ```
 
-One question, one answer, on the user's saved Gemini key or their AI credits through the proxy (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
+One question, one answer, on the user's saved Gemini key or their AI credits (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
 
 ## Pipeline: `5am pipeline`
 
@@ -1212,7 +1302,8 @@ only records a send that already happened.
   - Approving here is a bookkeeping step, not a review: the words already left.
     Do it only for an email the person confirms went out.
 - `--csv` writes `name,title,stage,website,notes,contact_name,contact_email,contact_role`,
-  the file `5am outreach prepare --csv` reads; `--overwrite` to replace it.
+  the file `5am outreach prepare --csv` reads (from CLI v1.8.95 it takes
+  `contact_email` as the address); `--overwrite` to replace it.
 
 ## Clip outreach: `5am outreach`
 
@@ -1337,6 +1428,7 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' FIVEAM_DISABLE_KEYRING=1 5am out
 5am outreach send --batch oct_week_1 --dry-run         # the exact messages
 5am outreach send --batch oct_week_1 --yes             # from your Gmail; mark-sent on each
 5am outreach stats --batch oct_week_1 --record         # views, opens, plays, shares, downloads, clicks, sign-ups per prospect (a sign-up = the prospect claimed the page)
+5am outreach engaged --days 2 --csv engaged.csv        # from CLI v1.8.95: played after the email, no sign-up yet; prepare it with --follow-up
 ```
 
 | Command | Costs | Needs | Prints |
@@ -1394,6 +1486,17 @@ Agent rules:
   already emailed; with `--follow-up` it accepts them only once the last send is
   at least `--min-days-since-sent` days old (3 by default), for a new episode
   or a check-in. Never work around it with another name.
+- **Follow up the people who watched** (from CLI v1.8.95). `5am outreach
+  engaged [--days 2] [--csv file]` lists prospects whose latest email's clip
+  was played after it went out (a play is a visitor starting the clip or
+  turning its sound on; the muted autoplay, a mail scanner and the page's
+  creator never count), with no sign-up and nothing written since; its
+  CSV carries `nudge_of`. Add `feed_url` and `line` for a fresh clip and run
+  `prepare --follow-up` on it: a `nudge_of` row gets the nudge copy.
+  `prepare` refuses the file if a `nudge_of` names a draft that is not yours,
+  was never sent, or went to another address than the row's email: fix or
+  drop `nudge_of` on those rows (engaged's own rows always pass). Never tell
+  the prospect they were seen watching.
 - **An email sent outside a batch is recorded, never drafted again.** When the
   person (or you) emailed a prospect before the pipeline knew, record it with
   `mark-sent --sent-at` (Pipeline, "Recording an email that already went
@@ -1420,8 +1523,8 @@ Agent rules:
   `5am media public-link draft <mediaId> --apply`) has Gemini write the
   headline, description and body ABOUT that episode or show from `context`
   (show notes), never about the clip; it spends the user's Gemini access and
-  never publishes. A page is indexable only once its body has 300 characters;
-  outreach pages are never published by this flow.
+  never publishes. A published page is indexable whatever its body; outreach
+  pages are never published by this flow.
 
 ## API keys (third-party providers)
 
@@ -1441,12 +1544,10 @@ Stored encrypted server-side; used by `media generate` and the local generation 
 call in the CLI (`media generate`, `describe`, `transcribe`, `clips`,
 `highlight`, `smartcrop`, the collage music, `5am studio`, the local skills,
 the eval judge) resolves access in this order: `GEMINI_API_KEY` in the
-environment (with `GOOGLE_GEMINI_BASE_URL` beside it the key is an AI-credits
-proxy token, which is how a cloud workflow run is configured), then the key
-stored by `5am keys set gemini`, then the account: its own key, or, when it
-has none, a one-hour AI-credits proxy token that the CLI renews by itself
-during long jobs. A token is memory-only and never printed. `5am keys list`
-reports the verdict:
+environment, then the key stored by `5am keys set gemini`, then the account:
+its own key, or, when it has none, its AI credits, through a short-lived
+credential the CLI renews by itself during long jobs (memory-only, never
+printed). `5am keys list` reports the verdict:
 
 ```json
 {"gemini_api_key":"","openai_api_key":"",
@@ -1574,8 +1675,7 @@ Purchased credits never expire.
 this period's allowance has spent) and `held_credits` (what requests in flight
 have reserved from it right now). Each Gemini call first holds its worst case,
 and an open hold counts against the balance until the call settles at what it
-really cost; a hold nobody settles is charged in full after 12 minutes (the
-proxy's `AI_HOLD_TTL`). So a balance that looks low while a job runs may be
+really cost; a hold nobody settles is charged in full after 12 minutes. So a balance that looks low while a job runs may be
 holds. `5am credits history [--limit 1..100] [--cursor C | --all]` lists the
 ledger newest first: `entries[]` (`reason`, `credits` exact and signed,
 `delta_micros`, `request_id`, `endpoint`, `model`, `price_version`,
@@ -2612,7 +2712,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **`5am characters skills execute` denials are returned in the JSON body**, not as non-zero exit. Always `jq` for an `error` / `denied` field.
 - **Skills enabled via `--skills` flag use defaults.** If the user wants per-skill config (e.g., a skill that takes its own API key, model, or limits), use `--from-file`.
 - **The CLI does not bundle a tunnel.** `webhooks listen` requires the user to run `ngrok`, `cloudflared`, or equivalent in another terminal first.
-- **For generation commands requiring a stored provider key, configure `5am keys set <provider>` first.** `media image-edit generate` uses the normal Gemini access flow (including supported proxy access), so do not assume a stored key is its only option. A missing key surfaces as a 4xx (exit 3), not a 5xx.
+- **For generation commands requiring a stored provider key, configure `5am keys set <provider>` first.** `media image-edit generate` uses the normal Gemini access flow (including AI credits), so do not assume a stored key is its only option. A missing key surfaces as a 4xx (exit 3), not a 5xx.
 - **`media generate image --model` is validated against the three Gemini image models** (`gemini-3.1-flash-image` default, `gemini-2.5-flash-image`, `gemini-3-pro-image`); anything else exits `3` with the accepted list. The `--aspect-ratio`, `--resolution`, `--image`, `--grounding`, and `--grounding-images` flags are **Gemini-only** (the OpenAI provider ignores them). `--resolution` is honored only by the 3.x models — `gemini-2.5-flash-image` is fixed at 1024px — and `--grounding-images` only by `gemini-3.1-flash-image`.
 - **`local_ffmpeg` args must be a JSON array of strings**, not a single space-separated string. `{"args": ["-i", "in.mp4", "out.mp3"]}` works; `{"args": "-i in.mp4 out.mp3"}` is rejected with a hint. Pass each token as its own array element so filenames with spaces are preserved.
 - **`5am media generate video` runs one model, `gemini-omni-1.1-flash`** (the Veo 3.1 previews retire on 2026-10-22). A retired `veo-*` `--model` is mapped to it with a stderr note; any other value exits `3`. `--duration` must be 4, 6, 8 (default) or 10 and is refused with `--extend`; `--last-frame` requires `--image`; `--reference-image` cannot combine with `--image`/`--last-frame`; all are rejected before any API call. A call is synchronous and takes about half a minute at 720p; for longer videos generate several clips and `5am media concat` them.
