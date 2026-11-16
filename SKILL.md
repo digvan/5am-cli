@@ -1,6 +1,6 @@
 ---
 name: 5am
-description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate AI video clips (gemini-omni-1.1-flash, which replaced Veo), concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), make motion graphics films from a brief (kinetic type, counters, charts, photos; Motion Studio's engine; free stills and contact sheets, 20-credit MP4 export), render a podcast WAV into a video (waveform overlay OR AI b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, read the sales pipeline a character keeps and drive its outreach approval queue, run a clip-outreach batch (one personalized Motion clip per prospect from a CSV, drafts staged in the pipeline, reviewed on a local page, sent from the user's own Gmail), or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music", "motion graphics", "kinetic typography", "animated title video", "launch film", "motion design", "5am motion", "motion studio", "5am pipeline", "sales pipeline", "outreach drafts", "approve the draft", "5am outreach", "clip outreach", "a clip for each prospect", "prospects csv", "send from my gmail".
+description: Reference for the `5am` CLI — the command-line client for the 5AM app. Use when the user asks to upload/download/organize media, manage albums, generate AI media (image/video/music/audio), generate AI video clips (gemini-omni-1.2-flash, which replaced Veo), concatenate/join video clips, cut a long video into short clips for Shorts/Reels/TikTok (subtitles + AI titles burned in), build an AI highlight reel from a talk, transcribe a video or podcast, build a memory collage / photo-montage / slideshow video (Ken Burns + crossfades, optional Lyria music), generate and render reusable image-edit recipes (IEDL, masked adjustments, presets, and AI edits), AI smart-crop photos to a pixel size or aspect ratio (subject detection keeps faces in frame), make motion graphics films from a brief (kinetic type, counters, charts, photos; Motion Studio's engine; free stills and contact sheets, 20-credit MP4 export), render a podcast WAV into a video (waveform overlay OR AI b-roll with the episode audio), mix a voice track over background music with automatic ducking (broadcast-style bed staging + EQ pocket), create or chat with AI characters, manage character webhooks, run multi-character orchestration in the Playground, read the sales pipeline a character keeps and drive its outreach approval queue, run a clip-outreach batch (one personalized Motion clip per prospect from a CSV, drafts staged in the pipeline, reviewed on a local page, sent from the user's own Gmail), or do anything via the `5am` binary. Trigger on phrases like "upload to 5am", "5am album", "5am character", "list my albums", "generate an image with 5am", "generate a video with 5am", "veo video", "concatenate video clips", "join veo clips", "veo video with podcast audio", "turn this video into shorts", "make tiktoks from", "make reels from", "cut this into clips", "short clips from a long video", "clip maker", "5am studio", "highlight reel", "summarize this video into a reel", "transcribe this video", "burn in subtitles", "memory collage", "photo montage video", "slideshow video", "ken burns", "collage with music", "smart crop", "crop to aspect ratio", "crop for Instagram", "keep faces in the frame", "recrop photos", "5am chat", "5am webhook", "5am playground", "scheduled task", "character runs daily", "autonomous character", "orchestrator", "multi-agent task", "wrap audio as video", "render waveform", "podcast to mp4", "duck music", "audio ducking", "music bed under narration", "mix voice over music", "motion graphics", "kinetic typography", "animated title video", "launch film", "motion design", "5am motion", "motion studio", "5am pipeline", "sales pipeline", "outreach drafts", "approve the draft", "5am outreach", "clip outreach", "a clip for each prospect", "prospects csv", "send from my gmail".
 when_to_use: User mentions the `5am` CLI, the 5AM Media Hub, 5am.app, or wants to perform any media-hub action from the terminal. Also invoke when the user pastes a `5am ...` command and asks for help, or asks to script against the hub.
 ---
 
@@ -514,32 +514,36 @@ The skill below saves the same way. The same controls are exposed to AI characte
 `local_generate_image` skill args: `model`, `aspect_ratio`, `resolution`,
 `reference_images` (array of paths), and `grounding`.
 
-### Gemini video model: `media generate video` (`gemini-omni-1.1-flash`)
+### Gemini video model: `media generate video` (`gemini-omni-1.2-flash`)
 
-One model, `gemini-omni-1.1-flash`, through the Gemini Interactions API (it
-replaced the Veo 3.1 previews, which Google turns off on 2026-10-22).
-`--model` defaults to it; a retired `veo-*` id is accepted and mapped to it
-with a note on stderr; anything else exits `3`. Each call makes ONE clip of
-`--duration` 4, 6, 8 (default) or 10 seconds, in about half a minute at 720p,
-for about $0.10 per second of 720p. Generate several and join them with
-`media concat` (below).
+`gemini-omni-1.2-flash` by default (from CLI v1.8.97; earlier releases run
+`gemini-omni-1.1-flash`), through the Gemini Interactions API.
+`--model gemini-omni-1.1-flash` runs the older model with its own limits
+(4, 6, 8 or 10 s, 3 references, 10 s clips to extend). A retired `veo-*` id
+is accepted and mapped to the default with a note on stderr; anything else
+exits `3`. Each call makes ONE clip of `--duration` 3 to 15 seconds (8 by
+default), in about half a minute at 720p, for about $0.07 per second of 720p.
+Generate several and join them with `media concat` (below).
 
 Parameters: `--aspect-ratio` (`16:9` default / `9:16`), `--resolution`
 (`360p`/`720p` default/`1080p`/`4k`; the last two are upscaled), `--duration`
-(`4`/`6`/`8`/`10` seconds), `--negative-prompt` (folded into the prompt as
-"Do not include: ..."; the model has no such parameter), and media inputs:
+(any whole second from `3` to `15`; `3` to `10` with `--last-frame`),
+`--negative-prompt` (folded into the prompt as "Do not include: ..."; the
+model has no such parameter), and media inputs:
 
 - `--image <path>` — initial/first frame (image-to-video).
 - `--last-frame <path>` — final frame for interpolation; **requires `--image`**.
-- `--reference-image <path>` (repeatable): subject or style references;
-  **cannot** combine with `--image`/`--last-frame`. Name them in the prompt as
-  `<IMAGE_REF_0>`, `<IMAGE_REF_1>`, ... to say which is which.
+- `--reference-image <path>` (repeatable, up to 6): subject or style references;
+  **cannot** combine with `--image`/`--last-frame`. Call them "reference image
+  1", "reference image 2", ... in the prompt to say which is which (an old
+  `<IMAGE_REF_0>` tag is rewritten to those words; the CLI states every image's
+  role in words, since Google deprecated the tags).
 - `--extend <path>`: video extension, continues a clip (`.mp4`/`.mov`/`.webm`)
-  of 10 s or less (longer is refused before upload). The clip is uploaded
+  of 15 s or less (longer is refused before upload). The clip is uploaded
   through the Gemini Files API first (deleted after). Describe the
   continuation ("Continue the scene: ..."); `--duration` is the length to ADD
-  (4/6/8/10), else the model picks 3 to 10 s. `--reference-image` may join it
-  to introduce a character or object (`<IMAGE_REF_0>` in the prompt);
+  (3 to 10), else the model picks. `--reference-image` may join it
+  to introduce a character or object ("reference image 1" in the prompt);
   **cannot** combine with `--image`/`--last-frame`. Appends at the end only;
   no new dialogue on an uploaded clip where someone talks. Google refuses
   edits of uploaded videos in the EEA, Switzerland and the UK.
@@ -554,11 +558,12 @@ Parameters: `--aspect-ratio` (`16:9` default / `9:16`), `--resolution`
   --extend butterfly.mp4 --output butterfly-extended.mp4
 5am media generate video --prompt "x" --last-frame end.png            # error: --last-frame requires --image
 5am media generate video --prompt "x" --image a.png --reference-image b.png  # error: mutually exclusive
-5am media generate video --prompt "x" --duration 5                     # error: 4, 6, 8 or 10
+5am media generate video --prompt "x" --duration 16                    # error: choose 3 to 15
+5am media generate video --prompt "x" --image a.png --last-frame b.png --duration 12  # error: 3 to 10 with two frames
 5am media generate video --prompt "Continue the scene: the camera pans up" --extend a.mp4 --duration 6  # adds about 6 s
-5am media generate video --prompt "Extend this video: have the character in <IMAGE_REF_0> enter and wave" \
+5am media generate video --prompt "Extend this video: have the character in reference image 1 enter and wave" \
   --extend scene.mp4 --reference-image character.png --output scene-extended.mp4
-5am media generate video --prompt "x" --extend long-30s.mp4            # error: uploaded clips must be 10 s or less
+5am media generate video --prompt "x" --extend long-30s.mp4            # error: uploaded clips must be 15 s or less
 ```
 
 The simple text params (`aspect_ratio`, `duration`, `resolution`,
@@ -596,7 +601,7 @@ printf '%s' "$LONG_PROMPT" | 5am media generate text --prompt -
 > answer, which looks like a working pipeline and is not.
 
 Models (`--model`, default `gemini-3-flash-preview`): `gemini-3-flash-preview`
-(fast), `gemini-3.8-flash` (newest flash),
+(fast), `gemini-3.8-flash` (flash), `gemini-4-hydrogen` (newest flash, from CLI v1.8.97),
 `gemini-3.5-flash-lite` (lightest), `gemini-3.1-flash-lite`,
 `gemini-3.1-pro-preview` (strongest). Anything else is refused before the
 API call (`internal/textmodels.Supported`). This backs the
@@ -1199,10 +1204,10 @@ Full guide and sample films: https://github.com/digvan/5am-cli/blob/main/docs/mo
 
 ```sh
 5am ai ask --prompt "Which year did the Talk Python podcast start?" --search        # grounded in Google Search: text + sources[] {title,url,domain} + queries[]
-5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`
+5am ai ask --prompt-file question.txt --json [--search] [--system "Answer tersely."] [--model gemini-3.8-flash] [--thinking low|medium|high]   # one JSON value, parsed into `json`; --model takes any Gemini text model, e.g. gemini-4-hydrogen
 ```
 
-One question, one answer, on the user's saved Gemini key or their AI credits (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level. A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
+One question, one answer, on the user's saved Gemini key or their AI credits (a credits refusal is category `credits`, exit 3). With `--search` the answer is grounded and the pages it rests on come back as `sources[]`; `grounded` says whether a search informed the answer: Google cited pages, or ran its searches step by step and fed the results into the model's context (such answers, and every JSON answer, carry no citations; the CLI tells by counting the prompt's own tokens, free). False: the model answered from memory, which a caller may trust less. With `--json` the first JSON value in the answer is returned parsed (refused when there is none). `--thinking` sets a Gemini 3 thinking level; Gemini 4 models (`gemini-4-hydrogen`) take low, medium or high, and `--thinking minimal` is refused for them before the call (from CLI v1.8.97). A grounded run comes back from Google with no candidate at all now and then (after a minute or more of searching): the CLI tries once more, thinking less, and when that is empty too the error names what came back (`FIVEAM_AI_DEBUG=1` prints the raw responses). Programs that need grounded research can call `5am ai ask --search --json` and verify the returned sources before acting.
 
 ## Pipeline: `5am pipeline`
 
@@ -1428,7 +1433,7 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' FIVEAM_DISABLE_KEYRING=1 5am out
 5am outreach send --batch oct_week_1 --dry-run         # the exact messages
 5am outreach send --batch oct_week_1 --yes             # from your Gmail; mark-sent on each
 5am outreach stats --batch oct_week_1 --record         # views, opens, plays, shares, downloads, clicks, sign-ups per prospect (a sign-up = the prospect claimed the page)
-5am outreach engaged --days 2 --csv engaged.csv        # from CLI v1.8.95: played after the email, no sign-up yet; prepare it with --follow-up
+5am outreach engaged --days 2 --csv engaged.csv        # from CLI v1.8.95: played (from v1.8.97: or watched) after the email, no sign-up yet; prepare it with --follow-up
 ```
 
 | Command | Costs | Needs | Prints |
@@ -1491,7 +1496,10 @@ Agent rules:
   was played after it went out (a play is a visitor starting the clip or
   turning its sound on; the muted autoplay, a mail scanner and the page's
   creator never count), with no sign-up and nothing written since; its
-  CSV carries `nudge_of`. Add `feed_url` and `line` for a fresh clip and run
+  CSV carries `nudge_of`. From CLI v1.8.97 a watch after the email counts
+  too: about 10 s of the clip in a visible tab after the visitor touched the
+  page, sound or not (rows add `watches`, `last_watched_at` and
+  `last_engaged_at`). Add `feed_url` and `line` for a fresh clip and run
   `prepare --follow-up` on it: a `nudge_of` row gets the nudge copy.
   `prepare` refuses the file if a `nudge_of` names a draft that is not yours,
   was never sent, or went to another address than the row's email: fix or
@@ -1547,7 +1555,17 @@ the eval judge) resolves access in this order: `GEMINI_API_KEY` in the
 environment, then the key stored by `5am keys set gemini`, then the account:
 its own key, or, when it has none, its AI credits, through a short-lived
 credential the CLI renews by itself during long jobs (memory-only, never
-printed). `5am keys list` reports the verdict:
+printed). The account's own Gemini and OpenAI keys reach only your own login
+or a token of yours with `write` scope: a read-scope token, an AI character's
+token and a workflow run's token never get them (server side since
+2026-11-14, every CLI version). Where one of those runs the CLI on an account
+with its own key, set `GEMINI_API_KEY` in that environment (from CLI v1.8.96,
+`OPENAI_API_KEY` too, read first by `--provider openai`): a key used there and
+nowhere else. `5am keys set` is not a local setting: it replaces the key saved
+in the account, for everything the person runs, needs write scope, and then
+keeps a copy on this machine; never use it to work around a hidden key. AI
+credits still work with a `write`-scope character or run token. `5am keys
+list` reports the verdict:
 
 ```json
 {"gemini_api_key":"","openai_api_key":"",
@@ -1560,8 +1578,13 @@ printed). `5am keys list` reports the verdict:
 ```
 
 `mode` is `byok` | `credits` | `none`; on `none`, `reason` says why
-(`cli_read_scope`: this CLI token has read scope and cannot obtain a token
-that spends money, so create one with write scope or set your own key;
+(`cli_read_scope`: this CLI token has read scope, so it gets neither AI
+credits nor the account's own key: use a token with write scope, or set
+`GEMINI_API_KEY`; `cli_token_not_person`, from CLI v1.8.96: an AI character's
+or a workflow run's token on an account with its own key, which it never
+reads: set `GEMINI_API_KEY`, or use your own token. From CLI v1.8.96, when the
+account hides its keys from the token, `keys list` also prints
+`keys_hidden_reason` and `has_gemini_api_key` / `has_openai_api_key`;
 `exhausted`: buy credits at https://5am.app/settings#ai-credits or set a
 key; `paused`: credits are paused platform-wide, set a key or wait;
 `credits_disabled`: set a key). Amounts are AI credits,
@@ -1983,7 +2006,7 @@ Provided by the CLI to characters in `chat`:
 - `run_command` — execute shell command. Destructive ops prompt even under `--auto-approve`. Uses `$SHELL` → `sh` → `bash` on Unix, `cmd.exe` on Windows; override with `FIVEAM_SHELL=/path/to/shell`.
 - `local_ffmpeg` — invoke local FFmpeg. **Args take an array of strings**, e.g. `{"args": ["-i", "my photo.jpg", "out.mp4"]}` — no shell parsing, so filenames with spaces/special characters work. The legacy single-string form is rejected with a hint.
 - `local_generate_image` — render AI image, save locally. Accepts `provider` (`gemini`/`openai`) plus, on Gemini, `model` (the three Nano Banana models), `aspect_ratio`, `resolution`, `reference_images` (array of local paths), and `grounding`.
-- `local_generate_video`: render AI video (`gemini-omni-1.1-flash`), save locally. Accepts `aspect_ratio`, `duration` (4, 6, 8 default, or 10 seconds), `resolution`, `negative_prompt`; there is no model choice (a retired Veo `model` value is mapped to Omni). (Image inputs are CLI-only, not exposed to the skill.)
+- `local_generate_video`: render AI video (`gemini-omni-1.2-flash`), save locally. Accepts `aspect_ratio`, `duration` (3 to 15 seconds, 8 default), `resolution`, `negative_prompt`; there is no model choice (a retired Veo `model` value is mapped to Omni). (Image inputs are CLI-only, not exposed to the skill.)
 - `local_generate_music` — render AI music, save locally
 - `local_generate_audio` — TTS, save locally
 
@@ -2028,7 +2051,7 @@ Insufficient scope returns a **structured denial in the response**, not an HTTP 
 
 ### Webhooks
 
-Each character can have one or more webhook endpoints receiving `chat.completed` and `skill.executed` events. Every delivery carries `X-5am-Signature: sha256=<hex>` = `HMAC-SHA256(<timestamp>.<body>, <signing_secret>)`. The signing secret is the connection's `access_token`: get it via `webhooks list` or rotate with `rotate-secret`. `webhooks list` shows it to your own login or token only: with an AI character's or a workflow run's token it is `null`, with `access_token_hidden: true`.
+Each character can have one or more webhook endpoints receiving `chat.completed` and `skill.executed` events. Every delivery carries `X-5am-Signature: sha256=<hex>` = `HMAC-SHA256(<timestamp>.<body>, <signing_secret>)`. The signing secret is the connection's `access_token`: get it via `webhooks list` or rotate with `rotate-secret`. `webhooks list` shows it to your own login, or a token of yours with `write` scope, only: with a read-scope token, an AI character's token or a workflow run's token it is `null`, with `access_token_hidden: true`, and so are the outbound auth's `token` and `header_value` in `connection_config.auth` (`auth_hidden: true`); the URL is only its origin (`url_hidden: true`) and `last_error` is only a code (`invalid_header`, `invalid_url`, `timeout`, `network`, `http_<status>`, or `error` for anything else, with `last_error_hidden: true`); a test's failure `reason` is the same code. Changing a webhook's URL or outbound auth clears its `last_error`. Saving a webhook read through that hidden view never replaces its stored credential or URL with the hidden values (a `null` value or the origin-only URL keeps what is stored); clear a credential explicitly with `webhooks update --auth none`. `webhooks test` with a character's or a run's token leaves out the receiver's reply (`response_body_hidden: true`).
 
 ```sh
 # CRUD
@@ -2446,13 +2469,13 @@ python3 scripts/podcast_to_video.py -i episode.wav -s episode.srt -a 9:16 -o ree
 python3 scripts/podcast_to_video.py -i episode.wav -s episode.srt --clips 2 --keep --workdir ./clips
 ```
 
-Flags: `-m/--model` (default `gemini-omni-1.1-flash`, the only video model),
+Flags: `-m/--model` (default `gemini-omni-1.2-flash`; `gemini-omni-1.1-flash` also works),
 `-p/--prompt` (your own scenes; overrides the
 transcript scene-writer), `--no-scene-prompts` (disable it), `-n/--clips`,
-`-d/--duration` (4, 6, 8 default, or 10 seconds per clip), `--max-clips` (default 30), `-j/--jobs` (generate N clips in
+`-d/--duration` (3 to 15 seconds per clip, 8 default), `--max-clips` (default 30), `-j/--jobs` (generate N clips in
 parallel; `-j 3`/`-j 4` is a good range), `--keep`/`--workdir` (clips land in
 `<workdir>/clip_NNN.mp4`). Run `--help` for the full list. Each
-8s clip costs about $0.80 at 720p (about twice the retired Veo 3.1 Lite), so start with `--clips 2`.
+8s clip costs about $0.56 at 720p, so start with `--clips 2`.
 
 ### "Find a media item by search and download it"
 
@@ -2715,7 +2738,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **For generation commands requiring a stored provider key, configure `5am keys set <provider>` first.** `media image-edit generate` uses the normal Gemini access flow (including AI credits), so do not assume a stored key is its only option. A missing key surfaces as a 4xx (exit 3), not a 5xx.
 - **`media generate image --model` is validated against the three Gemini image models** (`gemini-3.1-flash-image` default, `gemini-2.5-flash-image`, `gemini-3-pro-image`); anything else exits `3` with the accepted list. The `--aspect-ratio`, `--resolution`, `--image`, `--grounding`, and `--grounding-images` flags are **Gemini-only** (the OpenAI provider ignores them). `--resolution` is honored only by the 3.x models — `gemini-2.5-flash-image` is fixed at 1024px — and `--grounding-images` only by `gemini-3.1-flash-image`.
 - **`local_ffmpeg` args must be a JSON array of strings**, not a single space-separated string. `{"args": ["-i", "in.mp4", "out.mp3"]}` works; `{"args": "-i in.mp4 out.mp3"}` is rejected with a hint. Pass each token as its own array element so filenames with spaces are preserved.
-- **`5am media generate video` runs one model, `gemini-omni-1.1-flash`** (the Veo 3.1 previews retire on 2026-10-22). A retired `veo-*` `--model` is mapped to it with a stderr note; any other value exits `3`. `--duration` must be 4, 6, 8 (default) or 10 and is refused with `--extend`; `--last-frame` requires `--image`; `--reference-image` cannot combine with `--image`/`--last-frame`; all are rejected before any API call. A call is synchronous and takes about half a minute at 720p; for longer videos generate several clips and `5am media concat` them.
+- **`5am media generate video` defaults to `gemini-omni-1.2-flash` and also accepts `gemini-omni-1.1-flash` (from CLI v1.8.97; earlier releases default to 1.1)** (the Veo 3.1 previews retired on 2026-10-22). A retired `veo-*` `--model` is mapped to the default with a stderr note; any other value exits `3`. `--duration` must be a whole second from 3 to 15 (8 default; 3 to 10 with `--last-frame` and as the length `--extend` adds; 4, 6, 8 or 10 on 1.1); `--last-frame` requires `--image`; `--reference-image` takes up to 6 and cannot combine with `--image`/`--last-frame`; all are rejected before any API call. A call is synchronous and takes about half a minute at 720p; for longer videos generate several clips and `5am media concat` them.
 - **`5am media concat` needs ≥2 clips and a local ffmpeg.** Same `--ffmpeg`→`$FFMPEG`→PATH resolution and install-hint behavior as `media visualize`. Default is stream-copy with an **automatic re-encode fallback** (it logs `stream-copy concat failed, retrying with re-encode...` to stderr and retries) — so a `copy`-vs-`reencode` result in the JSON `mode` field tells you which path ran. `--audio` muxes a track over the joined video with `-shortest`, so output length is the shorter of video/audio.
 - **`5am media visualize` depends on a local ffmpeg binary.** Looks up `--ffmpeg` → `$FFMPEG` → PATH. A missing binary surfaces as exit 1 with platform-specific install hints (`brew install ffmpeg` on macOS, `apt install ffmpeg` on Linux, `winget install ffmpeg` on Windows) — don't auto-install on the user's behalf; suggest the hint and let them confirm. HEIF covers are rejected client-side; convert with `5am media convert` first.
 - **`5am media visualize` watermarks unauthenticated runs.** A small "Powered by 5AM" overlay is added in the bottom-left corner if there's no token configured (no `5am login`, no `FIVEAM_TOKEN`). To remove: `5am login` (free). Rendering works fully offline either way. The JSON result includes `"watermark": true|false` and `"loggedIn": true|false`; branch on those if you need to know what shipped.
