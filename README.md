@@ -1,6 +1,8 @@
 <!-- Purpose: Public repository overview and user guide for the 5am CLI, covering installation, IEDL image editing (Native Skia default engine), visual gallery generation, 5am motion, AI agents/workflows, and server agents. -->
 # 5am CLI — recipes, examples & guides
 
+[![5AM MCP server](https://mcprush.com/badge/5am-mcp/card.svg)](https://mcprush.com/to/5am-mcp?ref=badge)
+
 Use the [5AM CLI](https://5am.app/cli) to manage media, edit images, create video/audio pipelines, and automate work through AI agents and managed workflows. This repository contains public documentation, agent skills, and runnable examples; it is not the CLI source distribution.
 
 **[Motion graphics with `5am motion`](docs/motion.md)** (from v1.5.0): films from a brief (kinetic type, counters, charts, your photos and clips, a narrator) by Motion Studio's engine, with a live preview, free contact sheets and [four sample films](examples/motion/README.md). From v1.7.0 they render on Native Skia, with no browser.
