@@ -1331,11 +1331,13 @@ is the expected Gmail address, separate from `outreach mail setup` credentials.
 configured); `--follow-up-subject --follow-up-body-file` save a follow-up
 batch's (`prepare --follow-up`); the first-message template is used for intro
 and episode rows alike. Without them `draft` uses its built-in copy, chosen
-per row: a row with a `line` (an episode title) gets the episode teaser ("A
-teaser for your podcast: {{show}}", from CLI v1.8.9; v1.8.8 gave it the
-intro), a row without one the intro ("A short teaser for your show,
-{{name}}"), and in a follow-up batch a row with a line gets the follow-up
-("Another teaser, for {{line}}"). `draft --dry-run` shows each row's choice
+per row: a row with a `line` (an episode title) gets the episode message ("For
+your new episode of {{show}}" from CLI v1.8.99, "A teaser for your podcast:
+{{show}}" before; from CLI v1.8.9, v1.8.8 gave it the intro), a row without
+one the intro ("A short video for your show, {{name}}"), and in a follow-up
+batch a row with a line gets the follow-up ("Another video, for {{line}}").
+From v1.8.99 the built-in copy is short, with one ask (reply "yes") and the
+clip link as its only link. `draft --dry-run` shows each row's choice
 and its full text.
 Email placeholders are `{{name}}`, `{{show}}`, `{{line}}`,
 `{{clip_url}}` and `{{sender}}`; the body must contain `{{clip_url}}`.
@@ -1396,6 +1398,23 @@ inside `colors`; fixed hex paint inside layers will not follow it. Motion's
 `sound.style` (`minimal`, `pulse`, `house`, `ambient`) supplies synthesized
 music and animation cues; `none` silences them. It does not excerpt podcast audio.
 
+**Real clips from the episode (from CLI v1.8.99).** `prepare --real-clips`
+gives a row with a `line` and a `feed_url` a clip of the episode itself (the
+guest's or host's own words with captions, `--real-clip-seconds`, 30 by
+default, 6 to 90) instead of the template's card, when the feed has the
+episode (matched by title) with HTTPS audio. `motion podcast` makes it from a
+`--real-clip-window` (15 minutes by default, 5 to 60; five minutes in on a long
+episode), so a whole episode is never transcribed. `--real-clips-host-transcript`
+(experimental) starts from the show's timed transcript when the feed has one;
+quotes that do not line up with the audio mean a full transcription. Other rows keep the card;
+`clip_fallback` says why (`no_feed`, `no_line`, `episode_not_in_feed`,
+`feed_unreadable`, `no_https_audio`) and `clip_kind` is `real` or `card`.
+Unlike the rest of prepare it spends Gemini access (about 450 to 490 credits
+a clip, an estimate) and asks first: ask the person, then pass `--yes`. A
+re-run keeps a real clip whose inputs did not change (never paying twice);
+without the flag prepare keeps it too (for the same episode), and `--regenerate`
+brings the card back. `clips` renders a real clip at the podcast clip price (100 credits).
+
 **Recover and inspect.** After interruption, rerun `clips` to resume saved
 exports/uploads and `draft` to stage rendered rows. Paid checkpoints cost no
 new export credits; missing paid files or ambiguous receipts stop for inspection.
@@ -1409,7 +1428,7 @@ and then prepare/clips take `--browser` (else `CHROME_PATH` or discovery).
 See the public [Clip Outreach reference](https://5am.app/cli/docs/outreach).
 
 ```sh
-5am outreach config set --sender-name "Your name" --mailbox you@gmail.com --subject "A teaser for your podcast: {{show}}"
+5am outreach config set --sender-name "Your name" --mailbox you@gmail.com --subject "For your new episode of {{show}}"
 5am outreach config show --check-account
 5am motion doctor                                    # checks Skia (and reports Chrome); no paid export
 5am outreach mail setup --address you@gmail.com        # once: Gmail app password (2-step verification on)
@@ -1421,6 +1440,7 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' FIVEAM_DISABLE_KEYRING=1 5am out
 5am outreach fill --template template.motion.json --name "Maya Chen" --line "Episode 41" -o maya.motion.json   # FREE, offline: one prospect's film exactly as prepare writes it (then motion lint / motion sheet)
 5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 --character "Sales Director"
 #   -> items created or matched, one film + contact sheet per prospect (FREE). Look at the sheets.
+5am outreach prepare --csv prospects.csv --template template.motion.json --batch oct_week_1 --real-clips --yes   # from CLI v1.8.99: clips of the episodes themselves (spends Gemini access; ask first)
 5am outreach clips --batch oct_week_1 --dry-run        # price + toolchain check
 5am outreach clips --batch oct_week_1 --yes            # 20 AI credits each; album "Clip for <name>"; public link (headline = line, episode link = source_url); pipeline note
 5am outreach clips --batch oct_week_1 --yes --page-text   # + Gemini writes each page's text ABOUT the episode from the context column (spends Gemini access; never publishes)
@@ -1439,8 +1459,8 @@ FIVEAM_GMAIL_APP_PASSWORD='abcd efgh ijkl mnop' FIVEAM_DISABLE_KEYRING=1 5am out
 | Command | Costs | Needs | Prints |
 |---|---|---|---|
 | `fill` | free, offline, no login | the motion runtime, Node 20+ | `film` (written), `notes` (text made smaller to fit), `requires`; a template whose `outreach.requires` lists `line` refuses an empty `--line` (an intro), as prepare does |
-| `prepare` | free (Gemini is not called) | the motion runtime with Skia, Node 20+, ffmpeg (Chrome only with `--engine chrome`); a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed / skipped_suppressed / skipped_closed, `sheet`, `display_line` (the shorter title the film shows when the full one did not fit), `set_aside`, `credits_needed` |
-| `clips` | **20 AI credits per prospect** | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `set_aside` (suppressed or closed: never priced or rendered), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
+| `prepare` | free (Gemini is not called); `--real-clips` spends Gemini access on each new real clip | the motion runtime with Skia, Node 20+, ffmpeg (Chrome only with `--engine chrome`); a Premium plan and a character with `pipeline_query`, `pipeline_upsert`, `stage_outreach` | per prospect `status` prepared / needs_fix / failed / skipped_suppressed / skipped_closed, `sheet`, `display_line` (the shorter title the film shows when the full one did not fit), `set_aside`, `credits_needed`; with `--real-clips` per prospect `clip_kind` / `clip_fallback`, and `real_clips` (`real`, `card`, `fallback`, `planned`, `estimated_credits`) |
+| `clips` | **20 AI credits per prospect** (a real clip: 100) | the same toolchain; a write-scope token | `rendered`, `failed` (a check: MP4 size, page on), `set_aside` (suppressed or closed: never priced or rendered), `credits_charged`, `pending_payment`, per prospect `public_url`, `gif`, `preview_url`, `album_id`, `media_id` |
 | `draft` | free (`--personalize`: one Gemini chat per prospect) | the character | `drafted`, `held_no_email`, `failed` (a message check), `set_aside`, `deferred` + `deferred_reason: "draft_limit"` (left `rendered`: 100 drafts already await review), `draft_slots_free`, per prospect `draft_id`; `notice` (the review card posted into the character's chat for the selected rows' drafts still staged: `interaction_id`, `drafts`, or `error`, retried by the next `draft`; `--no-review-notice` skips it, `--notice-only` posts it and drafts nothing) |
 | `review` | free | a person and a browser | blocks until Done; `approved`, `skipped` |
 | `send` | free | the Gmail credential; **never in a workflow run** | `sent`, `failed` (not taken by Gmail; still approved, the next run retries), `skipped`, `uncertain`, `refused` (Gmail refused it for good; the draft is rejected, never retried), `stopped` (why the run ended early: Ctrl-C, a failed reservation), `messages[]` (each with `html` when the GIF part was added, `error` naming a failed check, Gmail's reply, or how to settle an uncertain one) |
@@ -1521,7 +1541,9 @@ Agent rules:
   (`--no-html` for text only); the plain-text part is always the draft itself.
 - **The film's sign-off is the show's card.** The gallery templates end on
   `{{show}}` (the show's name) and "LISTEN AT `{{site}}`": the CSV's `show`
-  and `site` columns, else the name and the website's host, else `5am.app`;
+  and `site` columns, else the name and the website's host; from CLI v1.8.99 an
+  app link reads "LISTEN ON YOUTUBE" (Spotify, Apple Podcasts) and no site of
+  the show's own reads "LISTEN WHEREVER YOU GET PODCASTS" (it was `5am.app`);
   the renderer's own "Made with 5AM.app" mark sits in the corner. The clip page's own address cannot be in the
   film: it exists only after the render is uploaded.
 - **The page links back and can be written for you.** `clips` sets the page's
@@ -1559,7 +1581,7 @@ printed). The account's own Gemini and OpenAI keys reach only your own login
 or a token of yours with `write` scope: a read-scope token, an AI character's
 token and a workflow run's token never get them (server side since
 2026-11-14, every CLI version). Where one of those runs the CLI on an account
-with its own key, set `GEMINI_API_KEY` in that environment (from CLI v1.8.96,
+with its own key, set `GEMINI_API_KEY` in that environment (from CLI v1.8.97,
 `OPENAI_API_KEY` too, read first by `--provider openai`): a key used there and
 nowhere else. `5am keys set` is not a local setting: it replaces the key saved
 in the account, for everything the person runs, needs write scope, and then
@@ -1580,9 +1602,9 @@ list` reports the verdict:
 `mode` is `byok` | `credits` | `none`; on `none`, `reason` says why
 (`cli_read_scope`: this CLI token has read scope, so it gets neither AI
 credits nor the account's own key: use a token with write scope, or set
-`GEMINI_API_KEY`; `cli_token_not_person`, from CLI v1.8.96: an AI character's
+`GEMINI_API_KEY`; `cli_token_not_person`, from CLI v1.8.97: an AI character's
 or a workflow run's token on an account with its own key, which it never
-reads: set `GEMINI_API_KEY`, or use your own token. From CLI v1.8.96, when the
+reads: set `GEMINI_API_KEY`, or use your own token. From CLI v1.8.97, when the
 account hides its keys from the token, `keys list` also prints
 `keys_hidden_reason` and `has_gemini_api_key` / `has_openai_api_key`;
 `exhausted`: buy credits at https://5am.app/settings#ai-credits or set a
@@ -1804,6 +1826,28 @@ Dates are UTC calendar days (YYYY-MM-DD; end date inclusive). On update,
 `--clear-*` twin (set XOR clear). Create/update are paid-gated (402
 `paid_plan_required` on a free plan); cancel needs an admin-scope token.
 Resume a cancelled task with `--status active`.
+
+### Notices from your agent (`characters notice`, from CLI v1.8.98)
+
+Post an answer card into one of the owner's character chats: the title, the
+markdown text, then (optional) an HTML report in the chat's sandboxed preview.
+Labelled "From your agent" (or "From <source>"). Shows on web, iOS and
+Android, arrives live, counts as unread; never reaches the character's model
+history or memory. Use it to hand the owner a finished answer or report where
+they already read their characters.
+
+```sh
+5am characters notice <characterId> --title "Nightly check" --text-file ./answer.md
+5am characters notice <characterId> --title "Weekly growth report" --text-file ./summary.md \
+  --html-file ./report.html --source crew --key growth-2026-W46 --json   # {"interaction_id": "...", "replayed": false}
+echo "All green." | 5am characters notice <characterId> --title "Deploy done" --text-file -
+```
+
+- **Self-contained reports**: the HTML runs in the chat's sandbox: scripts from the preview's CDN allowlist (cdnjs, jsDelivr, unpkg, ...) load, images only as `data:` URLs (no remote images), markdown images in the text show as links, and code fences in the text (```html too) show as code, never run: put anything that should render in `--html-file`. Put a chart's data in the page itself.
+- **Limits**: `--title` 1 to 120 characters, the text 1 to 8000, `--html-file` at most 262144 bytes (refused before sending), `--source` at most 40, `--key` at most 200. 60 notices an hour per account (HTTP 429 says how many minutes to wait).
+- **`--key` makes a retry safe**: the same key to the same character answers the notice already posted (`replayed: true`, HTTP 200) and writes nothing.
+- **Your own token with write scope only** (or a signed-in session). A character's token, a workflow run's token and a read-only token get `403 cli_token_not_allowed_here`, a real denial. The character must be the caller's (404 otherwise).
+- No MCP tool: call the command.
 
 ### Chat
 
@@ -2753,7 +2797,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **Promote/demote orchestrators with `5am characters update <id> --orchestrator true|false`.** Or set the flag at create time with `--orchestrator true`. If `5am playground orchestrators` returns `[]`, that's the fix.
 - **Playground writes (sessions create, task, feedback, proposals approve/modify/use-existing, resume) require a paid plan.** Reads, deletes, metadata writes (`sessions update`), and proposal `reject` work on free plans so lapsed users keep cleanup access. 402 with `error: "paid_plan_required"` and `upgrade_url` for gated calls.
 
-- **`5am outreach clips` charges 20 AI credits per prospect; `prepare` is free.** Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_finalize` row is paid by the NEXT `clips` run; never `motion render` it yourself.
+- **`5am outreach clips` charges 20 AI credits per prospect (100 for a real clip); `prepare` is free unless `--real-clips`,** which spends Gemini access while it makes the clips and asks first: ask the person before passing `--yes`. Run `prepare`, show the sheets, then `clips --dry-run`, then `clips`. A `pending_finalize` row is paid by the NEXT `clips` run; never `motion render` it yourself.
 - **`5am outreach review` blocks until a person clicks Done** (or Ctrl-C) and opens a browser page on 127.0.0.1. Never run it unattended: `5am outreach review --batch <slug> --no-wait` prints the batch's drafts (status, recipient, subject, body, clip link) and the commands that approve or reject them, then exits. Show the person the drafts and run only what they approve.
 - **`5am outreach send` is refused in a workflow run** and never sends a draft the person did not approve. It stops the batch on a refused Gmail sign-in (fix with `mail setup`, then send again: the rows stay approved). A closed pipeline item is skipped, not emailed. An `uncertain` row waits for the person's Gmail Sent folder check (mark-sent or release); send never retries it on its own. A `refused` row (Gmail's permanent refusal) is closed: its draft is rejected with Gmail's reply and never sent again.
 - **Pipeline state errors depend on the action.** `approve` on a non-staged draft and `mark-sent` on a draft that is neither approved nor sending answer 404; `edit` works while staged or approved (a sending or sent draft never changes). `unapprove` on a non-approved draft and `release` (plus the reserve/refuse actions used by send) answer 409 with the current `status`. Unapprove can also return 409 `review_queue_conflict`.
