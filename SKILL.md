@@ -42,6 +42,12 @@ the binary (`.5am-runtimes/<version>`), so it needs the same write access: after
 a sudo install, run it with sudo, or reinstall with `FIVEAM_INSTALL_DIR`. From
 CLI v1.8.9 it says so when it cannot write that folder.
 
+The installer ends with "Next steps": a `PATH` line when the install folder is
+not on it, an ffmpeg install command when ffmpeg is missing, the optional
+runtime (`5am update --runtime-only`) when it was not installed, `5am login`,
+`5am doctor --pretty`, and links to https://5am.app/cli/docs, the MCP guide
+(https://5am.app/cli/docs/mcp) and this skill.
+
 ## Setup & auth
 
 ```sh
@@ -105,7 +111,7 @@ Mint tokens in the web UI: **Settings → CLI Access Tokens → Generate token**
 5am albums get <albumId>
 5am albums create --name "Trip 2026" --description "..."
 5am albums update <albumId> --name "..." --description "..."
-5am albums delete <albumId> --yes                  # admin scope; refused (400, exit 3) while the album has media; --yes required in scripts
+5am albums delete <albumId> --yes                  # admin scope; refused (400, exit 3) while your own media is in it, members' media moves to an album of theirs; --yes required in scripts
 ```
 
 **`list` vs `list-shared`** — they're distinct endpoints, not a flag on one
@@ -1045,6 +1051,27 @@ stereo MP4 with `+faststart`. JSON result: `inputs`, `output`, dims,
 `ffmpeg`, and `uploadedToAlbum` (when uploaded). ffmpeg progress streams to
 stderr — rely on the JSON + exit code.
 
+## Reels on the public feed: `5am reels` (from CLI v1.8.100)
+
+Post a reel the user made and rendered in Reel Studio (web or app) to the
+public feed at 5am.app/reels, or take it off. The CLI does not make reels.
+
+```sh
+5am reels list [--published]            # JSON array: id, title, mood, status, renderMediaId, rendered, publishedAt, feedHidden, viewCount, url
+5am reels publish <reel-id>             # or: --media <renderMediaId>
+5am reels unpublish <reel-id>           # off the feed; the link keeps working (or: --media <renderMediaId>)
+```
+
+`publish`/`unpublish` print `{id, title, publishedAt, shareToken, url, feedUrl}`;
+`url` is the reel's public page (`/r/<token>`), the link to post. Publishing
+twice changes nothing. Only reels with `rendered: true` can be published; a
+group-album (event) reel and one moderation took out of the feed are refused
+(exit 3). The feed shows the reel's title, mood and owner name: there is no
+caption flag, the title is set in Reel Studio. Scopes: `list` read,
+`publish`/`unpublish` write; an AI character's token is refused. `list` and
+`--media` see the 100 most recently edited reels; name an older one by its id.
+A blank reel id is refused locally (exit 3).
+
 ## Motion Studio films — `5am motion`
 
 Motion graphics from a brief: kinetic type, shapes, counters, charts and the
@@ -1086,8 +1113,8 @@ error}`).
 5am motion sheet coffee-v2.motion.json -o coffee.png --count 24
 5am motion stills coffee-v2.motion.json --times 0.5,4 --out-dir stills   # --boxes (v1.8.94): boxes drawn, layers as JSON; --compact (v1.8.95): visible layers only
 5am motion sheet coffee-v2.motion.json -o moments.png --times 1.5,4,9.25 # v1.8.95: a sheet of chosen moments (beside a reference's stills)
-5am motion render coffee-v2.motion.json -o draft.mp4 --draft   # from CLI v1.8.94: free 360p draft, sound, DRAFT mark, no server
-5am motion render coffee-v2.motion.json -o coffee.mp4 --dry-run
+5am motion render coffee-v2.motion.json -o draft.mp4 --draft   # from CLI v1.8.94: free 360p draft, sound, DRAFT mark, no server (v1.8.100: without -o, <film>.draft.mp4, replaced each time)
+5am motion render coffee-v2.motion.json --dry-run    # -o optional from CLI v1.8.100; prints balanceCredits, and a note when it cannot pay
 5am motion render coffee-v2.motion.json -o coffee.mp4 --fps 30 --new-album "Films"
 5am motion render lower-third.motion.json -o lower-third.mov --alpha   # from CLI v1.8.95: transparent, ProRes 4444 with alpha
 5am motion finalize <requestId>     # [-o file]; a transparent film's must be .mov (v1.8.95)
@@ -1098,7 +1125,7 @@ error}`).
 |---|---|---|
 | `generate`, `revise` | Gemini access (AI credits or the user's key): 1 call, plus at most one layout repair and one retry of a reply cut off at its length limit or not valid JSON; on credits each call holds its worst case first and settles at what it used (`5am credits history`) | `output` (the film file), `title`, `format`, `duration`, `scenes`, `photos`, `calls`, `repaired`, `fixes`, `issues`, `warnings` |
 | `narrate` | Gemini access: 1 speech call (made even when the take is refused) | `output` (the `.narration.json`), `audio` (the WAV), `duration`, `filmDuration`, `voice`, `mood`, `model` |
-| `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `unknown` (fields the engine ignores, with the one meant), `frames`, `width`, `height`, `fonts`, `fontFiles`, `hash`, `timeline` (each scene's first beat, seconds and frames; from CLI v1.8.94); `--strict` exits 3 on any unknown, warning or fix |
+| `lint` | free, offline | `fixes`, `issues` (level `fix`/`note`), `warnings`, `unknown` (fields the engine ignores, with the one meant), `frames`, `width`, `height`, `fonts` (from CLI v1.8.100: `{id, label, roles}` per face each role draws, Inter and JetBrains Mono included, `hand` only when used), `fontFiles`, `hash`, `timeline` (each scene's first beat, seconds and frames; from CLI v1.8.94); `--strict` exits 3 on any unknown, warning or fix |
 | `inspect` | free; without moments offline, with `--times`/`--frames` (up to 48) it needs the engine | `timeline` (`scenes[]`: `startBeat`, `endBeat`, `start`, `end`, `startFrame`, `endFrame`, `transition`; `beatSec`, `tempo`, `frames`); with moments `frames[]`, each with `scene`, `transition` and `layers[]`: `path`, `kind`, `label`, `visible` or `hidden` (`before-start`, `after-end`, `transparent`, `off-frame`, `empty`), `box`/`corners` in export pixels, and for text `font`, `fitScale` (below 1: shrunk), `overflow`, `lines` |
 | `stills` / `sheet` | free (watermarked); up to 48 frames per call | `files` / `output`, `frames`; with `--boxes` also `inspect` (the layers, one entry per frame; `--compact`: the visible ones' path, label and box) and the boxes drawn |
 | `render` | **20 AI credits** per export, every account (a personal Gemini key does NOT exempt it); a podcast clip (`motion podcast`, its `.script.json` beside the film) is **100** (`product: podcast`). `--draft` (and any render while signed out) is free: 360p, 30 fps, the sound, a DRAFT mark, no server | `output`, `requestId`, `credits`, `frames`, `fps`, `width`, `height`, `audio`, `bytes`; with `--dry-run`: `dryRun: true` and no `output`; a draft: `draft: true`, `credits: 0`, `next` (the export), `note` when signed out; a transparent film: `transparent: true`, `codec: prores4444` |
@@ -1145,6 +1172,28 @@ Agent rules:
   (`preview` plays them with sound, without motion blur). What the export's
   credits buy is the MP4: the composed score and narration mixed in and every
   frame encoded. `render --dry-run` checks the film and the price and charges nothing.
+- **The mark is the renderer's.** Every export draws "Made with 5AM.app" in the
+  bottom-right corner of every frame (a top-corner badge on a transparent film).
+  Never write a "made with" line into the film: it would show twice (`lint` flags it).
+- **Lint's move fixes** (from CLI v1.8.100) give both fields: `dy` in design units
+  (short side 1000) and `y` in half-frames (`y` 1 = 889 units at 9:16, 500 at 16:9
+  and 1:1), with the value to set: `"dy" +64 (to 64) or "y" +0.072 (to 0.322)`.
+- **Counter `k`:** a `k`/`K` after the zeros divides by 1000 (`"to": 400000`,
+  `"format": "000K"` shows `400K`; the letter's case is kept from CLI v1.8.100).
+  Other letters (`M`, `B`) are units, never scaled. For `400K` from `"to": 400`,
+  use `"format": "000", "suffix": "K"`.
+- **From CLI v1.8.100:** a counter's `step` counts in steps (`1000`: 3,000 then 4,000),
+  landing on `to`; `count` beats run from the layer's `start`. A graph's `format` (a
+  counter pattern, `0.00`) sets its values' decimals. A graph's plot is solid to lint:
+  words on it are a fix. `"sound": {"style": "pulse", "intro": false}` starts the groove
+  on beat 0 (Shorts). `stills` takes `-o` for its folder and every motion command takes
+  `--out`. `render --alpha` refuses a film over 15 s (pass `--duration 15`). The draft's
+  sound is encoded as the export's, so its peak predicts the export's.
+  `render --true-peak -1.5` (export, draft, audio-only) measures the encoded file and
+  re-encodes its sound quieter until it is at or under the limit (`truePeak` in the result).
+  `render --audio-only` writes the sound alone (`<film>.m4a`, or `-o x.wav`): free, local.
+  A full-frame photo is a backdrop (lint notes only bare captions on it); `maxWidth` up to
+  1.2; a graph's `labelSize`, and its words grow with a chart larger than 640 x 400.
 - **Overwriting:** `generate`, `revise -o`, `stills`, `sheet` and `render`
   refuse an existing file unless `--overwrite` (`revise --in-place` replaces
   its film by design).
@@ -1170,7 +1219,9 @@ Agent rules:
   stored as `file:<path relative to the film>`: keep them beside the film.
   Local photos are described with Gemini once (cached) unless `--no-describe`.
 - **Video clips:** `--clip <file>` or `--clip media:<id>`, up to 4, on `generate`
-  and `revise` (where it REPLACES the film's clips). Needs the server's video flag
+  and `revise` (where it REPLACES the film's clips). A film plays at most 4; for more
+  footage, `5am media concat` the clips into one file, cast it once and give each
+  video layer its part with `in`/`out` (seconds into the joined file). Needs the server's video flag
   (`video clips in Motion films are not enabled on this server` otherwise). Skia
   reads clips through ffmpeg (ProRes and HEVC included); with `--engine chrome`,
   clips Chrome cannot decode get a cached ffmpeg proxy automatically.
@@ -2768,7 +2819,7 @@ jq -r '.prospects[] | "\(.status)\t\(.name)\t\(.sheet)"' prepare.json
 - **Characters can only query an ONLINE agent** (daemon polled within 90s). Offline agents fast-fail with `agent_offline` — the character will say so; it is not an error in your setup.
 - **`stats` requires a `number` field; `latest`, `--since`/`--until`, and `prune` require the dataset's `time_field`.** Datasets without a time field still support count/count_distinct/group_by/stats.
 - **Destructive custom skills are refused by the headless agent** (`destructive_refused`) unless it runs with `--allow-destructive` — the interactive confirm prompt from `characters chat` does not exist in the daemon.
-- **Album delete refuses an album that still has media** (400, exit 3; empty it first) and, like `media delete`, needs an admin-scope token. **Character delete cascades to token, webhooks, interactions, and memory.** Both deletes are irreversible.
+- **Album delete refuses an album that still has your own media** (400, exit 3; empty it first; media other members added moves to an album of their own, never deleted) and, like `media delete`, needs an admin-scope token. **Character delete cascades to token, webhooks, interactions, and memory.** Both deletes are irreversible.
 - **Paid direct shares and public-link sharing are mutually exclusive on the same album.** `5am albums public-link enable` returns 400 (exit 3) if the album has any paid direct shares; adding a paid share to an album with public sharing on is also rejected. To switch modes, disable the conflicting side first.
 - **`5am albums unshare --user` is rejected for contributors.** If the recipient uploaded media to the album, the unshare returns 400 with `"You cannot unshare someone who contributed to the album."` Reassign or delete their media first.
 - **`5am albums share` max 20 recipients per call.** Exceeding returns 400. Split into batches in a loop for larger sets.
@@ -2817,7 +2868,7 @@ environment. In a shell, `export FIVEAM_TOKEN=…` or `FIVEAM_TOKEN=… 5am whoa
 - `FIVEAM_TOKEN`: auth token (overrides stored login)
 - `FIVEAM_BASE_URL`: API base URL override
 - `FIVEAM_CONFIG_DIR`: a private folder that holds `config.toml` (isolated automation)
-- `FIVEAM_PRETTY=1`: globally enable `--pretty` output
+- `FIVEAM_PRETTY=1`: globally enable `--pretty` output (`--json` on any command overrides it, from CLI v1.8.100)
 - `FIVEAM_NOTIFY=1`: desktop notification when a long command finishes (`--notify`)
 - `FIVEAM_NO_UPDATE_CHECK=1`: no "update available" nudge
 - `FIVEAM_GMAIL_ADDRESS`, `FIVEAM_GMAIL_APP_PASSWORD`: the outreach Gmail credential, read before the stored one by `outreach send` and `outreach mail test|report`, and by `outreach mail setup` instead of asking

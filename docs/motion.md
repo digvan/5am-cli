@@ -138,6 +138,7 @@ Sends the film and your request to the model. `--format` and `--duration` re-lay
 - **Any format FFmpeg reads.** Skia reads each clip through FFmpeg and the `ffprobe` beside it, ProRes and HEVC included. With `--engine chrome`, the CLI opens each clip in Chrome first, and a clip Chrome cannot play as it is (ProRes, some HEVC, an unusual sound track) gets a copy made with FFmpeg, cached in `~/.5am/cache/motion/proxies`; the film still names your file.
 - **Stored like photos:** local clips as paths relative to the film, library clips by their id.
 - **On `revise`**, `--clip` replaces the film's clips.
+- **Four at most.** A film plays up to 4 clips, and `lint` warns about the rest, which are dropped with every layer that plays them (from CLI v1.8.100, the warning names them). For more footage, join the clips into one file with `5am media concat a.mp4 b.mp4 c.mp4 d.mp4 e.mp4 --output all.mp4`, cast that one file, and give each video layer its part with `in` and `out`, in seconds into the joined file.
 - **Their sound** is muted unless the clip's layer sets a `volume` (0 to 1), as in Motion Studio: ask for it in the brief or a `revise`, or edit the film.
 
 ### `narrate`
@@ -273,8 +274,12 @@ Free and offline. It prints:
 - the fields the engine ignores (`unknown`, from CLI v1.8.94): a misspelt field, or one the engine does not have, with the field meant when it looks like a typo, for example `scenes[0].layers[2].sise: unknown field, ignored (did you mean "size"?)`;
 - layout issues: `issues`, each of level `fix` or `note`, and `fixes`, the count of `fix` ones. A layer is named by its place in your film (`scenes[0].layers[7]`), even when the normalizer dropped one before it (from CLI v1.8.94; before, the numbering skipped the dropped layer);
 - the frame count and the render size;
-- `fonts`, the catalog faces a render loads for the film's font roles (the `hand` role's face included, whether or not anything writes by hand), and `fontFiles` (from CLI v1.8.94), the font files the film names by path, each with its roles and the file it found;
+- `fonts`, the face each font role draws with, one entry per face with its `roles` (from CLI v1.8.100: Inter and JetBrains Mono are listed too, and the `hand` face only when the film writes in it, in a note, a chapter name or a layer set in `"hand"`; before, it listed the catalog faces a render downloads), and `fontFiles` (from CLI v1.8.94), the font files the film names by path, each with its roles and the file it found;
 - `timeline` (from CLI v1.8.94): each scene's first beat, seconds and frames, as `inspect` prints it.
+
+A fix that moves a layer names both fields that place it (from CLI v1.8.100): `dx`/`dy` in design units and `x`/`y` in half-frames, with the value to set, for example `move it down 64 units, "dy" +64 (to 64) or "y" +0.072 (to 0.322) (y counts half-frames: y 1 is 889 units in 9:16)`. See [Units and coordinates](#units-and-coordinates).
+
+From CLI v1.8.100, a `note` names the characters a layer's face cannot draw, as drawn (a text in capitals checks the capitals), for example `"✓" (U+2713) is not in Anton (the display font), so it draws in Inter; set fonts.display to a face that has it (inter, ...)`. The character still draws, in Inter (JetBrains Mono for the mono role), or as an empty box when no face the film loads has it. Emoji are never named, and a font file only once the CLI has read it.
 
 It exits 0 even with issues; read `fixes`. With `--strict` (from CLI v1.8.94; also on `inspect` and `render`) it prints the same and exits 3 when there is any unknown field, any warning or any `fix` issue, so a script stops before an export of a film that is not what you wrote. A `note` passes.
 
@@ -308,12 +313,12 @@ While a transition plays, both scenes' layers are listed, each where the transit
 
 ```sh
 5am motion stills film.motion.json --times 0.5,4,9.5 --out-dir stills
-5am motion stills film.motion.json --frames 0,120,240 --out-dir stills --fps 30
+5am motion stills film.motion.json --frames 0,120,240 -o stills --fps 30
 5am motion sheet film.motion.json -o sheet.png --count 24
 5am motion sheet film.motion.json -o moments.png --times 1.5,4,9.25
 ```
 
-Free PNGs drawn exactly as the export would draw them, watermark included and with the export's motion blur: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48; frame i of n sits in the middle of the i-th of n equal stretches of the film, at (i + 0.5) / n of it). Neither replaces an existing file without `--overwrite`. Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
+Free PNGs drawn exactly as the export would draw them, watermark included and with the export's motion blur: chosen frames (up to 48 per call), or a contact sheet of evenly spaced ones (`--count`, 24 by default, up to 48; frame i of n sits in the middle of the i-th of n equal stretches of the film, at (i + 0.5) / n of it). Neither replaces an existing file without `--overwrite`. `stills` writes into the folder `--out-dir` names, or `-o` (from CLI v1.8.100); every `motion` command takes `--out` for its output too (from CLI v1.8.100). Look at a sheet before you export. A checker cannot judge a weak contrast, a word on a busy part of a photo or a fact the brief never gave; your eyes can.
 
 `--boxes` (from CLI v1.8.94) draws each visible layer's box and a label naming it, and each line of text, and prints the layers as [`inspect`](#inspect) does under `inspect`. With `--compact` (from CLI v1.8.95) it prints, for each frame, only the visible layers, each with its `path`, `label` and `box`: the part you read to place things, at a fraction of the size.
 
@@ -331,12 +336,14 @@ Opens the film in your browser with its sound: play, pause, scrub and loop (spac
 
 ```sh
 5am motion render film.motion.json -o film.mp4 [--fps 60|30] [--resolution 1080p|1440p] [--album <name-or-id> | --new-album <name>]
-5am motion render film.motion.json -o film.mp4 --dry-run
+5am motion render film.motion.json --dry-run
 5am motion render film.motion.json -o draft.mp4 --draft
+5am motion render film.motion.json -o film.mp4 --true-peak -1.5
+5am motion render film.motion.json --audio-only [-o film.m4a | -o film.wav]
 5am motion render overlay.motion.json -o overlay.mov --alpha
 ```
 
-**A free draft** (from CLI v1.8.94): `--draft` writes an MP4 to check timing and sound, and so does every render while the CLI is not signed in (`note` says so). It is 360 pixels on the short side at 30 fps, without motion blur or grain, with the film's whole sound and "DRAFT" across the frame; it reaches no server and costs nothing. `--resolution`, `--fps`, `--dry-run` and the album flags are for exports and are refused with it. The result has `draft: true` and, under `next`, the command for the export.
+**A free draft** (from CLI v1.8.94): `--draft` writes an MP4 to check timing and sound, and so does every render while the CLI is not signed in (`note` says so). It is 360 pixels on the short side at 30 fps, without motion blur or grain, with the film's whole sound and "DRAFT" across the frame; it reaches no server and costs nothing. `--resolution`, `--fps`, `--dry-run` and the album flags are for exports and are refused with it. The result has `draft: true`, the normalizer's `warnings`, and, under `next`, the command for the export. Without `-o` (from CLI v1.8.100) the draft is `<film>.draft.mp4` beside the film (`<film>.draft.mov` for a transparent film), replaced by every draft; a named `-o` is never replaced without `--overwrite`, since it could be a paid export. From CLI v1.8.100 its sound is encoded as the export's (AAC at 192 kb/s), so its peak and loudness predict the export's; before, it was encoded at a lower bitrate, which measured a higher peak than the export.
 
 An export, in this order:
 
@@ -347,9 +354,13 @@ An export, in this order:
 
 Ctrl-C, a stop signal (SIGTERM) or a failed render releases the reservation. A render killed outright (a command timeout that kills the process, a restart) cannot, so its reservation stays for 24 hours; see [`finalize`](#finalize) for releasing it sooner.
 
-`--dry-run` does step 1 and prints the price, size, frame count and whether the film has sound, without rendering or charging anything.
+`--dry-run` does step 1 and prints the price, size, frame count and whether the film has sound, without rendering or charging anything. It needs no `-o` (from CLI v1.8.100); with one, it also checks that the file is free to write. From CLI v1.8.100 it also prints the normalizer's `warnings` and `balanceCredits`, what the account can spend on one export (an export is paid from one of its credit buckets: the plan's allowance or the purchased credits). When that is less than the price, `note` says so and `next` is `5am credits buy`. With `--alpha`, a film longer than 15 seconds is refused (pass `--duration 15` to retime it) instead of being squeezed to 15 seconds.
 
-The MP4 is H.264 and AAC, 1080 pixels on the short side by default (1440 with `--resolution 1440p`), at 60 fps by default. Every frame has motion blur, film grain and a small "Made with 5AM.app" mark. With Skia on an Apple M1 Max, a 15-second 9:16 film at 1080x1920 rendered in 42 to 54 seconds at 60 fps (17 to 22 frames a second) and in about 33 seconds at 30 fps, measured while other work was running on the computer; a smaller computer takes longer. `--workers` sets how many workers draw at once (Skia's threads, or Chrome's pages with `--engine chrome`); the default suits the machine's cores and memory.
+The MP4 is H.264 and AAC, 1080 pixels on the short side by default (1440 with `--resolution 1440p`), at 60 fps by default. Every frame has motion blur, film grain and a small "Made with 5AM.app" mark in the bottom-right corner. Don't add a "made with" line of your own: the film would show two, and `lint` flags one. With Skia on an Apple M1 Max, a 15-second 9:16 film at 1080x1920 rendered in 42 to 54 seconds at 60 fps (17 to 22 frames a second) and in about 33 seconds at 30 fps, measured while other work was running on the computer; a smaller computer takes longer. `--workers` sets how many workers draw at once (Skia's threads, or Chrome's pages with `--engine chrome`); the default suits the machine's cores and memory.
+
+**The sound's peak.** The mix is limited to -2 dBTP before it is encoded; AAC's encode then lands it at about -1 dBTP. `--true-peak` (from CLI v1.8.100), a limit from -9 to -0.1 dBTP such as `--true-peak -1.5`, measures the encoded file itself and, when its sound peaks higher, encodes the sound again a little quieter (the picture is copied as it is, so nothing else changes), until it is at or under the limit. The result's `truePeak` says what happened: `limitDbtp`, `encodedDbtp` (before), `finalDbtp` (delivered) and `trimDb` (how far the sound was turned down; 0 when it was already under). It works on an export, a draft and `--audio-only`, and changes nothing about the price.
+
+**The sound alone** (from CLI v1.8.100): `--audio-only` writes the film's sound without its picture: the score, the narration and the clips' sound, mixed exactly as the export mixes them, as AAC in an `.m4a` (192 kb/s, as the export) or as a `.wav`. It is free and local, like a draft: no frames are drawn, the film's fonts and photos are never read, nothing is charged, and nothing reaches the server unless a clip comes from your library. Without `-o` it writes `<film>.m4a` beside the film, replaced each time. A film with no sound (`"sound": "none"`, no narration and no clip sound) or a transparent film has none to write, and the video flags (`--dry-run`, `--draft`, `--alpha`, `--fps`, `--resolution`, the album flags) are refused with it.
 
 **A transparent film** (from CLI v1.8.95): `--alpha`, or `"transparent": true` in the film, renders it with an alpha channel, to lay over a video in an editor (Final Cut Pro, DaVinci Resolve, ffmpeg's `overlay`). Nothing is drawn behind the layers: the scenes' backgrounds, gradients and vignettes are left out, so the video shows through. The file is ProRes 4444 with its alpha in a `.mov` (name the output `.mov`), without sound. A transparent film is an *insert*: 1.5 to 15 seconds, no score, no narration, no film grain, and clips play muted. The "Made with 5AM.app" mark is a small badge in the top-right corner (top left when the film's own `mark` logo is top right). `stills` and `sheet` take `--alpha` too: stills are PNGs with transparency, and a sheet shows the frames on a checkerboard.
 
@@ -506,7 +517,7 @@ Most eases stop at every key. From CLI v1.5.1, `smooth` on every key after the f
 | `mark` | `{ "photo", "corner", "size" }` (`photo` **required**) | none | A logo held in a corner of every frame, drawn whole (never cropped or graded): `photo` is a photo's id from `photos`, `corner` is `top-left` (the default), `top-right`, `bottom-left` or `bottom-right`, and `size` the height of its box, 40 to 240 units (default 90; a wide logo stops at 320 across). On 5am.app a brand kit sets it. |
 | `scenes` | 1 to 48 scenes (24 before CLI v1.8.4) | a title card of the `title` | The film, scene after scene. See [Scenes](#scenes). |
 
-Narration is not part of the film file: `narrate` saves the take beside it. The "Made with 5AM.app" mark is drawn by the renderer, and no field turns it off.
+Narration is not part of the film file: `narrate` saves the take beside it. The "Made with 5AM.app" mark is drawn by the renderer, in the bottom-right corner of every frame, and no field turns it off. Words of your own that say it again are a `lint` fix (from CLI v1.8.100).
 
 #### Palettes
 
@@ -579,6 +590,8 @@ Match the face to the brief's voice (a poster face for hype, a serif for editori
 | `none` | no music and no sound effects; narration and clip sound still play |
 
 `generate --sound` and `revise --sound` set it.
+
+**The intro.** A film of 3 scenes or more whose first scene is 4 beats or shorter opens with a quiet intro over that scene: a pad fades in and the drums start on the next scene (about 2 seconds at 120 BPM). For a Short that must grab at once, `"sound": { "style": "pulse", "intro": false }` (from CLI v1.8.100) starts the groove on the first beat, with a hit there.
 
 #### Feel
 
@@ -732,7 +745,7 @@ Big type that animates by letter, word or line: headlines, subheads, labels and 
 | `tracking` | em, -0.2 to 1 | -0.025 (`display`), 0.02 | Letter spacing. |
 | `lineHeight` | 0.7 to 2.2 | 0.98 (`display`), 1.25 | Line spacing, as a multiple of the font size. |
 | `align` | `left`, `center`, `right` | `center` | The edge the layer's point anchors. |
-| `maxWidth` | 0.2 to 1 | 0.94 | The longest line, as a fraction of the safe width; longer text wraps. |
+| `maxWidth` | 0.2 to 1.2 | 0.94 | The longest line, as a fraction of the safe width (the frame less 70 units a side); longer text wraps. From CLI v1.8.100 it may go above 1, into the side margins, up to the frame's edge and never past it (`lint` still wants words 16 units clear of the edge). |
 | `case` | `upper`, `lower`, `none` | `upper` | `none` keeps the text as written. |
 | `italic`, `outline` | `true`, `false` | `false` | Italic; letters drawn as outlines. |
 | `split` | `chars`, `words`, `lines`, `none` | `chars` | The unit that animates. |
@@ -879,13 +892,14 @@ A number that counts on the beat, on fixed digit slots so it never jitters.
 |---|---|---|---|
 | `to` | a number (**required**, unless `data` and `field` give the number) | | Where it lands. |
 | `from` | a number | 0 | Where it starts. |
-| `format` | `0`, `0.0`, `0%`, `00:00`, `$0,000`, `0k` and the like, then a unit if any (`0.00 AU`, `0 km`) | `0` | The zeros after the point are decimals, a comma groups thousands, `%` adds a percent sign, `k` counts thousands, `$`, `€` or `£` leads, and `00:00` shows seconds as minutes and seconds. A unit after the pattern (up to 12 characters, no digits; from CLI v1.8.94) is kept as written. |
+| `format` | `0`, `0.0`, `0%`, `00:00`, `$0,000`, `0k` and the like, then a unit if any (`0.00 AU`, `0 km`) | `0` | The zeros after the point are decimals, a comma groups thousands, `%` adds a percent sign, `$`, `€` or `£` leads, and `00:00` shows seconds as minutes and seconds. A `k` or `K` right after the zeros counts thousands: the number is divided by 1000 and the letter written as you wrote it (from CLI v1.8.100; before, always a lowercase `k`), so `"to": 400000` with `000K` lands on `400K`, and `"to": 400` with it lands on `0K` (a `lint` fix). Any other letter after the pattern is a unit, kept as written and never scaled (up to 12 characters, no digits; from CLI v1.8.94): `"to": 1.2` with `0.0M` shows `1.2M`. To show `400K` from `"to": 400`, write `"format": "000", "suffix": "K"`. Zeros before the point don't pad the number. |
 | `data`, `row`, `field` | a table, its row, a field of it | none | From CLI v1.8.94: the number is that field of the row, gliding between rows as the row's track glides; no count-up (see [The film timeline](#the-film-timeline-tables-tracks-and-overlays)). |
 | `prefix`, `suffix` | up to 6 and 8 characters | none | Text around the number. |
 | `font` | `display`, `body`, `mono`, `hand` | `display` | The role whose face draws it. |
 | `weight` | 100 to 900 | 900 | |
 | `size` | 20 to 700 | 200 | The cap height. |
-| `count` | `[start, end]` beats | from 0 to 60% of the layer | When it counts. |
+| `count` | `[start, end]` beats from the layer's own `start` | from 0 to 60% of the layer | When it counts. Like every layer beat, it counts from when the layer starts, not from the scene: a counter with `"start": 2, "count": [0, 1]` counts over the scene's beats 2 to 3. |
+| `step` | a number above 0 | none | From CLI v1.8.100: while it counts, the number moves in steps of this size from `from` (`1` for whole numbers, `1000` for 3,000 then 4,000), and always lands exactly on `to`. Without it every value in between shows. |
 | `ease` | an ease | `outExpo` | How it counts. |
 | `label` | up to 40 characters | none | A line under the number, in capitals in the mono face. |
 | `labelColor` | colour | the number's, at 70% | From CLI v1.8.94: the label's colour. |
@@ -1068,6 +1082,8 @@ Two modes: easing curves in a curve editor (`curves`, morphing one into the next
 | `morphAt` | beats | 1, 2, 3, ... | When each curve morphs into the next. |
 | `values` | up to 24 numbers | none | The data. |
 | `labels` | up to 24, of 14 characters | none | A label under each value. |
+| `labelSize` | 8 to 80 design units | 15, grown with the chart | From CLI v1.8.100: the size of the labels under the chart; the values over the bars are a little larger, in step. Without it, a chart larger than 640 x 400 grows its words with it (by the smaller of its width over 640 and its height over 400), so a big 9:16 chart's labels stay readable; a chart at the default size draws as before. |
+| `format` | a counter's number pattern (`0.00`, `0%`, `$0,000`, `0.0k`) | `0` for whole numbers, `0.0` for others, `0,000` from 1000 | From CLI v1.8.100: how the values over the bars (or a line's last point) are written, so 3.79 can show as `3.79` with `0.00`. See the counter's `format`. |
 | `data`, `field`, `labelField` | a table and two of its fields | none | From CLI v1.8.94: the values are `field` of every row, the labels `labelField`. |
 | `highlight` | a track's name, or a value's number | none | From CLI v1.8.94: that row's bar (or a dot on the line) and label take `accent`, gliding as the track glides. |
 | `style` | `line`, `area`, `bars` | `line` | How values are drawn. |
@@ -1081,6 +1097,8 @@ Two modes: easing curves in a curve editor (`curves`, morphing one into the next
 | `lineWidth` | 1 to 24 | 4.5 | |
 
 Its `color` is the curve or the bars (default `accent`).
+
+A chart's plot is solid to `lint` (from CLI v1.8.100): words over the bars or the line are a fix ("runs into the graph"), moved above or below it, never into its middle; before, only the chart's own labels and values were checked against other words.
 
 #### `pill`: buttons and chips
 
@@ -1333,6 +1351,8 @@ A film can show your own photos and video clips. Each is listed once in a table 
 #### `image`: one photo
 
 A photo in a rounded box: a hero shot, a print on a wall, a before and after.
+
+A photo (or a photo set) that covers the whole frame is the scene's backdrop: words may sit on it (from CLI v1.8.100; before, `lint` made every caption on it a fix). `lint` cannot see the photo, so it names, as a `note`, only words with nothing of their own under them (no text `box`, no shape, pill or bar behind them): check those on a still, or give them a box.
 
 | Field | Value | Default | What it does |
 |---|---|---|---|
